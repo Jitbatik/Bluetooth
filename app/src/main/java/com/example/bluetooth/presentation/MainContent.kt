@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.components.Screen
-import com.example.nativeappjetpaccompouse.presentation.view.ConnectContent
+import com.example.bluetooth.presentation.view.ConnectContent
 import com.example.nativeappjetpaccompouse.presentation.view.HomeContent
 import com.example.nativeappjetpaccompouse.presentation.view.SettingsContent
 
