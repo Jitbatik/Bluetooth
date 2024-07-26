@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Bluetooth"
 include(":app")
- 
+include(":domain")
+include(":data")
+include(":di")

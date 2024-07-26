@@ -1,4 +1,4 @@
-package com.example.nativeappjetpaccompouse.presentation.view
+package com.example.bluetooth.presentation.view
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,17 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bluetooth.ConnectViewModel
 import com.example.bluetooth.model.Device
 
 @Preview(showSystemUi = true)
 @Composable
 fun ConnectContent() {
+    val viewModel = viewModel<ConnectViewModel>()
 
-    val deviceList = listOf(
-        Device("Device 1", "00:11:22:33:44:55"),
-        Device("Device 2", "66:77:88:99:AA:BB")
-        // Добавьте другие устройства по мере необходимости
-    )
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -37,24 +35,23 @@ fun ConnectContent() {
         Column(
             modifier = Modifier
                 .fillMaxSize(),
-            //center
         ) {
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .padding(bottom = 16.dp)
             ) {
-                items(deviceList) { device ->
-                    DeviceCard(device = device)
+                items(viewModel.deviceList) { device ->
+                    DeviceCard(device = device, viewModel = viewModel)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
             }
             Button(
-                onClick = { /* Ваш обработчик нажатия */ },
+                onClick = { viewModel.findToDevice() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp) // Отступ снизу
+                    .padding(bottom = 16.dp)
             ) {
                 Text(text = "Сканировать")
             }
@@ -64,18 +61,21 @@ fun ConnectContent() {
 }
 
 @Composable
-fun DeviceCard(device: Device) {
+fun DeviceCard(
+    device: Device,
+    viewModel: ConnectViewModel,
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { /**/ }
+            .clickable { viewModel.handlerConnectionToDevice(deviceName = device.name) }
     ) {
         Column(
-            modifier = Modifier.padding(16.dp) // Внутренние отступы карточки
+            modifier = Modifier.padding(16.dp)
         ) {
             Text(text = device.name, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp)) // Отступ между текстами
+            Spacer(modifier = Modifier.height(4.dp))
             Text(text = device.address)
         }
     }
