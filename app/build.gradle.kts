@@ -63,6 +63,7 @@ dependencies {
 
     //hilt
     implementation(libs.dagger.hilt)
+    implementation(libs.androidx.runtime.livedata)
     kapt(libs.dagger.hilt.compiler)
     //viewmodel
     implementation (libs.androidx.lifecycle.livedata.ktx)
