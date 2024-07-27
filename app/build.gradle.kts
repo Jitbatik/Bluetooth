@@ -59,6 +59,7 @@ dependencies {
 
     implementation(project(":domain"))
     implementation(project(":di"))
+    implementation(libs.androidx.hilt.navigation.compose)
 
     //hilt
     implementation(libs.dagger.hilt)

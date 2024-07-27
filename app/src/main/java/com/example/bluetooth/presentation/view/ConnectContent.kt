@@ -18,14 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.bluetooth.ConnectViewModel
-import com.example.bluetooth.model.Device
+import com.example.domain.model.Device
 
 @Preview(showSystemUi = true)
 @Composable
-fun ConnectContent() {
-    val viewModel = viewModel<ConnectViewModel>()
+fun ConnectContent(viewModel: ConnectViewModel = hiltViewModel()) {
 
     Box(
         modifier = Modifier

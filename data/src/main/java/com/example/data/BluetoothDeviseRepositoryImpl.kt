@@ -1,6 +1,6 @@
 package com.example.data
 
-import com.example.domain.BluetoothDeviseRepository
+import com.example.domain.repository.BluetoothDeviseRepository
 import javax.inject.Inject
 
 class BluetoothDeviseRepositoryImpl @Inject constructor(): BluetoothDeviseRepository {
