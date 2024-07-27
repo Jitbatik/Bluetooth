@@ -2,8 +2,8 @@ package com.example.di
 
 import com.example.data.BluetoothDeviseRepositoryImpl
 import com.example.data.ConnectRepositoryImpl
-import com.example.domain.BluetoothDeviseRepository
-import com.example.domain.ConnectRepository
+import com.example.domain.repository.BluetoothDeviseRepository
+import com.example.domain.repository.ConnectRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

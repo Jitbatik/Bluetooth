@@ -3,9 +3,9 @@ package com.example.bluetooth
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluetooth.model.Device
-import com.example.domain.BluetoothDeviseRepository
-import com.example.domain.ConnectRepository
+import com.example.domain.model.Device
+import com.example.domain.repository.BluetoothDeviseRepository
+import com.example.domain.repository.ConnectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
