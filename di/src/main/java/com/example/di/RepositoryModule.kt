@@ -1,8 +1,8 @@
 package com.example.di
 
-import com.example.data.BluetoothDeviseRepositoryImpl
+import com.example.data.BluetoothRepositoryImpl
 import com.example.data.ConnectRepositoryImpl
-import com.example.domain.repository.BluetoothDeviseRepository
+import com.example.domain.repository.BluetoothRepository
 import com.example.domain.repository.ConnectRepository
 import dagger.Binds
 import dagger.Module
@@ -16,9 +16,9 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindBluetoothDeviseRepository(
-        bluetoothDeviseRepository: BluetoothDeviseRepositoryImpl
-    ) : BluetoothDeviseRepository
+    abstract fun bindBluetoothRepository(
+        bluetoothRepository: BluetoothRepositoryImpl
+    ) : BluetoothRepository
 
     @Binds
     @Singleton
