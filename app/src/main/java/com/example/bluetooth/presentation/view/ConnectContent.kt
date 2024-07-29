@@ -14,20 +14,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.ConnectViewModel
-import com.example.domain.model.Device
+import com.example.domain.model.BluetoothDevice
 
 @Preview(showSystemUi = true)
 @Composable
-fun ConnectContent(viewModel: ConnectViewModel = hiltViewModel()) {
-    val deviceList by viewModel.mediatorLiveData.observeAsState(emptyList())
+fun ConnectContent(
+    viewModel: ConnectViewModel = viewModel()
+) {
+    val deviceList by viewModel.devices.collectAsState()
 
     Box(
         modifier = Modifier
@@ -35,8 +37,7 @@ fun ConnectContent(viewModel: ConnectViewModel = hiltViewModel()) {
             .padding(16.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -44,7 +45,7 @@ fun ConnectContent(viewModel: ConnectViewModel = hiltViewModel()) {
                     .padding(bottom = 16.dp)
             ) {
                 items(deviceList) { device ->
-                    DeviceCard(device = device, viewModel = viewModel)
+                    DeviceCard(bluetoothDevice = device, viewModel = viewModel)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -62,21 +63,21 @@ fun ConnectContent(viewModel: ConnectViewModel = hiltViewModel()) {
 
 @Composable
 fun DeviceCard(
-    device: Device,
+    bluetoothDevice: BluetoothDevice,
     viewModel: ConnectViewModel,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { viewModel.handlerConnectionToDevice(device = device) }
+            .clickable { viewModel.handlerConnectionToDevice(bluetoothDevice = bluetoothDevice) }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(text = device.name, fontWeight = FontWeight.Bold)
+            Text(text = bluetoothDevice.name, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = device.address)
+            Text(text = bluetoothDevice.address)
         }
     }
 }

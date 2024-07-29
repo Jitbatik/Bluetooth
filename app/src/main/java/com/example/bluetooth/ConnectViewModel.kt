@@ -1,49 +1,54 @@
 package com.example.bluetooth
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.model.Device
-import com.example.domain.repository.BluetoothDeviseRepository
+import com.example.domain.model.BluetoothDevice
+import com.example.domain.repository.BluetoothRepository
 import com.example.domain.repository.ConnectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class ConnectViewModel @Inject constructor(
-    private val bluetoothDeviseRepository: BluetoothDeviseRepository,
+    private val bluetoothDeviseRepository: BluetoothRepository,
     private val connectRepository: ConnectRepository
 ) : ViewModel() {
 
-    private var deviseListLiveData : LiveData<List<Device>> = bluetoothDeviseRepository.getSavedBluetoothDevise()
-    val mediatorLiveData = MediatorLiveData<List<Device>>()
+    private val _devices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    val devices: StateFlow<List<BluetoothDevice>> = _devices.asStateFlow()
 
     init {
-        mediatorLiveData.addSource(deviseListLiveData) { devices ->
-            mediatorLiveData.value = devices
-        }
+        fetchDevices()
     }
 
-    // отключение подключение по нажатию
-        // при подключении карточка загарается зеленым
-        // при отключении возвращается обратно
-    fun handlerConnectionToDevice(device: Device) {
+    private fun fetchDevices() {
+        Log.d("ConnectViewModel", "Init Bluetooth")
+        //initBluetooth()
         viewModelScope.launch {
-            connectRepository.connectToDevise(device = device)
+
         }
     }
 
-    // сохраненные устройства с новыми
+    fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
+        Log.d("ConnectViewModel", "Handling connection to device")
+        viewModelScope.launch {
+            connectRepository.connectToDevice(bluetoothDevice)
+        }
+    }
+
     fun findToDevice() {
+        Log.d("ConnectViewModel", "Scanning for new devices")
         viewModelScope.launch {
-            val newDevices = bluetoothDeviseRepository.scanNewDevise().value ?: emptyList()
-            withContext(Dispatchers.Main) {
-                mediatorLiveData.postValue(newDevices)
-            }
+            bluetoothDeviseRepository.getScannedDevice()
+                .collect { newDevices ->
+                    _devices.value = newDevices
+                }
         }
     }
 }
+

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.model.isOpened
-import com.example.nativeappjetpaccompouse.presentation.MainContent
+import com.example.bluetooth.presentation.MainContent
 import com.example.nativeappjetpaccompouse.presentation.components.Drawer
 import kotlin.math.roundToInt
 

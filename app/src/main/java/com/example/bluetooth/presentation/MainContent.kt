@@ -1,4 +1,4 @@
-package com.example.nativeappjetpaccompouse.presentation
+package com.example.bluetooth.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
