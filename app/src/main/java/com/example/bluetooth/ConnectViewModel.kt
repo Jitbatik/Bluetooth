@@ -13,43 +13,46 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val CONNECT_VIEWMODEL = "CONNECT_VIEWMODEL"
+
 @HiltViewModel
 class ConnectViewModel @Inject constructor(
-    private val bluetoothDeviseRepository: BluetoothRepository,
+    private val bluetoothRepository: BluetoothRepository,
     private val connectRepository: ConnectRepository
 ) : ViewModel() {
 
     private val _devices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    val devices: StateFlow<List<BluetoothDevice>> = _devices.asStateFlow()
+    val devices: StateFlow<List<BluetoothDevice>>
+        get() = _devices.asStateFlow()
 
     init {
-        initBluetooth()
+        observeBluetoothDeviceList()
     }
 
-    private fun initBluetooth() {
-        Log.d("ConnectViewModel", "Preparation Bluetooth")
-        if (!bluetoothDeviseRepository.preparationBluetooth())
-            viewModelScope.launch {
-
+    private fun observeBluetoothDeviceList() {
+        Log.d(CONNECT_VIEWMODEL, "Subscribe to a stream")
+        viewModelScope.launch {
+            bluetoothRepository.bluetoothDeviceList.collect { newDevices ->
+                _devices.value = newDevices
             }
-        Log.d("ConnectViewModel", "Preparation Bluetooth is good")
-
+        }
     }
 
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
-        Log.d("ConnectViewModel", "Handling connection to device")
+        Log.d(CONNECT_VIEWMODEL, "Handling connection to device")
         viewModelScope.launch {
             connectRepository.connectToDevice(bluetoothDevice)
         }
     }
 
     fun findToDevice() {
-        Log.d("ConnectViewModel", "Scanning for new devices")
+        Log.d(CONNECT_VIEWMODEL, "Scanning for devices")
         viewModelScope.launch {
-            bluetoothDeviseRepository.getScannedDevice()
-                .collect { newDevices ->
-                    _devices.value = newDevices
-                }
+            val result = bluetoothRepository.findPairedDevices()
+
+            result.onFailure { exception ->
+                Log.e("ConnectViewModel", "Failed to find devices", exception)
+            }
         }
     }
 }

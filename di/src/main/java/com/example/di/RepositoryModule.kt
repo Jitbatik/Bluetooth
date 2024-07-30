@@ -34,6 +34,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPermissionRepository(
-        permissionRepository: BluetoothRepositoryImpl
+        permissionRepository: PermissionRepositoryImpl
     ) : PermissionRepository
 }
