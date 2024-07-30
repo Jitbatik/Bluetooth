@@ -23,15 +23,17 @@ class ConnectViewModel @Inject constructor(
     val devices: StateFlow<List<BluetoothDevice>> = _devices.asStateFlow()
 
     init {
-        fetchDevices()
+        initBluetooth()
     }
 
-    private fun fetchDevices() {
-        Log.d("ConnectViewModel", "Init Bluetooth")
-        //initBluetooth()
-        viewModelScope.launch {
+    private fun initBluetooth() {
+        Log.d("ConnectViewModel", "Preparation Bluetooth")
+        if (!bluetoothDeviseRepository.preparationBluetooth())
+            viewModelScope.launch {
 
-        }
+            }
+        Log.d("ConnectViewModel", "Preparation Bluetooth is good")
+
     }
 
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
