@@ -2,19 +2,19 @@ package com.example.data
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import androidx.core.app.ActivityCompat
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.BluetoothRepository
+import com.example.domain.repository.PermissionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -27,8 +27,8 @@ private const val BLUETOOTH_SCANNER = "ANDROID_BLUETOOTH_SCANNER"
 
 @SuppressLint("MissingPermission")
 class BluetoothRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context
-): BluetoothRepository {
+    @ApplicationContext private val context: Context,
+): BluetoothRepository, PermissionRepository  {
 
     private val bluetoothDeviceList = mutableListOf<BluetoothDevice>()
 
@@ -57,16 +57,27 @@ class BluetoothRepositoryImpl @Inject constructor(
     /**
     * Пока просто заглушка проверок
      */
+    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingPermission")
     override fun preparationBluetooth(): Boolean {
         if (!_hasScanPermission) {
             Log.e(BLUETOOTH_SCANNER, "NO scan permission")
-            requestScanPermission()
-            return false
+            requestPermissions(
+                arrayOf(Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ),
+                REQUEST_CODE_SCAN_PERMISSION
+            )
+            return false // буду писать исключения
         }
         if (!_hasLocationPermission) {
             Log.e(BLUETOOTH_SCANNER, "NO location permission")
-            requestLocationPermission()
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_CODE_LOCATION_PERMISSION
+            )
             return false
         }
         val bluetoothAdapter = _bluetoothAdapter
@@ -77,24 +88,11 @@ class BluetoothRepositoryImpl @Inject constructor(
 
         if (bluetoothAdapter.isEnabled) {
             Log.e(BLUETOOTH_SCANNER, "NO enable bluetooth")
+            // надо АКТИВИТИ для включения
             return false
         }
         return true
     }
-
-
-    private fun requestScanPermission() {
-
-    }
-
-    private fun requestLocationPermission() {
-        // может придется делать отдельный интерфейс для запроса разрешений
-    }
-
-
-
-
-
 
     override fun getPairedDevice(): Flow<List<BluetoothDevice>> {
         return flow {
@@ -120,5 +118,16 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     override fun releaseResources() {
         TODO("Not yet implemented")
+    }
+
+    override fun requestPermissions(permissions: Array<String>, requestCode: Int) {
+        if (permissions.isNotEmpty()) {
+            // Надо АКТИВИТИ
+        }
+    }
+
+    companion object {
+        private const val REQUEST_CODE_SCAN_PERMISSION = 1001
+        private const val REQUEST_CODE_LOCATION_PERMISSION = 1002
     }
 }
