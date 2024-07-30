@@ -2,25 +2,21 @@ package com.example.domain.repository
 
 import com.example.domain.model.BluetoothDevice
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
-/**
-    Устройства
-        -сохраненные  getSavedBluetoothDevice
-        -Новые  scanNewDevice
-*/
 
 interface BluetoothRepository {
+    val bluetoothDeviceList: StateFlow<List<BluetoothDevice>>
+    val pairedDevices: StateFlow<List<BluetoothDevice>>
+    val availableDevices: StateFlow<List<BluetoothDevice>>
 
-    fun preparationBluetooth(): Boolean
+    fun findPairedDevices(): Result<Unit>
 
-    fun getPairedDevice() : Flow<List<BluetoothDevice>>
-
-    fun getScannedDevice() : Flow<List<BluetoothDevice>>
+    fun startScan(): Result<Boolean>
 
     fun stopScan(): Result<Boolean>
 
-    /**
-     * Clears resources when done
-     */
     fun releaseResources()
+
+
 }
