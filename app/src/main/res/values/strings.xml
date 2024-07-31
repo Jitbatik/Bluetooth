@@ -3,4 +3,7 @@
     <string name="description_switch_bluetooth">Использовать фильтрацию</string>
     <string name="hint_text_bluetooth">Введите маску имени</string>
     <string name="title_bluetooth">Bluetooth</string>
+    <string name="bluetooth_permission_not_found_title">Не получены разрешения Bluetooth</string>
+    <string name="bluetooth_permission_not_found_desc">Для коректной работы блютуз требуется разрешения Bluetooth</string>
+    <string name="scanner_box_button_title">Сканировать</string>
 </resources>

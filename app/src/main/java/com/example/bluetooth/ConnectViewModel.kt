@@ -8,8 +8,10 @@ import com.example.domain.repository.BluetoothRepository
 import com.example.domain.repository.ConnectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +22,15 @@ class ConnectViewModel @Inject constructor(
     private val bluetoothRepository: BluetoothRepository,
     private val connectRepository: ConnectRepository
 ) : ViewModel() {
+
+    private val _isBluetoothEnabled = MutableStateFlow(true)
+    val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled
+
+//    val isBTActive = bluetoothRepository.isBluetoothActive.stateIn(
+//        scope = viewModelScope,
+//        started = SharingStarted.Eagerly,
+//        initialValue = false
+//    )
 
     private val _devices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val devices: StateFlow<List<BluetoothDevice>>
@@ -36,6 +47,10 @@ class ConnectViewModel @Inject constructor(
                 _devices.value = newDevices
             }
         }
+    }
+
+    fun updateBluetoothPermission(granted: Any) {
+
     }
 
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {

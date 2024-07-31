@@ -2,10 +2,8 @@ package com.example.di
 
 import com.example.data.BluetoothRepositoryImpl
 import com.example.data.ConnectRepositoryImpl
-import com.example.data.PermissionRepositoryImpl
 import com.example.domain.repository.BluetoothRepository
 import com.example.domain.repository.ConnectRepository
-import com.example.domain.repository.PermissionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,13 +25,4 @@ abstract class RepositoryModule {
     abstract fun bindConnectRepository(
         connectRepository: ConnectRepositoryImpl
     ) : ConnectRepository
-
-
-    /**
-     * ХЗ правильно ли */
-    @Binds
-    @Singleton
-    abstract fun bindPermissionRepository(
-        permissionRepository: PermissionRepositoryImpl
-    ) : PermissionRepository
 }

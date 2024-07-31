@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.components.Screen
-import com.example.bluetooth.presentation.view.ConnectContent
+import com.example.bluetooth.presentation.view.connectcontainer.ConnectContainer
 import com.example.nativeappjetpaccompouse.presentation.view.HomeContent
 import com.example.nativeappjetpaccompouse.presentation.view.SettingsContent
 
@@ -38,7 +38,7 @@ fun MainContent(
             Box(modifier = modifier.padding(paddingValues)) {
                 when (screen) {
                     is Screen.Home -> HomeContent()
-                    is Screen.Connect -> ConnectContent()
+                    is Screen.Connect -> ConnectContainer()
                     is Screen.Settings -> SettingsContent()
                 }
             }
