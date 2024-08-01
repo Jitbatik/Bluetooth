@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.bluetooth.ConnectViewModel
 import com.example.bluetooth.model.BluetoothScreenType
 import com.example.bluetooth.presentation.BtPermissionNotProvidedBox
 import com.example.domain.model.BluetoothDevice
@@ -43,6 +42,7 @@ fun ConnectContainer(
     val deviceList by viewModel.devices.collectAsState()
 
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
+
     var hasBluetoothPermission by remember(context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             mutableStateOf(

@@ -5,10 +5,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 
-interface BluetoothRepository {
+interface ScannerRepository {
+
     val bluetoothDeviceList: StateFlow<List<BluetoothDevice>>
     val pairedDevices: StateFlow<List<BluetoothDevice>>
     val availableDevices: StateFlow<List<BluetoothDevice>>
+
+    val isBluetoothActive: Flow<Boolean>
+    //val hasBluetoothPermission:  Flow<Boolean>
 
     fun findPairedDevices(): Result<Unit>
 
