@@ -50,7 +50,13 @@ fun ConnectContainer(
                     context, Manifest.permission.BLUETOOTH_SCAN
                 ) == PermissionChecker.PERMISSION_GRANTED
             )
-        else mutableStateOf(true)
+        else {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PermissionChecker.PERMISSION_GRANTED
+            )
+        }
     }
 
     val screenType by remember(hasBluetoothPermission, isBluetoothEnabled) {
