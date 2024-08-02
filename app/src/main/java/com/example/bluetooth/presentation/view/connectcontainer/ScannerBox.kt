@@ -36,7 +36,7 @@ fun ScannerBox(
             }
         }
         Button(
-            onClick = { viewModel.findToDevice() },
+            onClick = { viewModel.scan() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)

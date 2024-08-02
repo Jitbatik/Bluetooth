@@ -40,15 +40,12 @@ class ConnectViewModel @Inject constructor(
     private fun observeBluetoothDeviceList() {
         Log.d(CONNECT_VIEWMODEL, "Subscribe to a stream")
         viewModelScope.launch {
-            scannerRepository.bluetoothDeviceList.collect { newDevices ->
+            scannerRepository.deviceList.collect { newDevices ->
                 _devices.value = newDevices
             }
         }
     }
 
-    fun updateBluetoothPermission(granted: Any) {
-
-    }
 
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d(CONNECT_VIEWMODEL, "Handling connection to device")
@@ -57,14 +54,13 @@ class ConnectViewModel @Inject constructor(
         }
     }
 
-    fun findToDevice() {
-        Log.d(CONNECT_VIEWMODEL, "Scanning for devices")
-        viewModelScope.launch {
-            val result = scannerRepository.findPairedDevices()
-
-            result.onFailure { exception ->
-                Log.e("ConnectViewModel", "Failed to find devices", exception)
-            }
+    fun scan()= viewModelScope.launch {
+        try {
+            Log.d(CONNECT_VIEWMODEL, "Scanning for devices")
+            scannerRepository.startScan()
+        }
+        catch (exception: Exception) {
+            Log.e("ConnectViewModel", "Failed to Scanning devices", exception)
         }
     }
 }
