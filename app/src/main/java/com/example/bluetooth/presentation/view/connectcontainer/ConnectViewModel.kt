@@ -50,7 +50,10 @@ class ConnectViewModel @Inject constructor(
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d(CONNECT_VIEWMODEL, "Handling connection to device")
         viewModelScope.launch {
-            connectRepository.connectToDevice(bluetoothDevice)
+            connectRepository.connectToDevice(
+                bluetoothDevice,
+                connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
+            )
         }
     }
 
