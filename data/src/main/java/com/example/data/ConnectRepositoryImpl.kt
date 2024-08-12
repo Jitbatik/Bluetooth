@@ -32,7 +32,7 @@ import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 
-const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGGER"
+private const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGGER"
 
 @SuppressLint("MissingPermission")
 class ConnectRepositoryImpl @Inject constructor(
@@ -117,6 +117,7 @@ class ConnectRepositoryImpl @Inject constructor(
                 socket.connect()
                 Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLIENT CONNECTED")
                 _connectState.update { ClientConnectionState.CONNECTION_ACCEPTED }
+                //
             }
             Result.success(Unit)
         } catch (e: IOException) {
@@ -125,7 +126,6 @@ class ConnectRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-
 
     override fun disconnectFromDevice(): Result<Unit> {
         if (_btClientSocket == null) return Result.success(Unit)
