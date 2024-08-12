@@ -1,16 +1,15 @@
 package com.example.domain.repository
 
 import com.example.domain.model.BluetoothDevice
-
-/*
-    Действия с устройтвами
-        -Подключение  connectToDevice
-        -Отключение  disconnectFromDevice
-*/
+import java.util.UUID
 
 interface ConnectRepository  {
 
-    fun connectToDevice(bluetoothDevice: BluetoothDevice) : Boolean
+    suspend fun connectToDevice(
+        bluetoothDevice: BluetoothDevice,
+        connectUUID: String,
+        secure: Boolean = true
+    ) : Result<Unit>
 
-    fun disconnectFromDevice() : Boolean
+    fun disconnectFromDevice() : Result<Unit>
 }
