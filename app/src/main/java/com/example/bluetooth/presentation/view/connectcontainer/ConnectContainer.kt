@@ -30,6 +30,7 @@ import androidx.core.content.PermissionChecker
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.model.BluetoothScreenType
 import com.example.bluetooth.presentation.BtPermissionNotProvidedBox
+import com.example.bluetooth.presentation.view.connectcontainer.scanner.ScannerBox
 import com.example.domain.model.BluetoothDevice
 
 

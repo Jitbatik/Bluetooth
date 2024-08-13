@@ -2,6 +2,7 @@ package com.example.data
 
 import android.bluetooth.BluetoothSocket
 import android.util.Log
+import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.repository.ExchangeDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -17,10 +18,18 @@ import javax.inject.Inject
 private const val EXCHANGE_DATA_REPOSITORY_IMPL = "MANAGE_DATA_REPOSITORY_IMPL"
 
 class ExchangeDataRepositoryImpl @Inject constructor(
-    private val socket: BluetoothSocket,
-) : ExchangeDataRepository {
-    private var _inputStream: InputStream = socket.inputStream
-    private var _outputStream: OutputStream = socket.outputStream
+    private val bluetoothSocketProvider: BluetoothSocketProvider,
+    ) : ExchangeDataRepository {
+    private val socket: BluetoothSocket
+        get() = bluetoothSocketProvider.getSocket()
+            ?: throw IOException("Bluetooth socket is not available")
+
+    private val _inputStream: InputStream
+        get() = socket.inputStream
+
+    private val _outputStream: OutputStream
+        get() = socket.outputStream
+
 
     override fun readFromStream(canRead: Boolean): Flow<ByteArray> {
         val buffer = ByteArray(4 * 1_024)

@@ -1,8 +1,9 @@
-package com.example.nativeappjetpaccompouse.presentation.view
+package com.example.bluetooth.presentation.view.homecontainer
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,13 +12,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.example.bluetooth.ui.theme.BluetoothTheme
 
 
-@Preview(showSystemUi = true)
 @Composable
-fun HomeContent() {
+fun HomeContainer() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -39,5 +40,13 @@ fun MyTextField() {
             onValueChange = { newText -> text = newText },
             modifier = Modifier.width(200.dp)
         )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeContentPreview() = BluetoothTheme {
+    Surface {
+        HomeContainer()
     }
 }
