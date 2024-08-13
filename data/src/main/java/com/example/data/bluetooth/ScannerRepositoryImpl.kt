@@ -1,4 +1,4 @@
-package com.example.data
+package com.example.data.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -12,8 +12,8 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
-import com.example.data.receivers.BluetoothScanReceiver
-import com.example.data.receivers.BluetoothStateReceiver
+import com.example.data.bluetooth.receivers.BluetoothScanReceiver
+import com.example.data.bluetooth.receivers.BluetoothStateReceiver
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ScannerRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -133,25 +133,31 @@ class ScannerRepositoryImpl @Inject constructor(
         return Result.success(status)
     }
 
-    private fun stopScan(): Result<Boolean> {
-        if (!_hasScanPermission)
-            return Result.failure(SecurityException("No Bluetooth Location permission granted"))
-        // stop discovery
-        Log.d(BLUETOOTH_SCANNER, "SCAN CANCELED")
-        val status = _bluetoothAdapter?.cancelDiscovery() ?: false
-        return Result.success(status)
-    }
+//    private fun stopScan(): Result<Boolean> {
+//        if (!_hasScanPermission)
+//            return Result.failure(SecurityException("No Bluetooth Location permission granted"))
+//        // stop discovery
+//        Log.d(BLUETOOTH_SCANNER, "SCAN CANCELED")
+//        val status = _bluetoothAdapter?.cancelDiscovery() ?: false
+//        return Result.success(status)
+//    }
 
 
     override fun startScan(): Result<Boolean> {
         val pairedResult = findPairedDevices()
         if (pairedResult.isFailure) {
-            Log.e(BLUETOOTH_SCANNER, "Failed to find paired devices: ${pairedResult.exceptionOrNull()}")
+            Log.e(
+                BLUETOOTH_SCANNER,
+                "Failed to find paired devices: ${pairedResult.exceptionOrNull()}"
+            )
         }
 
         val discoverResult = findDiscoverDevices()
         if (discoverResult.isFailure) {
-            Log.e(BLUETOOTH_SCANNER, "Failed to discover devices: ${discoverResult.exceptionOrNull()}")
+            Log.e(
+                BLUETOOTH_SCANNER,
+                "Failed to discover devices: ${discoverResult.exceptionOrNull()}"
+            )
         }
 
         val status = discoverResult.getOrElse { false }

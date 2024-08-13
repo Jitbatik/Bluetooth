@@ -1,4 +1,4 @@
-package com.example.data.mapper
+package com.example.data.bluetooth.mapper
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice as AndroidBluetoothDevice
