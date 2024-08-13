@@ -12,11 +12,10 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import javax.inject.Inject
 
 private const val EXCHANGE_DATA_REPOSITORY_IMPL = "MANAGE_DATA_REPOSITORY_IMPL"
 
-class ExchangeDataRepositoryImpl @Inject constructor(
+class ExchangeDataRepositoryImpl(
     private val socket: BluetoothSocket,
 ) : ExchangeDataRepository {
 
@@ -43,11 +42,12 @@ class ExchangeDataRepositoryImpl @Inject constructor(
         }
     }
 
+
     override suspend fun sendToStream(value: String): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-            if (!socket.isConnected)
-                return@withContext Result.failure(SecurityException("No connected socket"))
+                if (!socket.isConnected)
+                    return@withContext Result.failure(SecurityException("No connected socket"))
                 _outputStream.write(value.toByteArray())
                 Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM")
                 Result.success(true)

@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,7 +38,7 @@ private const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGG
 @SuppressLint("MissingPermission")
 class ConnectRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-): ConnectRepository {
+) : ConnectRepository {
 
     private val _bluetoothManager by lazy { context.getSystemService<BluetoothManager>() }
     private val _bluetoothAdapter: BluetoothAdapter?
@@ -84,11 +85,12 @@ class ConnectRepositoryImpl @Inject constructor(
 
     private val _connectState = MutableStateFlow(ClientConnectionState.CONNECTION_INITIALIZING)
     private var _btClientSocket: BluetoothSocket? = null
+    private var _transferService: ExchangeDataRepositoryImpl? = null
     override suspend fun connectToDevice(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean
-    ): Result<Unit> = withContext(Dispatchers.IO){
+    ): Result<Unit> = withContext(Dispatchers.IO) {
         if (!_hasBtPermission) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "No Bluetooth connect permission granted.")
             return@withContext Result.failure(SecurityException("No Bluetooth scan permission granted"))
@@ -105,9 +107,13 @@ class ConnectRepositoryImpl @Inject constructor(
             _connectState.update { ClientConnectionState.CONNECTION_BONDED }
         }
 
-        _btClientSocket = if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CREATED_SOCKET SECURE:$secure SPECIFIED UUID: $connectUUID")
+        _btClientSocket =
+            if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+            else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+        Log.d(
+            CONNECT_REPOSITORY_IMPL_LOGGER,
+            "CREATED_SOCKET SECURE:$secure SPECIFIED UUID: $connectUUID"
+        )
 
         if (_bluetoothAdapter?.isDiscovering == true)
             _bluetoothAdapter?.cancelDiscovery()
@@ -117,7 +123,7 @@ class ConnectRepositoryImpl @Inject constructor(
                 socket.connect()
                 Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLIENT CONNECTED")
                 _connectState.update { ClientConnectionState.CONNECTION_ACCEPTED }
-                //
+                _transferService = ExchangeDataRepositoryImpl(socket)
             }
             Result.success(Unit)
         } catch (e: IOException) {
@@ -125,6 +131,29 @@ class ConnectRepositoryImpl @Inject constructor(
             _connectState.update { ClientConnectionState.CONNECTION_DENIED }
             Result.failure(e)
         }
+    }
+
+    suspend fun listenForIncomingData() {
+        _connectState.collectLatest { status ->
+            val canRead = status == ClientConnectionState.CONNECTION_ACCEPTED
+            _transferService?.readFromStream(canRead = canRead)?.collect { value ->
+                Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "ByteArray: $value")
+                //processBluetoothMessage(value)
+            }
+        }
+    }
+
+    private fun processBluetoothMessage(message: ByteArray) {
+
+    }
+
+
+    override suspend fun sendData(data: String): Result<Boolean> {
+        val valueToSend = data.trim()
+        if (valueToSend.isEmpty()) return Result.success(false)
+
+        return _transferService?.sendToStream(value = valueToSend)
+            ?: Result.success(false)
     }
 
     override fun disconnectFromDevice(): Result<Unit> {

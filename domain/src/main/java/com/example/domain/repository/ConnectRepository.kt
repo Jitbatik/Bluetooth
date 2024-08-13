@@ -10,5 +10,6 @@ interface ConnectRepository  {
         secure: Boolean = true
     ) : Result<Unit>
 
+    suspend fun sendData(data: String): Result<Boolean>
     fun disconnectFromDevice() : Result<Unit>
 }
