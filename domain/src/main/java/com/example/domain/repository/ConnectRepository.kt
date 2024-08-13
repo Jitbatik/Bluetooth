@@ -1,7 +1,7 @@
 package com.example.domain.repository
 
+import android.bluetooth.BluetoothSocket
 import com.example.domain.model.BluetoothDevice
-import java.util.UUID
 
 interface ConnectRepository  {
 
@@ -9,7 +9,7 @@ interface ConnectRepository  {
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean = true
-    ) : Result<Unit>
+    ) : Result<BluetoothSocket>
 
     fun disconnectFromDevice() : Result<Unit>
 }

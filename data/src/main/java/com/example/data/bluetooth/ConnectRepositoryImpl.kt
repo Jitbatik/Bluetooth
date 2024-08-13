@@ -1,4 +1,4 @@
-package com.example.data
+package com.example.data.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -12,7 +12,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
-import com.example.data.receivers.RemoteDeviceUUIDReceiver
+import com.example.data.bluetooth.receivers.RemoteDeviceUUIDReceiver
 import com.example.domain.enums.ClientConnectionState
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ConnectRepository
@@ -32,7 +32,7 @@ import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 
-const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGGER"
+private const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGGER"
 
 @SuppressLint("MissingPermission")
 class ConnectRepositoryImpl @Inject constructor(
@@ -88,7 +88,7 @@ class ConnectRepositoryImpl @Inject constructor(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean
-    ): Result<Unit> = withContext(Dispatchers.IO){
+    ): Result<BluetoothSocket> = withContext(Dispatchers.IO){
         if (!_hasBtPermission) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "No Bluetooth connect permission granted.")
             return@withContext Result.failure(SecurityException("No Bluetooth scan permission granted"))
@@ -107,18 +107,18 @@ class ConnectRepositoryImpl @Inject constructor(
 
         _btClientSocket = if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
         else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CREATED_SOCKET SECURE:$secure SPECIFIED UUID: $connectUUID")
+        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID")
 
         if (_bluetoothAdapter?.isDiscovering == true)
             _bluetoothAdapter?.cancelDiscovery()
 
-        try {
+        return@withContext try {
             _btClientSocket?.let { socket ->
                 socket.connect()
                 Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLIENT CONNECTED")
                 _connectState.update { ClientConnectionState.CONNECTION_ACCEPTED }
-            }
-            Result.success(Unit)
+                Result.success(socket)
+            } ?: Result.failure(IOException("Socket is null"))
         } catch (e: IOException) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "Connection failed: ${e.message}")
             _connectState.update { ClientConnectionState.CONNECTION_DENIED }

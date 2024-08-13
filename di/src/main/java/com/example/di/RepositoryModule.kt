@@ -1,8 +1,10 @@
 package com.example.di
 
-import com.example.data.ConnectRepositoryImpl
-import com.example.data.ScannerRepositoryImpl
+import com.example.data.ExchangeDataRepositoryImpl
+import com.example.data.bluetooth.ConnectRepositoryImpl
+import com.example.data.bluetooth.ScannerRepositoryImpl
 import com.example.domain.repository.ConnectRepository
+import com.example.domain.repository.ExchangeDataRepository
 import com.example.domain.repository.ScannerRepository
 import dagger.Binds
 import dagger.Module
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindConnectRepository(
         connectRepository: ConnectRepositoryImpl
     ) : ConnectRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExchangeDataRepository(
+        exchangeDataRepository: ExchangeDataRepositoryImpl
+    ) : ExchangeDataRepository
 }
