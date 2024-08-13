@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.view.connectcontainer
+package com.example.bluetooth.presentation.view.connectcontainer.permission
 
 interface TextProvider {
     val title: String

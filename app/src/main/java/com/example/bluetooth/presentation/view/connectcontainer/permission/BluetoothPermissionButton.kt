@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.presentation.CustomDialog
-import com.example.bluetooth.presentation.view.connectcontainer.TextPermissionProvider
+import com.example.bluetooth.presentation.view.connectcontainer.permission.TextPermissionProvider
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable

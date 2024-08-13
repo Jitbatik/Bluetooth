@@ -1,6 +1,5 @@
 package com.example.domain.repository
 
-import android.bluetooth.BluetoothSocket
 import com.example.domain.model.BluetoothDevice
 
 interface ConnectRepository  {
@@ -9,7 +8,7 @@ interface ConnectRepository  {
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean = true
-    ) : Result<BluetoothSocket>
+    ) : Result<Boolean>
 
     fun disconnectFromDevice() : Result<Unit>
 }

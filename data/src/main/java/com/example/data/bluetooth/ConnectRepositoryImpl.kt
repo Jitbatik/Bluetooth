@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
+import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.data.bluetooth.receivers.RemoteDeviceUUIDReceiver
 import com.example.domain.enums.ClientConnectionState
 import com.example.domain.model.BluetoothDevice
@@ -37,6 +38,7 @@ private const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGG
 @SuppressLint("MissingPermission")
 class ConnectRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val bluetoothSocketProvider: BluetoothSocketProvider,
 ): ConnectRepository {
 
     private val _bluetoothManager by lazy { context.getSystemService<BluetoothManager>() }
@@ -88,7 +90,7 @@ class ConnectRepositoryImpl @Inject constructor(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean
-    ): Result<BluetoothSocket> = withContext(Dispatchers.IO){
+    ): Result<Boolean> = withContext(Dispatchers.IO){
         if (!_hasBtPermission) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "No Bluetooth connect permission granted.")
             return@withContext Result.failure(SecurityException("No Bluetooth scan permission granted"))
@@ -117,8 +119,9 @@ class ConnectRepositoryImpl @Inject constructor(
                 socket.connect()
                 Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLIENT CONNECTED")
                 _connectState.update { ClientConnectionState.CONNECTION_ACCEPTED }
-                Result.success(socket)
-            } ?: Result.failure(IOException("Socket is null"))
+                bluetoothSocketProvider.setSocket(socket)
+            }
+            Result.success(true)
         } catch (e: IOException) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "Connection failed: ${e.message}")
             _connectState.update { ClientConnectionState.CONNECTION_DENIED }
@@ -134,7 +137,6 @@ class ConnectRepositoryImpl @Inject constructor(
             _connectState.update { ClientConnectionState.CONNECTION_DISCONNECTED }
             Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLOSING CONNECTION")
             _btClientSocket = null
-
             Result.success(Unit)
         } catch (e: IOException) {
             Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CANNOT CLOSE CONNECTION")

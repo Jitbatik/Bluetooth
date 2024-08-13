@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.view.connectcontainer
+package com.example.bluetooth.presentation.view.connectcontainer.scanner
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
+import com.example.bluetooth.presentation.view.connectcontainer.ConnectViewModel
+import com.example.bluetooth.presentation.view.connectcontainer.DeviceCard
 import com.example.domain.model.BluetoothDevice
 
 @Composable

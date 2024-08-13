@@ -16,7 +16,7 @@ import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.components.Screen
 import com.example.bluetooth.presentation.view.connectcontainer.ConnectContainer
-import com.example.nativeappjetpaccompouse.presentation.view.HomeContent
+import com.example.bluetooth.presentation.view.homecontainer.HomeContainer
 import com.example.nativeappjetpaccompouse.presentation.view.SettingsContent
 
 @Composable
@@ -37,7 +37,7 @@ fun MainContent(
         content = { paddingValues ->
             Box(modifier = modifier.padding(paddingValues)) {
                 when (screen) {
-                    is Screen.Home -> HomeContent()
+                    is Screen.Home -> HomeContainer()
                     is Screen.Connect -> ConnectContainer()
                     is Screen.Settings -> SettingsContent()
                 }
