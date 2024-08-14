@@ -27,6 +27,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Конфигурации для debug версии
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -44,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
