@@ -19,7 +19,7 @@ private const val EXCHANGE_DATA_REPOSITORY_IMPL = "MANAGE_DATA_REPOSITORY_IMPL"
 
 class ExchangeDataRepositoryImpl @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
-    ) : ExchangeDataRepository {
+) : ExchangeDataRepository {
     private val socket: BluetoothSocket
         get() = bluetoothSocketProvider.getSocket()
             ?: throw IOException("Bluetooth socket is not available")
