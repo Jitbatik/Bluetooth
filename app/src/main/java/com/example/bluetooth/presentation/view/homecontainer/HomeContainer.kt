@@ -34,7 +34,21 @@ fun HomeContainer(
         Column {
             ButtonFBox(buttonType = true, onButtonClick = {})
             SpacerDivider()
-            TerminalDataBox()
+            val sentence =
+                "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+
+            fun getRandomColor(): Color {
+                val r = (0..255).random()
+                val g = (0..255).random()
+                val b = (0..255).random()
+                return Color(r, g, b)
+            }
+
+            val data = sentence.map { char ->
+                Pair(char, Pair(getRandomColor(), getRandomColor()))
+                //Pair(char, Pair(Color.Black, Color.Gray))
+            }
+            TerminalDataBox(data, 4)
             SpacerDivider()
             ButtonFBox(buttonType = false, onButtonClick = {})
             ButtonHelpBox(onButtonClick = {})
