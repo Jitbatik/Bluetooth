@@ -18,7 +18,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindBluetoothRepository(
+    abstract fun bindScannerRepository(
         scannerRepository: ScannerRepositoryImpl
     ) : ScannerRepository
 

@@ -7,6 +7,8 @@ import com.example.domain.repository.ExchangeDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -24,11 +26,22 @@ class ExchangeDataRepositoryImpl @Inject constructor(
         get() = bluetoothSocketProvider.getSocket()
             ?: throw IOException("Bluetooth socket is not available")
 
+    val isSocket: Flow<Boolean>
+        get() = MutableStateFlow(false)
+
+    private val connectedMessage = "Процессор: СР678!   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+    private val disconnectedMessage = "нет подключения нет подключения нет подключения нет подключения нет подключения"
+    override val data: StateFlow<Boolean>
+        get() = TODO("Переделать под нужный формат")
+
+    //
+
     private val _inputStream: InputStream
         get() = socket.inputStream
 
     private val _outputStream: OutputStream
         get() = socket.outputStream
+
 
 
     override fun readFromStream(canRead: Boolean): Flow<ByteArray> {

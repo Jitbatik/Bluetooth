@@ -52,7 +52,8 @@ class ConnectViewModel @Inject constructor(
         viewModelScope.launch {
             connectRepository.connectToDevice(
                 bluetoothDevice,
-                connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
+                connectUUID = "00000000-deca-fade-deca-deafdecacafe"
+                //connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
             )
         }
     }
