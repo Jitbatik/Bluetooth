@@ -11,19 +11,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
 import com.example.bluetooth.presentation.view.connectcontainer.ConnectViewModel
-import com.example.bluetooth.presentation.view.connectcontainer.DeviceCard
-import com.example.domain.model.BluetoothDevice
 
 @Composable
 fun ScannerBox(
     viewModel: ConnectViewModel,
-    deviceList:List<BluetoothDevice>
 ) {
+    val deviceList by viewModel.devices.collectAsState()
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -33,7 +34,11 @@ fun ScannerBox(
                 .padding(bottom = 16.dp)
         ) {
             items(deviceList) { device ->
-                DeviceCard(bluetoothDevice = device, viewModel = viewModel)
+                DeviceCard(bluetoothDevice = device,
+                    onConnect = { selectedDevice ->
+                        viewModel.handlerConnectionToDevice(bluetoothDevice = selectedDevice)
+                    }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }

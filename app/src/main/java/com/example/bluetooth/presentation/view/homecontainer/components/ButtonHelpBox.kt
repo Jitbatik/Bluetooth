@@ -24,7 +24,7 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
 fun ButtonHelpBox(onButtonClick: (Int) -> Unit) {
-    val buttonLabels = listOf("Меню", "Режим", "Ввод", "Отмена", "Архив", "F", "↑", "↓")
+    val buttonLabels = listOf("Меню", "Режим", "Ввод", "Отмена", "Архив", "F", "стрелкаВВ", "стрелкаВН")
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
