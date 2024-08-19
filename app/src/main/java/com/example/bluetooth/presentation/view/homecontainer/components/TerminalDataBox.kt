@@ -12,15 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.bluetooth.ui.theme.psisFontFamily
 
 
 @Composable
@@ -54,12 +53,10 @@ fun TerminalDataBox(charsWithStyles: List<Pair<Char, Pair<Color, Color>>>, rows:
                         .fillMaxWidth()
                         .wrapContentHeight(),
                     text = rowText,
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 25.sp,
-                        lineHeight = 20.sp,
-                        letterSpacing = 0.sp
-                    ),
+                    fontFamily = psisFontFamily,
+                    fontSize = 25.sp,
+                    lineHeight = 20.sp,
+                    letterSpacing = 0.sp,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -72,6 +69,8 @@ fun TerminalDataBox(charsWithStyles: List<Pair<Char, Pair<Color, Color>>>, rows:
 @Composable
 private fun TerminalDataBoxPreview() = BluetoothTheme {
     Surface {
+
+
         val sentence =
             "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
@@ -84,7 +83,6 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
 
         val data = sentence.map { char ->
             Pair(char, Pair(getRandomColor(), getRandomColor()))
-            //Pair(char, Pair(Color.Black, Color.Gray))
         }
         TerminalDataBox(data, 4)
     }
