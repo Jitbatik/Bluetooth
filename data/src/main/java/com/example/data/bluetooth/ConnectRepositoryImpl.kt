@@ -39,7 +39,7 @@ private const val CONNECT_REPOSITORY_IMPL_LOGGER = "CONNECT_REPOSITORY_IMPL_LOGG
 class ConnectRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val bluetoothSocketProvider: BluetoothSocketProvider,
-): ConnectRepository {
+) : ConnectRepository {
 
     private val _bluetoothManager by lazy { context.getSystemService<BluetoothManager>() }
     private val _bluetoothAdapter: BluetoothAdapter?
@@ -85,12 +85,14 @@ class ConnectRepositoryImpl @Inject constructor(
         else true
 
     private val _connectState = MutableStateFlow(ClientConnectionState.CONNECTION_INITIALIZING)
+    override val isConnected: Flow<ClientConnectionState>
+        get() = _connectState
     private var _btClientSocket: BluetoothSocket? = null
     override suspend fun connectToDevice(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
         secure: Boolean
-    ): Result<Boolean> = withContext(Dispatchers.IO){
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
         if (!_hasBtPermission) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "No Bluetooth connect permission granted.")
             return@withContext Result.failure(SecurityException("No Bluetooth scan permission granted"))
@@ -107,9 +109,13 @@ class ConnectRepositoryImpl @Inject constructor(
             _connectState.update { ClientConnectionState.CONNECTION_BONDED }
         }
 
-        _btClientSocket = if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID")
+        _btClientSocket =
+            if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+            else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+        Log.d(
+            CONNECT_REPOSITORY_IMPL_LOGGER,
+            "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID"
+        )
 
         if (_bluetoothAdapter?.isDiscovering == true)
             _bluetoothAdapter?.cancelDiscovery()
@@ -137,6 +143,7 @@ class ConnectRepositoryImpl @Inject constructor(
             _connectState.update { ClientConnectionState.CONNECTION_DISCONNECTED }
             Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLOSING CONNECTION")
             _btClientSocket = null
+            bluetoothSocketProvider.setSocket(null)
             Result.success(Unit)
         } catch (e: IOException) {
             Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CANNOT CLOSE CONNECTION")

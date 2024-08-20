@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,6 +26,8 @@ fun HomeContainer(
     viewModel: ExchangeDataViewModel = viewModel()
 ) {
     val data by viewModel.data.collectAsState()
+    val isConnected by viewModel.isConnected.collectAsState()
+
     Box(
         modifier = Modifier
             .padding(0.dp)
@@ -34,7 +37,11 @@ fun HomeContainer(
         Column {
             ButtonFBox(buttonType = true, onButtonClick = {})
             SpacerDivider()
-            TerminalDataBox(data, 4)
+            if (isConnected) {
+                TerminalDataBox(data, 4)
+            } else {
+                Text("Нет подключения")
+            }
             SpacerDivider()
             ButtonFBox(buttonType = false, onButtonClick = {})
             ButtonHelpBox(onButtonClick = {})
