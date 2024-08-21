@@ -24,6 +24,7 @@ fun ScannerBox(
     viewModel: ConnectViewModel,
 ) {
     val deviceList by viewModel.devices.collectAsState()
+    val connectedDevice by viewModel.connectedDevice.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -35,6 +36,7 @@ fun ScannerBox(
         ) {
             items(deviceList) { device ->
                 DeviceCard(bluetoothDevice = device,
+                    isConnected = device == connectedDevice,
                     onConnect = { selectedDevice ->
                         viewModel.handlerConnectionToDevice(bluetoothDevice = selectedDevice)
                     }

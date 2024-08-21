@@ -23,13 +23,14 @@ import com.example.domain.model.BluetoothDevice
 @Composable
 fun DeviceCard(
     bluetoothDevice: BluetoothDevice,
+    isConnected: Boolean,
     onConnect: (BluetoothDevice) -> Unit
 ) {
+    val cardColor =if (isConnected) Color.Green else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (isConnected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant
     Card(
         colors = CardDefaults.cardColors(
-            containerColor =
-            if (bluetoothDevice.isConnected) Color.Green
-            else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = cardColor
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -39,9 +40,9 @@ fun DeviceCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(text = bluetoothDevice.name, fontWeight = FontWeight.Bold)
+            Text(text = bluetoothDevice.name, fontWeight = FontWeight.Bold, color = textColor)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = bluetoothDevice.address)
+            Text(text = bluetoothDevice.address, color = textColor)
         }
     }
 }
@@ -52,6 +53,7 @@ fun DeviceCardNoConnectedPreview() = BluetoothTheme {
     Surface {
         DeviceCard(
             bluetoothDevice = BluetoothDevice(name = "Fake_Device", address = "12.12.21"),
+            isConnected = false,
             onConnect = {}
         )
     }
@@ -65,8 +67,8 @@ fun DeviceCardConnectedPreview() = BluetoothTheme {
             bluetoothDevice = BluetoothDevice(
                 name = "Fake_Device",
                 address = "12.12.21",
-                isConnected = true
             ),
+            isConnected = true,
             onConnect = {}
         )
     }

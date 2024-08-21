@@ -33,14 +33,16 @@ class ConnectViewModel @Inject constructor(
     val devices: StateFlow<List<BluetoothDevice>>
         get() = _devices.asStateFlow()
 
-
+    private val _connectedDevice = MutableStateFlow<BluetoothDevice?>(null)
+    val connectedDevice: StateFlow<BluetoothDevice?>
+        get() = _connectedDevice.asStateFlow()
 
     init {
         observeBluetoothDeviceList()
     }
 
     private fun observeBluetoothDeviceList() {
-        Log.d(CONNECT_VIEWMODEL, "Subscribe to a stream")
+        Log.d(CONNECT_VIEWMODEL, "Subscribe to a stream device list")
         viewModelScope.launch {
             scannerRepository.deviceList.collect { newDevices ->
                 _devices.value = newDevices
@@ -51,8 +53,9 @@ class ConnectViewModel @Inject constructor(
     fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d(CONNECT_VIEWMODEL, "Handling connection to device")
         viewModelScope.launch {
-            if (bluetoothDevice.isConnected) {
+            if (_connectedDevice.value != null) {
                 connectRepository.disconnectFromDevice()
+                _connectedDevice.value = null
             }
             else {
                 connectRepository.connectToDevice(
@@ -60,6 +63,7 @@ class ConnectViewModel @Inject constructor(
                     connectUUID = "00000000-deca-fade-deca-deafdecacafe"
                     //connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
                 )
+                _connectedDevice.value = bluetoothDevice
             }
 
         }
