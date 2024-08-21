@@ -6,28 +6,16 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
-import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
-import com.example.data.bluetooth.receivers.RemoteDeviceUUIDReceiver
-import com.example.domain.enums.ClientConnectionState
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ConnectRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
@@ -46,34 +34,34 @@ class ConnectRepositoryImpl @Inject constructor(
         get() = _bluetoothManager?.adapter
 
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private fun fetchUUIDs(address: String): Flow<List<UUID>> = callbackFlow {
-        val device = _bluetoothAdapter?.getRemoteDevice(address)
-
-        val remoteDeviceUUIDReceiver = RemoteDeviceUUIDReceiver(
-            onReceivedUUIDs = { uuids ->
-                // remove the client-server uuid
-                val uuidSet = uuids.distinct()
-                Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "FOUND UUIDS: $uuids")
-                scope.launch { send(uuidSet) }
-            },
-        )
-
-        ContextCompat.registerReceiver(
-            context,
-            remoteDeviceUUIDReceiver,
-            IntentFilter(android.bluetooth.BluetoothDevice.ACTION_UUID),
-            ContextCompat.RECEIVER_EXPORTED
-        )
-        // fetch uuids using service discovery protocol
-        val isOk = device?.fetchUuidsWithSdp()
-        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "DEVICE UUID FETCH STATUS $isOk")
-        awaitClose {
-            context.unregisterReceiver(remoteDeviceUUIDReceiver)
-            scope.cancel()
-            Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "RECEIVER_FOR_UUID_REMOVED")
-        }
-    }
+//    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+//    private fun fetchUUIDs(address: String): Flow<List<UUID>> = callbackFlow {
+//        val device = _bluetoothAdapter?.getRemoteDevice(address)
+//
+//        val remoteDeviceUUIDReceiver = RemoteDeviceUUIDReceiver(
+//            onReceivedUUIDs = { uuids ->
+//                // remove the client-server uuid
+//                val uuidSet = uuids.distinct()
+//                Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "FOUND UUIDS: $uuids")
+//                scope.launch { send(uuidSet) }
+//            },
+//        )
+//
+//        ContextCompat.registerReceiver(
+//            context,
+//            remoteDeviceUUIDReceiver,
+//            IntentFilter(android.bluetooth.BluetoothDevice.ACTION_UUID),
+//            ContextCompat.RECEIVER_EXPORTED
+//        )
+//        // fetch uuids using service discovery protocol
+//        val isOk = device?.fetchUuidsWithSdp()
+//        Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "DEVICE UUID FETCH STATUS $isOk")
+//        awaitClose {
+//            context.unregisterReceiver(remoteDeviceUUIDReceiver)
+//            scope.cancel()
+//            Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "RECEIVER_FOR_UUID_REMOVED")
+//        }
+//    }
 
 
     private val _hasBtPermission: Boolean
@@ -84,10 +72,8 @@ class ConnectRepositoryImpl @Inject constructor(
             ) == PermissionChecker.PERMISSION_GRANTED
         else true
 
-    private val _connectState = MutableStateFlow(ClientConnectionState.CONNECTION_INITIALIZING)
-    override val isConnected: Flow<ClientConnectionState>
-        get() = _connectState
     private var _btClientSocket: BluetoothSocket? = null
+
     override suspend fun connectToDevice(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
@@ -106,7 +92,6 @@ class ConnectRepositoryImpl @Inject constructor(
                 Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "Failed to bond with device.")
                 return@withContext Result.failure(SecurityException("Failed to bond with device"))
             }
-            _connectState.update { ClientConnectionState.CONNECTION_BONDED }
         }
 
         _btClientSocket =
@@ -124,13 +109,11 @@ class ConnectRepositoryImpl @Inject constructor(
             _btClientSocket?.let { socket ->
                 socket.connect()
                 Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLIENT CONNECTED")
-                _connectState.update { ClientConnectionState.CONNECTION_ACCEPTED }
                 bluetoothSocketProvider.setSocket(socket)
             }
             Result.success(true)
         } catch (e: IOException) {
             Log.e(CONNECT_REPOSITORY_IMPL_LOGGER, "Connection failed: ${e.message}")
-            _connectState.update { ClientConnectionState.CONNECTION_DENIED }
             Result.failure(e)
         }
     }
@@ -140,7 +123,6 @@ class ConnectRepositoryImpl @Inject constructor(
         if (_btClientSocket == null) return Result.success(Unit)
         return try {
             _btClientSocket?.close()
-            _connectState.update { ClientConnectionState.CONNECTION_DISCONNECTED }
             Log.d(CONNECT_REPOSITORY_IMPL_LOGGER, "CLOSING CONNECTION")
             _btClientSocket = null
             bluetoothSocketProvider.setSocket(null)
@@ -150,6 +132,4 @@ class ConnectRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-
-
 }

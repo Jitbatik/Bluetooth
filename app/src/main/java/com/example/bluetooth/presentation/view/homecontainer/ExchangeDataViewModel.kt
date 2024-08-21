@@ -47,7 +47,7 @@ class ExchangeDataViewModel @Inject constructor(
     }
 
     private fun observeSocketState() {
-        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream")
+        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
         viewModelScope.launch {
             exchangeDataRepository.isSocket
                 .collect { isConnected ->
