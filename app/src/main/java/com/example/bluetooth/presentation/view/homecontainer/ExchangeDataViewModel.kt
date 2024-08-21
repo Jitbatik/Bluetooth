@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -77,9 +78,11 @@ class ExchangeDataViewModel @Inject constructor(
         try {
             exchangeDataRepository.readFromStream(canRead = true)
                 .collect { byteArray ->
+                    Log.d(EXCHANGE_VIEWMODEL, "BYTEARRAY: ${byteArray.joinToString("")}")
                     val parseData = parseData(byteArray)
                     _data.value = parseData
                 }
+
         } catch (e: IOException) {
             Log.e(EXCHANGE_VIEWMODEL, "Error reading data from socket", e)
             returnSentenceData()
@@ -89,9 +92,58 @@ class ExchangeDataViewModel @Inject constructor(
 
     }
 
+    private suspend fun requestPacketData() {
+        var currentIndex = 0
+
+        while (currentIndex < 20) {
+            val command = listOf(
+                0xFE,
+                0x08,
+                0x00,
+                0x00,
+                0x00,
+                currentIndex,
+                0x00,
+                0x00,
+                0x00,
+                0x00
+            )
+
+            sendData(command.toString())
+
+            currentIndex = (currentIndex + 1) % 21
+
+            delay(1000L)
+        }
+//        val command = listOf(
+//                0xFE,
+//                0x08,
+//                0x00,
+//                0x00,
+//                0x00,
+//                0x00,
+//                0x00,
+//                0x00,
+//                0x00,
+//                0x00
+//            )
+//        sendData(command.toString())
+    }
+
     private fun parseData(byteArray: ByteArray): List<Pair<Char, Pair<Color, Color>>> {
         Log.d(EXCHANGE_VIEWMODEL, "Data from socket: $byteArray")
         return emptyList()
+    }
+
+    private fun sendData(value: String) {
+        viewModelScope.launch {
+            val result = exchangeDataRepository.sendToStream(value)
+            if (result.isSuccess) {
+                Log.d(EXCHANGE_VIEWMODEL, "Data sent successfully: $value")
+            } else {
+                Log.e(EXCHANGE_VIEWMODEL, "Failed to send data: $value, Error: ${result.exceptionOrNull()}")
+            }
+        }
     }
 }
 

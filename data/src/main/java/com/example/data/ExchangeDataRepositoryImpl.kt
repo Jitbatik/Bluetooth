@@ -1,6 +1,5 @@
 package com.example.data
 
-import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.repository.ExchangeDataRepository
@@ -40,8 +39,8 @@ class ExchangeDataRepositoryImpl @Inject constructor(
 
     override fun readFromStream(canRead: Boolean): Flow<ByteArray> {
         return flow {
-            val buffer = ByteArray(4 * 1_024)
-            while (canRead) {
+            val buffer = ByteArray(10)
+            while (canRead && currentCoroutineContext().isActive) {
                 val inputStream = getInputStream()
                 if (inputStream != null && bluetoothSocketProvider.bluetoothSocket.value?.isConnected == true) {
                     try {
@@ -49,6 +48,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                             inputStream.read(buffer)
                         }
                         if (bytesRead > 0) {
+                            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, " InputStream is null111")
                             emit(buffer.copyOf(bytesRead))
                         }
                     } catch (e: IOException) {
@@ -56,7 +56,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                         break
                     }
                 } else {
-                    // Сокет не подключен или inputStream null
+                    Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, " InputStream is null")
                     break
                 }
             }
@@ -69,32 +69,40 @@ class ExchangeDataRepositoryImpl @Inject constructor(
         try {
             getInputStream()?.close()
             getOutputStream()?.close()
+            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "CLOSE STREAMS")
         } catch (e: IOException) {
             Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error closing streams", e)
         }
     }
 
 
-//    override suspend fun sendToStream(value: String): Result<Boolean> {
-//        return withContext(Dispatchers.IO) {
-//            try {
-//                val socket = socket ?: return@withContext Result.failure(SecurityException("No connected socket"))
-//                if (!socket.isConnected) {
-//                    return@withContext Result.failure(SecurityException("Socket is not connected"))
-//                }
-//
-//                val outputStream = _outputStream ?: return@withContext Result.failure(IOException("Output stream is null"))
-//
-//                outputStream.write(value.toByteArray())
-//                outputStream.flush()
-//
-//                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM")
-//                Result.success(true)
-//            } catch (e: IOException) {
-//                Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error sending data to stream", e)
-//                Result.failure(e)
-//            }
-//        }
-//    }
+    override suspend fun sendToStream(value: String): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val socket = bluetoothSocketProvider.bluetoothSocket.value
+                    ?: return@withContext Result.failure(SecurityException("No connected socket"))
+
+                if (!socket.isConnected) {
+                    return@withContext Result.failure(SecurityException("Socket is not connected"))
+                }
+
+                val outputStream = getOutputStream()
+                    ?: return@withContext Result.failure(IOException("Output stream is null"))
+
+                outputStream.write(value.toByteArray())
+                outputStream.flush()
+
+                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM")
+                Result.success(true)
+            } catch (e: IOException) {
+                Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error sending data to stream", e)
+                Result.failure(e)
+            } catch (e: Exception) {
+                Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Unexpected error", e)
+                Result.failure(e)
+            }
+        }
+    }
+
 
 }
