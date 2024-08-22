@@ -18,13 +18,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bluetooth.presentation.view.homecontainer.ListData
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.ui.theme.psisFontFamily
 
 
 @Composable
-fun TerminalDataBox(charsWithStyles: List<Pair<Char, Pair<Color, Color>>>, rows: Int) {
-    val charsPerRow = (charsWithStyles.size + rows - 1) / rows
+fun TerminalDataBox(charsWithStyles: ListData, rows: Int) {
+    val charsWithStylesConvertChar = mutableListOf<Char>()
+    charsWithStyles.data.forEach {
+        charsWithStylesConvertChar.add(it.toInt().toChar())
+    }
+
+    val charsPerRow = (charsWithStyles.data.size + rows - 1) / rows
 
     Box(
         modifier = Modifier
@@ -33,10 +39,11 @@ fun TerminalDataBox(charsWithStyles: List<Pair<Char, Pair<Color, Color>>>, rows:
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            charsWithStyles.chunked(charsPerRow).take(rows).forEach { row ->
+            charsWithStylesConvertChar.chunked(charsPerRow).take(rows).forEach { row ->
                 val rowText = buildAnnotatedString {
-                    row.forEach { (char, colors) ->
-                        val (textColor, backgroundColor) = colors
+                    row.forEach { char ->
+                        val textColor = charsWithStyles.charColor
+                        val backgroundColor = charsWithStyles.charBackground
                         withStyle(
                             SpanStyle(
                                 color = textColor,
@@ -70,18 +77,29 @@ fun TerminalDataBox(charsWithStyles: List<Pair<Char, Pair<Color, Color>>>, rows:
 private fun TerminalDataBoxPreview() = BluetoothTheme {
     val sentence =
         "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+//
+//    fun getRandomColor(): Color {
+//        val r = (0..255).random()
+//        val g = (0..255).random()
+//        val b = (0..255).random()
+//        return Color(r, g, b)
+//    }
+//
+//    val data = sentence.map { char ->
+//        Pair(char, Pair(getRandomColor(), getRandomColor()))
+//    }
+//    Surface {
+//        TerminalDataBox(data, 4)
+//    }
 
-    fun getRandomColor(): Color {
-        val r = (0..255).random()
-        val g = (0..255).random()
-        val b = (0..255).random()
-        return Color(r, g, b)
-    }
-
+    val test = mutableListOf<Byte>()
+//    for (i in 0..79) {
+//        test.add(i)
+//    }
     val data = sentence.map { char ->
-        Pair(char, Pair(getRandomColor(), getRandomColor()))
+        test.add(char.toByte())
     }
     Surface {
-        TerminalDataBox(data, 4)
+        TerminalDataBox(ListData(data = test), 4)
     }
 }
