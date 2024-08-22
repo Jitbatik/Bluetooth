@@ -37,6 +37,61 @@ class ExchangeDataRepositoryImpl @Inject constructor(
         return bluetoothSocketProvider.bluetoothSocket.value?.outputStream
     }
 
+    override suspend fun requestData(): Flow<List<Byte>> {
+        return flow {
+            var currentIndex = 0
+            val listByteArray = mutableListOf<ByteArray>()
+
+            while (currentIndex < 20) {
+                val command = listOf(
+                    0xFE,
+                    0x08,
+                    0x00,
+                    0x00,
+                    0x00,
+                    currentIndex,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00
+                )
+                val byteArray = command.map { it.toByte() }.toByteArray()
+
+                sendToStream(byteArray)
+                listByteArray.add(readFromStreamVer2())
+                currentIndex += 1
+            }
+            emit(parsData(listByteArray))
+        }
+    }
+
+    private fun parsData(listByteArray: List<ByteArray>): List<Byte> {
+        return listByteArray.flatMap { byteArray ->
+            byteArray.drop(6)
+        }
+    }
+
+
+    private fun readFromStreamVer2(): ByteArray {
+        val inputStream = getInputStream()
+        val buffer = ByteArray(10)
+        if (bluetoothSocketProvider.bluetoothSocket.value?.isConnected == true && inputStream != null) {
+            try {
+                inputStream.read(buffer)
+                return buffer
+            } catch (e: IOException) {
+                Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error reading stream", e)
+                return buffer
+            }
+        } else {
+            Log.d(
+                EXCHANGE_DATA_REPOSITORY_IMPL,
+                "Socket is not connected or InputStream is null"
+            )
+            return buffer
+        }
+    }
+
     override fun readFromStream(canRead: Boolean): Flow<ByteArray> {
         return flow {
             val inputStream = getInputStream()
@@ -60,7 +115,10 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                         break
                     }
                 } else {
-                    Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "Socket is not connected or InputStream is null")
+                    Log.d(
+                        EXCHANGE_DATA_REPOSITORY_IMPL,
+                        "Socket is not connected or InputStream is null"
+                    )
                     break
                 }
             }
@@ -97,7 +155,10 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                 outputStream.write(value)
                 outputStream.flush()
 
-                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM: ${value.joinToString(" ")}")
+                Log.d(
+                    EXCHANGE_DATA_REPOSITORY_IMPL,
+                    "WRITTEN TO STREAM: ${value.joinToString(" ")}"
+                )
                 Result.success(true)
             } catch (e: IOException) {
                 Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error sending data to stream", e)

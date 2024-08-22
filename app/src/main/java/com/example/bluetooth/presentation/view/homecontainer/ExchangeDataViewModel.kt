@@ -9,7 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -25,7 +25,10 @@ private const val EXCHANGE_VIEWMODEL = "EXCHANGE_VIEWMODEL"
 class ExchangeDataViewModel @Inject constructor(
     private val exchangeDataRepository: ExchangeDataRepository,
 ) : ViewModel() {
-    private val _isConnected = MutableStateFlow(false)
+//    private val _isConnected = MutableStateFlow(false)
+
+    private val _dataVer2 = MutableStateFlow<ListData?>(null)
+    val dataVer2: StateFlow<ListData?> = _dataVer2
 
     private val _data = MutableStateFlow<List<Pair<Char, Pair<Color, Color>>>>(emptyList())
     val data: StateFlow<List<Pair<Char, Pair<Color, Color>>>> = _data
@@ -63,11 +66,12 @@ class ExchangeDataViewModel @Inject constructor(
             exchangeDataRepository.getStateSocket()
                 .distinctUntilChanged()
                 .collectLatest { socketState ->
-                    _isConnected.value = socketState
+//                    _isConnected.value = socketState
                     handleSocketStateChange(socketState)
                 }
         }
     }
+
     private suspend fun handleSocketStateChange(socketState: Boolean) {
         dataStreamJob?.cancelAndJoin()
         if (socketState) {
@@ -84,7 +88,7 @@ class ExchangeDataViewModel @Inject constructor(
             exchangeDataRepository.readFromStream(canRead = true)
                 .collect { byteArray ->
                     if (!currentCoroutineContext().isActive) return@collect
-                    Log.d(EXCHANGE_VIEWMODEL, "BYTEARRAY: ${byteArray.joinToString(" ") }}")
+                    Log.d(EXCHANGE_VIEWMODEL, "BYTEARRAY: ${byteArray.joinToString(" ")}}")
                 }
 
         } catch (e: IOException) {
@@ -95,34 +99,44 @@ class ExchangeDataViewModel @Inject constructor(
         }
 
     }
-
     fun requestPacketData() {
         viewModelScope.launch {
-            var currentIndex = 0
+            exchangeDataRepository.requestData().collect{ data ->
 
-            while (currentIndex < 1) {
-                val command = listOf(
-                    0xFE,
-                    0x08,
-                    0x00,
-                    0x00,
-                    0x00,
-                    currentIndex,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00
-                )
-                val byteArray = command.map { it.toByte() }.toByteArray()
-
-                sendData(byteArray)
-
-                currentIndex = (currentIndex + 1) % 21
-
-                delay(1000L)
+                _dataVer2.value = ListData(data = data)
             }
         }
+
     }
+
+
+//    fun requestPacketData() {
+//        viewModelScope.launch {
+//            var currentIndex = 0
+//
+//            while (currentIndex < 1) {
+//                val command = listOf(
+//                    0xFE,
+//                    0x08,
+//                    0x00,
+//                    0x00,
+//                    0x00,
+//                    currentIndex,
+//                    0x00,
+//                    0x00,
+//                    0x00,
+//                    0x00
+//                )
+//                val byteArray = command.map { it.toByte() }.toByteArray()
+//
+//                sendData(byteArray)
+//
+//                currentIndex = (currentIndex + 1) % 21
+//
+//                delay(1000L)
+//            }
+//        }
+//    }
 
 //    private fun parseData(byteArray: ByteArray): List<Pair<Char, Pair<Color, Color>>> {
 //        Log.d(EXCHANGE_VIEWMODEL, "Data from socket: $byteArray")
@@ -135,7 +149,10 @@ class ExchangeDataViewModel @Inject constructor(
             if (result.isSuccess) {
                 Log.d(EXCHANGE_VIEWMODEL, "Data sent successfully: ${value.joinToString(" ")}")
             } else {
-                Log.e(EXCHANGE_VIEWMODEL, "Failed to send data: $value, Error: ${result.exceptionOrNull()}")
+                Log.e(
+                    EXCHANGE_VIEWMODEL,
+                    "Failed to send data: $value, Error: ${result.exceptionOrNull()}"
+                )
             }
         }
     }
