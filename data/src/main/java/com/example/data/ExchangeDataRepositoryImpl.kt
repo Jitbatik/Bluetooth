@@ -39,16 +39,20 @@ class ExchangeDataRepositoryImpl @Inject constructor(
 
     override fun readFromStream(canRead: Boolean): Flow<ByteArray> {
         return flow {
-            val buffer = ByteArray(10)
+            val inputStream = getInputStream()
+            if (inputStream == null) {
+                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, " InputStream is null")
+                return@flow
+            }
+
             while (canRead && currentCoroutineContext().isActive) {
-                val inputStream = getInputStream()
-                if (inputStream != null && bluetoothSocketProvider.bluetoothSocket.value?.isConnected == true) {
+                if (bluetoothSocketProvider.bluetoothSocket.value?.isConnected == true) {
                     try {
+                        val buffer = ByteArray(10)
                         val bytesRead = withContext(Dispatchers.IO) {
                             inputStream.read(buffer)
                         }
                         if (bytesRead > 0) {
-                            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, " InputStream is null111")
                             emit(buffer.copyOf(bytesRead))
                         }
                     } catch (e: IOException) {
@@ -56,7 +60,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                         break
                     }
                 } else {
-                    Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, " InputStream is null")
+                    Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "Socket is not connected or InputStream is null")
                     break
                 }
             }
@@ -64,6 +68,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
             closeStreams()
         }
     }
+
 
     private fun closeStreams() {
         try {
@@ -76,7 +81,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
     }
 
 
-    override suspend fun sendToStream(value: String): Result<Boolean> {
+    override suspend fun sendToStream(value: ByteArray): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
                 val socket = bluetoothSocketProvider.bluetoothSocket.value
@@ -89,10 +94,10 @@ class ExchangeDataRepositoryImpl @Inject constructor(
                 val outputStream = getOutputStream()
                     ?: return@withContext Result.failure(IOException("Output stream is null"))
 
-                outputStream.write(value.toByteArray())
+                outputStream.write(value)
                 outputStream.flush()
 
-                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM")
+                Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "WRITTEN TO STREAM: ${value.joinToString(" ")}")
                 Result.success(true)
             } catch (e: IOException) {
                 Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error sending data to stream", e)
@@ -103,6 +108,4 @@ class ExchangeDataRepositoryImpl @Inject constructor(
             }
         }
     }
-
-
 }
