@@ -1,10 +1,12 @@
 package com.example.data
 
+import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.repository.ExchangeDataRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
@@ -29,6 +31,10 @@ class ExchangeDataRepositoryImpl @Inject constructor(
             .distinctUntilChanged()
     }
 
+    private fun getSocket(): BluetoothSocket? {
+        return bluetoothSocketProvider.bluetoothSocket.value
+    }
+
     private fun getInputStream(): InputStream? {
         return bluetoothSocketProvider.bluetoothSocket.value?.inputStream
     }
@@ -37,32 +43,35 @@ class ExchangeDataRepositoryImpl @Inject constructor(
         return bluetoothSocketProvider.bluetoothSocket.value?.outputStream
     }
 
-    override suspend fun requestData(): Flow<List<Byte>> {
-        return flow {
-            var currentIndex = 0
-            val listByteArray = mutableListOf<ByteArray>()
+    override suspend fun requestData(): Flow<List<Byte>> = flow {
+        var currentIndex = 0
+        val listByteArray = mutableListOf<ByteArray>()
 
-            while (currentIndex < 20) {
-                val command = listOf(
-                    0xFE,
-                    0x08,
-                    0x00,
-                    0x00,
-                    0x00,
-                    currentIndex,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00
-                )
-                val byteArray = command.map { it.toByte() }.toByteArray()
+        while (currentIndex < 20) {
+            val command = listOf(
+                0xFE,
+                0x08,
+                0x00,
+                0x00,
+                0x00,
+                currentIndex,
+                0x00,
+                0x00,
+                0x00,
+                0x00
+            )
+            val byteArray = command.map { it.toByte() }.toByteArray()
+            delay(100)
+            sendToStream(byteArray)
+            val test = readFromStreamVer2()
 
-                sendToStream(byteArray)
-                listByteArray.add(readFromStreamVer2())
-                currentIndex += 1
+            if (test != null && test.isNotEmpty()) {
+                listByteArray.add(test)
+                currentIndex = (currentIndex + 1) //% 20
             }
-            emit(parsData(listByteArray))
+
         }
+        emit(parsData(listByteArray))
     }
 
     private fun parsData(listByteArray: List<ByteArray>): List<Byte> {
@@ -72,23 +81,31 @@ class ExchangeDataRepositoryImpl @Inject constructor(
     }
 
 
-    private fun readFromStreamVer2(): ByteArray {
-        val inputStream = getInputStream()
+    private fun readFromStreamVer2(): ByteArray? {
         val buffer = ByteArray(10)
-        if (bluetoothSocketProvider.bluetoothSocket.value?.isConnected == true && inputStream != null) {
-            try {
-                inputStream.read(buffer)
-                return buffer
-            } catch (e: IOException) {
-                Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error reading stream", e)
-                return buffer
-            }
-        } else {
-            Log.d(
-                EXCHANGE_DATA_REPOSITORY_IMPL,
-                "Socket is not connected or InputStream is null"
-            )
+        val socket = getSocket()
+        if (socket == null) {
+            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "Socket is null")
+            return null
+        }
+        if (!socket.isConnected) {
+            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "Socket is not connected")
+            return null
+        }
+        val inputStream = socket.inputStream
+        if (inputStream == null) {
+            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "InputStream is null")
+            return null
+        }
+
+
+        try {
+            inputStream.read(buffer)
+            Log.d(EXCHANGE_DATA_REPOSITORY_IMPL, "Read from stream: [${buffer.joinToString(" ")}]")
             return buffer
+        } catch (e: IOException) {
+            Log.e(EXCHANGE_DATA_REPOSITORY_IMPL, "Error reading stream", e)
+            return null
         }
     }
 
