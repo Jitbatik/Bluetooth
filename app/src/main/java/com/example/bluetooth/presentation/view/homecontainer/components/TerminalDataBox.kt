@@ -18,19 +18,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.homecontainer.ListData
+import com.example.bluetooth.presentation.view.homecontainer.CharUIModel
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.ui.theme.psisFontFamily
 
 
 @Composable
-fun TerminalDataBox(charsWithStyles: ListData, rows: Int) {
-    val charsWithStylesConvertChar = mutableListOf<Char>()
-    charsWithStyles.data.forEach {
-        charsWithStylesConvertChar.add(it.toInt().toChar())
-    }
-
-    val charsPerRow = (charsWithStyles.data.size + rows - 1) / rows
+fun TerminalDataBox(charUIModelList: List<CharUIModel>, rows: Int) {
+    val charsPerRow = (charUIModelList.size + rows - 1) / rows
 
     Box(
         modifier = Modifier
@@ -39,18 +34,18 @@ fun TerminalDataBox(charsWithStyles: ListData, rows: Int) {
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            charsWithStylesConvertChar.chunked(charsPerRow).take(rows).forEach { row ->
+            charUIModelList.chunked(charsPerRow).take(rows).forEach { row ->
                 val rowText = buildAnnotatedString {
-                    row.forEach { char ->
-                        val textColor = charsWithStyles.charColor
-                        val backgroundColor = charsWithStyles.charBackground
+                    row.forEach { charUI ->
+                        val textColor = charUI.charColor
+                        val backgroundColor = charUI.charBackground
                         withStyle(
                             SpanStyle(
                                 color = textColor,
                                 background = backgroundColor,
                             )
                         ) {
-                            append(char)
+                            append(charUI.char)
                         }
                     }
                 }
@@ -77,29 +72,22 @@ fun TerminalDataBox(charsWithStyles: ListData, rows: Int) {
 private fun TerminalDataBoxPreview() = BluetoothTheme {
     val sentence =
         "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
-//
-//    fun getRandomColor(): Color {
-//        val r = (0..255).random()
-//        val g = (0..255).random()
-//        val b = (0..255).random()
-//        return Color(r, g, b)
-//    }
-//
-//    val data = sentence.map { char ->
-//        Pair(char, Pair(getRandomColor(), getRandomColor()))
-//    }
-//    Surface {
-//        TerminalDataBox(data, 4)
-//    }
 
-    val test = mutableListOf<Byte>()
-//    for (i in 0..79) {
-//        test.add(i)
-//    }
-    val data = sentence.map { char ->
-        test.add(char.toByte())
+    fun getRandomColor(): Color {
+        val r = (0..255).random()
+        val g = (0..255).random()
+        val b = (0..255).random()
+        return Color(r, g, b)
     }
+    val data = sentence.map { char ->
+        CharUIModel(
+            char = char,
+            charColor = getRandomColor(),
+            charBackground = getRandomColor()
+        )
+    }
+
     Surface {
-        TerminalDataBox(ListData(data = test), 4)
+        TerminalDataBox(data, 4)
     }
 }
