@@ -30,21 +30,6 @@ fun HomeContainer(
     viewModel: ExchangeDataViewModel = viewModel()
 ) {
     val data by viewModel.data.collectAsState()
-    //val isConnected by viewModel.isConnected.collectAsState()
-
-//    LaunchedEffect(isConnected) {
-//        if (isConnected) {
-//            viewModel.requestPacketData()
-//        }
-//    }
-//    DisposableEffect(isConnected) {
-//        if (isConnected) {
-//            viewModel.requestPacketData()
-//        }
-//        onDispose {
-//            Log.d(HOME_CONTAINER, "Disconnected, cleaning up resources")
-//        }
-//    }
 
     Box(
         modifier = Modifier

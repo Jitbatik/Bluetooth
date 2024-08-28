@@ -1,16 +1,13 @@
 package com.example.di
 
 import com.example.data.ExchangeDataRepositoryImpl
-import com.example.data.FirstPatternRepository
 import com.example.data.bluetooth.ConnectRepositoryImpl
 import com.example.data.bluetooth.ScannerRepositoryImpl
-import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.repository.ConnectRepository
 import com.example.domain.repository.ExchangeDataRepository
 import com.example.domain.repository.ScannerRepository
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
