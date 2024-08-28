@@ -19,6 +19,12 @@ class FirstPatternRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
 ) {
 
+//    fun getStateSocket(): Flow<Boolean> {
+//        return bluetoothSocketProvider.bluetoothSocket
+//            .map { socket -> socket != null }
+//            .distinctUntilChanged()
+//    }
+
     suspend fun requestData(): Flow<List<CharData>> = flow {
         var currentIndex = 0
         val listByteArray = mutableListOf<ByteArray>()

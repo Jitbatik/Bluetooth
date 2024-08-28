@@ -27,7 +27,45 @@ class ExchangeDataViewModel @Inject constructor(
 
     init {
         returnTemplateData()
+        //observeSocketState()
     }
+
+    fun requestPacketData() {
+        viewModelScope.launch {
+            exchangeDataRepository.requestData().collect { data ->
+                Log.d(EXCHANGE_VIEWMODEL, "REQUEST DATA")
+                _data.value = data.mapToListCharUIModel()
+            }
+        }
+    }
+
+//    private fun continuouslyRequestData() {
+//        viewModelScope.launch {
+//            while (true) {
+//                try {
+//                    requestPacketData()
+//                } catch (e: Exception) {
+//                    Log.e(EXCHANGE_VIEWMODEL, "Error requesting data", e)
+//                }
+//                delay(5000)
+//            }
+//        }
+//    }
+
+//    private fun observeSocketState() {
+//        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
+//        viewModelScope.launch {
+//            exchangeDataRepository.getStateSocket()
+//                .distinctUntilChanged()
+//                .collectLatest { socketState ->
+//                    Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
+//                    if (socketState) {
+//                        Log.d(EXCHANGE_VIEWMODEL, "Socket connected, requesting data")
+//                        continuouslyRequestData()
+//                    }
+//                }
+//        }
+//    }
 
     private fun returnTemplateData() {
         fun getRandomColor(): Color {
@@ -45,15 +83,6 @@ class ExchangeDataViewModel @Inject constructor(
             )
         }
         _data.value = newData
-    }
-
-    fun requestPacketData() {
-        viewModelScope.launch {
-            exchangeDataRepository.requestData().collect { data ->
-                Log.d(EXCHANGE_VIEWMODEL, "REQUEST DATA")
-                _data.value = data.mapToListCharUIModel()
-            }
-        }
     }
 }
 
