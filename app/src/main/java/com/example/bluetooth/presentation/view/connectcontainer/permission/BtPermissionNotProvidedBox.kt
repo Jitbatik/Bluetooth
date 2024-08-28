@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation
+package com.example.bluetooth.presentation.view.connectcontainer.permission
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.BluetoothPermissionButton
 import com.example.bluetooth.R
 import com.example.bluetooth.ui.theme.BluetoothTheme
 

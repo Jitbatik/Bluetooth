@@ -18,14 +18,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.homecontainer.CharUIModel
+import com.example.bluetooth.presentation.view.homecontainer.CharUI
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.ui.theme.psisFontFamily
 
 
 @Composable
-fun TerminalDataBox(charUIModelList: List<CharUIModel>, rows: Int) {
-    val charsPerRow = (charUIModelList.size + rows - 1) / rows
+fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
+    val charsPerRow = (charUIList.size + rows - 1) / rows
 
     Box(
         modifier = Modifier
@@ -34,11 +34,11 @@ fun TerminalDataBox(charUIModelList: List<CharUIModel>, rows: Int) {
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            charUIModelList.chunked(charsPerRow).take(rows).forEach { row ->
+            charUIList.chunked(charsPerRow).take(rows).forEach { row ->
                 val rowText = buildAnnotatedString {
                     row.forEach { charUI ->
-                        val textColor = charUI.charColor
-                        val backgroundColor = charUI.charBackground
+                        val textColor = charUI.color
+                        val backgroundColor = charUI.background
                         withStyle(
                             SpanStyle(
                                 color = textColor,
@@ -80,10 +80,10 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
         return Color(r, g, b)
     }
     val data = sentence.map { char ->
-        CharUIModel(
+        CharUI(
             char = char,
-            charColor = getRandomColor(),
-            charBackground = getRandomColor()
+            color = getRandomColor(),
+            background = getRandomColor()
         )
     }
 

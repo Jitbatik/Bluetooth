@@ -1,4 +1,4 @@
-package com.example.bluetooth
+package com.example.bluetooth.presentation.view.connectcontainer.permission
 
 import android.Manifest
 import android.os.Build
@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.presentation.CustomDialog
-import com.example.bluetooth.presentation.view.connectcontainer.permission.TextPermissionProvider
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
@@ -37,7 +36,8 @@ fun BluetoothPermissionButton(
         requiredPermissions.addAll(
             listOf(
                 Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.ACCESS_FINE_LOCATION // for scan new device
             )
         )
     }
