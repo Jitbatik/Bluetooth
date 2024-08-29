@@ -24,7 +24,6 @@ class ExchangeDataViewModel @Inject constructor(
     private val _sentence =
         "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
-
     init {
         returnTemplateData()
         //observeSocketState()
