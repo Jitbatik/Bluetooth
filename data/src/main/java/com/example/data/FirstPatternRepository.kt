@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import javax.inject.Inject
 
@@ -43,15 +44,21 @@ class FirstPatternRepository @Inject constructor(
                 0x00
             )
             val byteArray = command.map { it.toByte() }.toByteArray()
-            delay(1000)
-            sendToStream(byteArray)
-            val request = readFromStream()
 
-            if (request != null && request.isNotEmpty()) {
-                listByteArray.add(request)
-                currentIndex = (currentIndex + 1) //% 20
+            var request: ByteArray? = null
+            val timeoutDuration = 3000L
+            while (request == null) {
+                sendToStream(byteArray)
+                request = withTimeoutOrNull(timeoutDuration) {
+                    readFromStream()
+                }
+                if (request == null) {
+                    delay(1000)
+                }
             }
 
+            listByteArray.add(request)
+            currentIndex = (currentIndex + 1)
         }
         emit(listByteArray.mapToListCharDataFromArray())
     }
@@ -61,7 +68,6 @@ class FirstPatternRepository @Inject constructor(
     }
 
     private fun readFromStream(): ByteArray? {
-        val buffer = ByteArray(10)
         val socket = getSocket()
         if (socket == null) {
             Log.d(FIRST_PATTERN_REPOSITORY, "Socket is null")
@@ -71,27 +77,26 @@ class FirstPatternRepository @Inject constructor(
             Log.d(FIRST_PATTERN_REPOSITORY, "Socket is not connected")
             return null
         }
-        val inputStream = socket.inputStream
-        if (inputStream == null) {
-            Log.d(FIRST_PATTERN_REPOSITORY, "InputStream is null")
-            return null
-        }
+        val inputStream = socket.inputStream ?: return null
 
-
-        try {
-            inputStream.read(buffer)
-            Log.d(FIRST_PATTERN_REPOSITORY, "Read from stream: [${buffer.joinToString(" ")}]")
-            return buffer
+        val buffer = ByteArray(1024)
+        return try {
+            Log.d(FIRST_PATTERN_REPOSITORY, "Attempting to read from stream...")
+            val bytesRead = inputStream.read(buffer)
+            val result = buffer.copyOf(bytesRead)
+            Log.d(FIRST_PATTERN_REPOSITORY, "Read from stream: [${result.joinToString(" ")}]")
+            result
         } catch (e: IOException) {
             Log.e(FIRST_PATTERN_REPOSITORY, "Error reading stream", e)
-            return null
+            null
         }
     }
 
     private suspend fun sendToStream(value: ByteArray): Result<Boolean> {
-        val socket = getSocket()
+
         return withContext(Dispatchers.IO) {
             try {
+                val socket = getSocket()
                 if (socket == null) {
                     Log.d(FIRST_PATTERN_REPOSITORY, "Socket is null")
                     return@withContext Result.failure(SecurityException("No connected socket"))
@@ -120,5 +125,4 @@ class FirstPatternRepository @Inject constructor(
             }
         }
     }
-
 }

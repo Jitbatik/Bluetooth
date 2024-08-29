@@ -30,7 +30,7 @@ fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
     Box(
         modifier = Modifier
             .background(Color(0xFF61D7A4))
-            .padding(4.dp)
+            .padding(top = 4.dp, bottom = 4.dp)
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -56,9 +56,9 @@ fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
                         .wrapContentHeight(),
                     text = rowText,
                     fontFamily = psisFontFamily,
-                    fontSize = 25.sp,
-                    lineHeight = 20.sp,
-                    letterSpacing = 0.sp,
+                    fontSize = 26.sp,
+                    lineHeight = 30.sp,
+                    letterSpacing = 1.sp,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -82,7 +82,7 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
     val data = sentence.map { char ->
         CharUI(
             char = char,
-            color = getRandomColor(),
+            color = Color.Black, //getRandomColor(),
             background = getRandomColor()
         )
     }

@@ -30,7 +30,6 @@ fun HomeContainer(
     viewModel: ExchangeDataViewModel = viewModel()
 ) {
     val data by viewModel.data.collectAsState()
-
     Box(
         modifier = Modifier
             .padding(0.dp)
