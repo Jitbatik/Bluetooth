@@ -1,6 +1,5 @@
 package com.example.bluetooth.presentation.view.homecontainer
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +21,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.presentation.view.homecontainer.components.ButtonFBox
 import com.example.bluetooth.presentation.view.homecontainer.components.ButtonHelpBox
 import com.example.bluetooth.presentation.view.homecontainer.components.TerminalDataBox
+import com.example.bluetooth.utils.UIEvents
 
-private const val HOME_CONTAINER = "HOME_CONTAINER"
 
 @Composable
 fun HomeContainer(
@@ -37,15 +36,19 @@ fun HomeContainer(
         contentAlignment = Alignment.Center
     ) {
         Column {
-            ButtonFBox(buttonType = true, onButtonClick = {
-                Log.d(HOME_CONTAINER, "Index button $it")
-            })
+            ButtonFBox(
+                buttonType = true,
+                onEvent = viewModel::onEvents
+            )
             SpacerDivider()
             TerminalDataBox(data, 4)
             SpacerDivider()
-            ButtonFBox(buttonType = false, onButtonClick = {})
-            ButtonHelpBox(onButtonClick = {})
-            Button(onClick = { viewModel.requestPacketData() }) {
+            ButtonFBox(
+                buttonType = false,
+                onEvent = viewModel::onEvents
+            )
+            ButtonHelpBox(onEvent = viewModel::onEvents)
+            Button(onClick = {  viewModel.onEvents(UIEvents.RequestData) }) {
                 Text(text = "test")
             }
         }

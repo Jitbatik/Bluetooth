@@ -21,10 +21,20 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.bluetooth.utils.UIEvents
 
 @Composable
-fun ButtonHelpBox(onButtonClick: (Int) -> Unit) {
-    val buttonLabels = listOf("Меню", "Режим", "Ввод", "Отмена", "Архив", "F", "стрелкаВВ", "стрелкаВН")
+fun ButtonHelpBox(onEvent: (UIEvents) -> Unit) {
+    val buttonLabels = listOf(
+        "Меню",
+        "Режим",
+        "Ввод",
+        "Отмена",
+        "Архив",
+        "F",
+        "↑",
+        "↓",
+    )
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
@@ -36,7 +46,21 @@ fun ButtonHelpBox(onButtonClick: (Int) -> Unit) {
     ) {
         items(buttonLabels) { label ->
             Button(
-                onClick = { onButtonClick(buttonLabels.indexOf(label)) },
+                onClick = {
+                    val index = buttonLabels.indexOf(label)
+                    val event = when (index) {
+                        0 -> UIEvents.ClickButtonMenu        // Для "Меню"
+                        1 -> UIEvents.ClickButtonMode        // Для "Режим"
+                        2 -> UIEvents.ClickButtonInput       // Для "Ввод"
+                        3 -> UIEvents.ClickButtonCancel      // Для "Отмена"
+                        4 -> UIEvents.ClickButtonArchive     // Для "Архив"
+                        5 -> UIEvents.ClickButtonF           // Для "F"
+                        6 -> UIEvents.ClickButtonUpArrow     // Для "стрелкаВВ"
+                        7 -> UIEvents.ClickButtonDownArrow   // Для "стрелкаВН"
+                        else -> throw IllegalArgumentException("Invalid index")
+                    }
+                    onEvent(event)
+                },
                 modifier = Modifier
                     .padding(0.dp)
                     .border(1.dp, Color.Black, RoundedCornerShape(18.dp))
@@ -60,6 +84,6 @@ fun ButtonHelpBox(onButtonClick: (Int) -> Unit) {
 @Composable
 private fun ButtonHelpBoxPreview() = BluetoothTheme {
     Surface {
-        ButtonHelpBox(onButtonClick = {})
+        ButtonHelpBox(onEvent = {})
     }
 }

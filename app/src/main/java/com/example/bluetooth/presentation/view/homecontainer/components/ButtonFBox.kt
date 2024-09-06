@@ -23,9 +23,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.bluetooth.utils.UIEvents
 
 @Composable
-fun ButtonFBox(buttonType: Boolean, onButtonClick: (Int) -> Unit) {
+fun ButtonFBox(
+    buttonType: Boolean,
+    onEvent: (UIEvents) -> Unit,
+) {
     val startIndex = if (buttonType) listOf(0, 1, 2, 3) else listOf(4, 5, 6, 7)
 
     LazyVerticalGrid(
@@ -43,7 +47,20 @@ fun ButtonFBox(buttonType: Boolean, onButtonClick: (Int) -> Unit) {
                     .background(Color.Gray)
             ) {
                 Button(
-                    onClick = { onButtonClick(index) },
+                    onClick = {
+                        val event = when(index) {
+                            0 -> UIEvents.ClickButtonF1
+                            1 -> UIEvents.ClickButtonF2
+                            2 -> UIEvents.ClickButtonF3
+                            3 -> UIEvents.ClickButtonF4
+                            4 -> UIEvents.ClickButtonF5
+                            5 -> UIEvents.ClickButtonF6
+                            6 -> UIEvents.ClickButtonF7
+                            7 -> UIEvents.ClickButtonF8
+                            else -> throw IllegalArgumentException("Invalid index")
+                        }
+                        onEvent(event)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(0.dp),
@@ -68,8 +85,8 @@ fun ButtonFBox(buttonType: Boolean, onButtonClick: (Int) -> Unit) {
 private fun ButtonFBoxPreview() = BluetoothTheme {
     Surface {
         Column {
-            ButtonFBox(buttonType = true, onButtonClick = {})
-            ButtonFBox(buttonType = false, onButtonClick = {})
+            ButtonFBox(buttonType = true, onEvent = {})
+            ButtonFBox(buttonType = false, onEvent = {})
         }
     }
 }
