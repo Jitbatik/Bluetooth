@@ -1,6 +1,5 @@
 package com.example.bluetooth.presentation.view.homecontainer
 
-import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,11 +23,8 @@ import com.example.bluetooth.utils.UIEvents.ClickButtonUpArrow
 import com.example.bluetooth.utils.UIEvents.RequestData
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,26 +42,25 @@ class ExchangeDataViewModel @Inject constructor(
 
     init {
         returnTemplateData()
-        observeSocketState()
-        observeDataStream()
+        //observeSocketState()
     }
 
-    private fun observeSocketState() {
-        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
-        viewModelScope.launch {
-            exchangeDataRepository.getStateSocket()
-                .distinctUntilChanged()
-                .collectLatest { socketState ->
-                    Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
-                    if (socketState) {
-                        Log.w(EXCHANGE_VIEWMODEL, "Socket connected")
-                        continuouslyRequestData()
-                    } else {
-                        Log.w(EXCHANGE_VIEWMODEL, "Socket disconnected")
-                    }
-                }
-        }
-    }
+//    private fun observeSocketState() {
+//        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
+//        viewModelScope.launch {
+//            exchangeDataRepository.getStateSocket()
+//                .distinctUntilChanged()
+//                .collectLatest { socketState ->
+//                    Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
+//                    if (socketState) {
+//                        Log.w(EXCHANGE_VIEWMODEL, "Socket connected")
+//                        continuouslyRequestData()
+//                    } else {
+//                        Log.w(EXCHANGE_VIEWMODEL, "Socket disconnected")
+//                    }
+//                }
+//        }
+//    }
 
     private fun requestPacketData() {
         viewModelScope.launch {
@@ -73,35 +68,18 @@ class ExchangeDataViewModel @Inject constructor(
         }
     }
 
-    private fun continuouslyRequestData() {
-        viewModelScope.launch {
-            while (true) {
-                try {
-                    exchangeDataRepository.requestData()
-                    //requestPacketData()
-                } catch (e: Exception) {
-                    Log.e(EXCHANGE_VIEWMODEL, "Error requesting data", e)
-                }
-                delay(5000)
-            }
-        }
-    }
-
-    private fun observeDataStream() {
-        viewModelScope.launch {
-            exchangeDataRepository.getData()
-                .collectLatest { charDataList ->
-                    val newData = charDataList.map { charData ->
-                        CharUI(
-                            char = charData.charByte.toInt().toChar(),
-                            color = Color.Black,
-                            background = Color.Transparent
-                        )
-                    }
-                    _data.value = newData
-                }
-        }
-    }
+//    private fun continuouslyRequestData() {
+//        viewModelScope.launch {
+//            while (true) {
+//                try {
+//                    exchangeDataRepository.requestData()
+//                } catch (e: Exception) {
+//                    Log.e(EXCHANGE_VIEWMODEL, "Error requesting data", e)
+//                }
+//                delay(5000)
+//            }
+//        }
+//    }
 
     private fun returnTemplateData() {
         fun getRandomColor(): Color {
@@ -123,7 +101,7 @@ class ExchangeDataViewModel @Inject constructor(
 
     private fun sendData(value: ByteArray) {
         viewModelScope.launch {
-            exchangeDataRepository.sendToStream(value = value)
+            //exchangeDataRepository.sendToStream(value = value)
         }
     }
 
