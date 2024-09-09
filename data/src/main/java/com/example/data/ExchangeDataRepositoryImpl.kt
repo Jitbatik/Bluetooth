@@ -1,5 +1,6 @@
 package com.example.data
 
+import com.example.domain.model.CharData
 import com.example.domain.repository.ExchangeDataRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -12,6 +13,10 @@ class ExchangeDataRepositoryImpl @Inject constructor(
 
     override fun getStateSocket(): Flow<Boolean> = flow {
         emitAll(firstPatternRepository.getStateSocket())
+    }
+
+    override fun getData(): Flow<List<CharData>> = flow {
+        emitAll(firstPatternRepository.getData())
     }
 
     override suspend fun requestData() =

@@ -3,12 +3,15 @@ package com.example.data
 import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
+import com.example.data.bluetooth.utils.mapToListCharDataFromArray
+import com.example.domain.model.CharData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
@@ -18,11 +21,14 @@ import java.io.IOException
 import javax.inject.Inject
 
 private const val FIRST_PATTERN_REPOSITORY = "MANAGE_DATA_REPOSITORY_IMPL"
+
 /**
  * Проверяем состояние сокета, если socket != null,
  * то создаем корутину и слушаем данные
  * в ином случае закрываем корутину
  * */
+
+
 class FirstPatternRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
 ) {
@@ -34,6 +40,12 @@ class FirstPatternRepository @Inject constructor(
         }
     }
 
+    fun getData(): Flow<List<CharData>> = flow {
+        if (packetsMap.all { it.value.state == DataPacketState.Received }) {
+            val allData = packetsMap.values.map { it.data }
+            emit(allData.mapToListCharDataFromArray())
+        }
+    }
 
     fun getStateSocket(): Flow<Boolean> {
         return bluetoothSocketProvider.bluetoothSocket
@@ -63,10 +75,11 @@ class FirstPatternRepository @Inject constructor(
 
         listeningJob = coroutineScope.launch {
             val inputStream = socket.inputStream ?: return@launch
-            val buffer = ByteArray(1024)
+            val buffer = ByteArray(10)
             try {
                 while (isActive && socket.isConnected) {
                     val bytesRead = inputStream.read(buffer)
+                    Log.d(FIRST_PATTERN_REPOSITORY, "Read from stream: [${buffer.joinToString(" ")}]")
                     if (bytesRead != -1) saveTableData(buffer.copyOf(bytesRead))
                 }
             } catch (e: IOException) {
@@ -81,6 +94,7 @@ class FirstPatternRepository @Inject constructor(
         }
     }
 
+
     private fun stopListening() {
         listeningJob?.cancel()
         listeningJob = null
@@ -88,7 +102,7 @@ class FirstPatternRepository @Inject constructor(
     }
 
     private fun saveTableData(value: ByteArray) {
-        val index = value[5].toInt()
+        val index = value[5].toUByte().toInt()
         Log.d(
             FIRST_PATTERN_REPOSITORY,
             "Received packet index=$index,\n\t data=[${value.joinToString(" ")}]"

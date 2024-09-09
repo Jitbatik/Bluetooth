@@ -24,6 +24,7 @@ import com.example.bluetooth.utils.UIEvents.ClickButtonUpArrow
 import com.example.bluetooth.utils.UIEvents.RequestData
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -46,6 +47,7 @@ class ExchangeDataViewModel @Inject constructor(
     init {
         returnTemplateData()
         observeSocketState()
+        observeDataStream()
     }
 
     private fun observeSocketState() {
@@ -57,6 +59,7 @@ class ExchangeDataViewModel @Inject constructor(
                     Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
                     if (socketState) {
                         Log.w(EXCHANGE_VIEWMODEL, "Socket connected")
+                        continuouslyRequestData()
                     } else {
                         Log.w(EXCHANGE_VIEWMODEL, "Socket disconnected")
                     }
@@ -67,6 +70,36 @@ class ExchangeDataViewModel @Inject constructor(
     private fun requestPacketData() {
         viewModelScope.launch {
             exchangeDataRepository.requestData()
+        }
+    }
+
+    private fun continuouslyRequestData() {
+        viewModelScope.launch {
+            while (true) {
+                try {
+                    exchangeDataRepository.requestData()
+                    //requestPacketData()
+                } catch (e: Exception) {
+                    Log.e(EXCHANGE_VIEWMODEL, "Error requesting data", e)
+                }
+                delay(5000)
+            }
+        }
+    }
+
+    private fun observeDataStream() {
+        viewModelScope.launch {
+            exchangeDataRepository.getData()
+                .collectLatest { charDataList ->
+                    val newData = charDataList.map { charData ->
+                        CharUI(
+                            char = charData.charByte.toInt().toChar(),
+                            color = Color.Black,
+                            background = Color.Transparent
+                        )
+                    }
+                    _data.value = newData
+                }
         }
     }
 
