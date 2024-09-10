@@ -3,10 +3,16 @@ package com.example.data
 import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
+import com.example.domain.model.CharData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,18 +29,14 @@ class FirstPatternRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
     private val daddyRepository: DaddyRepository
 ) {
-//    fun getStateSocket(): Flow<Boolean> {
+    //    fun getStateSocket(): Flow<Boolean> {
 //        return bluetoothSocketProvider.bluetoothSocket
 //            .map { socket -> socket != null }
 //            .distinctUntilChanged()
 //    }
 
-    private fun getSocket(): BluetoothSocket? {
-        return bluetoothSocketProvider.bluetoothSocket.value
-    }
-
     private fun getValidSocket(): BluetoothSocket? {
-        val socket = getSocket()
+        val socket = bluetoothSocketProvider.bluetoothSocket.value
         if (socket == null || !socket.isConnected) {
             val error = "Socket is ${if (socket == null) "null" else "not connected"}"
             Log.d("ttt", error)
@@ -43,63 +45,106 @@ class FirstPatternRepository @Inject constructor(
         return socket
     }
 
+    private val _testHub = MutableStateFlow<List<TestDataList>>(emptyList())
+
+    fun getData(): Flow<List<CharData>> {
+        return _testHub.map { testDataList ->
+            testDataList.mapToListCharData()
+        }
+    }
+
+    private fun List<TestDataList>.mapToListCharData(): List<CharData> {
+        return this.flatMap { it.listByte }.map {
+            CharData(charByte = it, colorByte = 1.toByte(), backgroundByte = 0.toByte())
+        }
+    }
+
+    private fun ByteArray.mapToTestDataList(): TestDataList {
+        val index = this[5].toInt()
+        val listByte = this.drop(6)
+        return TestDataList(index = index, listByte = listByte)
+    }
+
+    private fun addTestData(data: TestDataList) {
+        _testHub.update { currentList ->
+            val mutableList = currentList.toMutableList()
+            val existingIndex = mutableList.indexOfFirst { it.index == data.index }
+            if (existingIndex != -1) {
+                mutableList[existingIndex] = data
+            } else {
+                mutableList.add(data)
+            }
+            mutableList
+        }
+    }
+
+//    private fun printTestHub() {
+//        _testHub.forEach { testData ->
+//            Log.d(
+//                "TEST_HUB",
+//                "Index: ${testData.index}, Data: ${testData.listByte.joinToString(", ")}"
+//            )
+//        }
+//    }
+
+
     suspend fun requestData() {
         val socket = getValidSocket() ?: return
+        val canRead = MutableStateFlow(true)
+        CoroutineScope(Dispatchers.IO).launch {
+            daddyRepository.readFromStream(socket = socket, canRead = canRead)
+                .cancellable()
+                .collect { data ->
+                    if (!canRead.value) {
+                        cancel()
+                    }
+                    Log.d(
+                        FIRST_PATTERN_REPOSITORY,
+                        "Received from stream in flow: ${data.joinToString(" ")}"
+                    )
+                    addTestData(data.mapToTestDataList())
 
-        val listeningJob = CoroutineScope(Dispatchers.IO).launch {
-            daddyRepository.readFromStream(socket = socket).collect { data ->
-                Log.d(
-                    FIRST_PATTERN_REPOSITORY,
-                    "Received from stream in flow: ${data.joinToString(" ")}"
-                )
-            }
+                }
         }
-        var currentIndex = 0
-        while (currentIndex < 20) {
+
+        while (true) {
+            val missingIndex = checkTest()
+
+            if (missingIndex == -1) {
+                break
+            }
+
             val command = byteArrayOf(
                 0xFE.toByte(),
                 0x08.toByte(),
                 0x00,
                 0x00,
                 0x00,
-                currentIndex.toByte(),
+                missingIndex.toByte(),
                 0x00,
                 0x00,
                 0x00,
                 0x00
             )
+
             daddyRepository.sendToStream(socket = socket, value = command)
 
-            currentIndex++
             delay(100)
         }
-
-        listeningJob.cancelAndJoin()
+        canRead.value = false
+        //printTestHub()
     }
+
+    private fun checkTest(): Int {
+        val requiredIndices = (0..19).toList()
+        val presentIndices = _testHub.value.map { it.index }
+        for (index in requiredIndices) {
+            if (index !in presentIndices) {
+                return index
+            }
+        }
+        return -1
+    }
+
+
 }
-
-
-//    suspend fun sendToStream(value: ByteArray): Result<Boolean> {
-//        return withContext(Dispatchers.IO) {
-//            val socket = getSocket()
-//            if (socket == null || !socket.isConnected) {
-//                val error = "Socket is ${if (socket == null) "null" else "not connected"}"
-//                Log.d(FIRST_PATTERN_REPOSITORY, error)
-//                return@withContext Result.failure(SecurityException(error))
-//            }
-//
-//            return@withContext try {
-//                socket.outputStream?.let { outputStream ->
-//                    outputStream.write(value)
-//                    Log.d(FIRST_PATTERN_REPOSITORY, "Written to stream: ${value.joinToString(" ")}")
-//                    Result.success(true)
-//                } ?: Result.failure(IOException("Output stream is null"))
-//            } catch (e: IOException) {
-//                Log.e(FIRST_PATTERN_REPOSITORY, "Error sending data to stream", e)
-//                Result.failure(e)
-//            } catch (e: Exception) {
-//                Log.e(FIRST_PATTERN_REPOSITORY, "Unexpected error", e)
-//                Result.failure(e)
-//            }
-//        }
-//    }
