@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,12 +30,6 @@ class FirstPatternRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
     private val daddyRepository: DaddyRepository
 ) {
-    //    fun getStateSocket(): Flow<Boolean> {
-//        return bluetoothSocketProvider.bluetoothSocket
-//            .map { socket -> socket != null }
-//            .distinctUntilChanged()
-//    }
-
     private fun getValidSocket(): BluetoothSocket? {
         val socket = bluetoothSocketProvider.bluetoothSocket.value
         if (socket == null || !socket.isConnected) {
@@ -45,32 +40,45 @@ class FirstPatternRepository @Inject constructor(
         return socket
     }
 
-    private val _testHub = MutableStateFlow<List<TestDataList>>(emptyList())
-
+    private val _dataPacketsFlow = MutableStateFlow<List<DataPacket>>(emptyList())
     fun getData(): Flow<List<CharData>> {
-        return _testHub.map { testDataList ->
-            testDataList.mapToListCharData()
-        }
+        return _dataPacketsFlow
+            .filter { it.size == MAX_PACKET_SIZE }
+            .map { it.mapToListCharData() }
     }
 
-    private fun List<TestDataList>.mapToListCharData(): List<CharData> {
-        return this.flatMap { it.listByte }.map {
+    companion object {
+        private const val MAX_PACKET_SIZE = 20
+        private const val RETRY_DELAY_MS = 100L
+    }
+
+    private fun List<DataPacket>.mapToListCharData(): List<CharData> {
+        return this.flatMap { it.dataBytes }.map {
             CharData(charByte = it, colorByte = 1.toByte(), backgroundByte = 0.toByte())
         }
     }
+    //    fun getStateSocket(): Flow<Boolean> {
+//        return bluetoothSocketProvider.bluetoothSocket
+//            .map { socket -> socket != null }
+//            .distinctUntilChanged()
+//    }
 
-    private fun ByteArray.mapToTestDataList(): TestDataList {
+    private fun ByteArray.mapToDataPacket(): DataPacket {
         val index = this[5].toInt()
         val listByte = this.drop(6)
-        return TestDataList(index = index, listByte = listByte)
+        return DataPacket(index = index, dataBytes = listByte)
     }
 
-    private fun addTestData(data: TestDataList) {
-        _testHub.update { currentList ->
+    private fun addDataPacket(data: DataPacket) {
+        _dataPacketsFlow.update { currentList ->
             val mutableList = currentList.toMutableList()
             val existingIndex = mutableList.indexOfFirst { it.index == data.index }
+
             if (existingIndex != -1) {
-                mutableList[existingIndex] = data
+                val existingData = mutableList[existingIndex]
+                if (existingData != data) {
+                    mutableList[existingIndex] = data
+                }
             } else {
                 mutableList.add(data)
             }
@@ -78,19 +86,10 @@ class FirstPatternRepository @Inject constructor(
         }
     }
 
-//    private fun printTestHub() {
-//        _testHub.forEach { testData ->
-//            Log.d(
-//                "TEST_HUB",
-//                "Index: ${testData.index}, Data: ${testData.listByte.joinToString(", ")}"
-//            )
-//        }
-//    }
-
-
     suspend fun requestData() {
         val socket = getValidSocket() ?: return
         val canRead = MutableStateFlow(true)
+
         CoroutineScope(Dispatchers.IO).launch {
             daddyRepository.readFromStream(socket = socket, canRead = canRead)
                 .cancellable()
@@ -98,17 +97,12 @@ class FirstPatternRepository @Inject constructor(
                     if (!canRead.value) {
                         cancel()
                     }
-                    Log.d(
-                        FIRST_PATTERN_REPOSITORY,
-                        "Received from stream in flow: ${data.joinToString(" ")}"
-                    )
-                    addTestData(data.mapToTestDataList())
-
+                    addDataPacket(data.mapToDataPacket())
                 }
         }
 
         while (true) {
-            val missingIndex = checkTest()
+            val missingIndex = checkMissingPackage()
 
             if (missingIndex == -1) {
                 break
@@ -129,15 +123,21 @@ class FirstPatternRepository @Inject constructor(
 
             daddyRepository.sendToStream(socket = socket, value = command)
 
-            delay(100)
+            delay(RETRY_DELAY_MS)
         }
-        canRead.value = false
-        //printTestHub()
+        //canRead.value = false
+        //printDataPackets()
     }
 
-    private fun checkTest(): Int {
-        val requiredIndices = (0..19).toList()
-        val presentIndices = _testHub.value.map { it.index }
+
+    /**
+     * Function to check for missing package
+     *  Searches for an index in the range 0 to 19 that is not in the list.
+     *  @return if(missing package) package index else -1
+     * */
+    private fun checkMissingPackage(): Int {
+        val requiredIndices = (0 until MAX_PACKET_SIZE).toList()
+        val presentIndices = _dataPacketsFlow.value.map { it.index }
         for (index in requiredIndices) {
             if (index !in presentIndices) {
                 return index
@@ -147,4 +147,16 @@ class FirstPatternRepository @Inject constructor(
     }
 
 
+//    private fun printDataPackets() {
+//        _dataPacketsFlow.value.forEach { testData ->
+//            Log.d(
+//                "TEST_HUB",
+//                "Index: ${testData.index}, Data: ${testData.dataBytes.joinToString(", ")}"
+//            )
+//        }
+//        Log.d(FIRST_PATTERN_REPOSITORY, "САЙз ${_dataPacketsFlow.value.size}")
+//    }
 }
+
+
+
