@@ -21,9 +21,10 @@ import com.example.bluetooth.utils.UIEvents.ClickButtonMenu
 import com.example.bluetooth.utils.UIEvents.ClickButtonMode
 import com.example.bluetooth.utils.UIEvents.ClickButtonUpArrow
 import com.example.bluetooth.utils.UIEvents.RequestData
+import com.example.domain.model.CharData
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -37,32 +38,28 @@ private const val EXCHANGE_VIEWMODEL = "EXCHANGE_VIEWMODEL"
 class ExchangeDataViewModel @Inject constructor(
     private val exchangeDataRepository: ExchangeDataRepository,
 ) : ViewModel() {
-    private val _data = MutableStateFlow<List<CharUI>>(emptyList())
+    private val _data = exchangeDataRepository.getData()
+        .mapToCharUI()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = returnTemplateData()
+        )
     val data: StateFlow<List<CharUI>> = _data
-//    val data: StateFlow<List<CharUI>> = exchangeDataRepository.getData()
-//        .map { charDataList ->
-//            charDataList.map { charData ->
-//                CharUI(
-//                    char = charData.charByte.toInt().toChar(),
-//                    color = Color.Black,
-//                    background = Color.Transparent
-//                )
-//            }
-//        }
-//        .stateIn(
-//            scope = viewModelScope,
-//            started = SharingStarted.Eagerly,
-//            initialValue = emptyList()
-//        )
 
-
-    private val _sentence =
-        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+    private fun Flow<List<CharData>>.mapToCharUI(): Flow<List<CharUI>> = map { charDataList ->
+        charDataList.map { charData ->
+            CharUI(
+                char = charData.charByte.toInt().toChar()
+            )
+        }
+    }
 
     init {
-        returnTemplateData()
+        //returnTemplateData()
         //observeSocketState()
     }
+
 
 //    private fun observeSocketState() {
 //        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
@@ -100,7 +97,10 @@ class ExchangeDataViewModel @Inject constructor(
 //        }
 //    }
 
-    private fun returnTemplateData() {
+    private fun returnTemplateData(): List<CharUI>  {
+        val sentence =
+            "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+
         fun getRandomColor(): Color {
             val r = (0..255).random()
             val g = (0..255).random()
@@ -108,14 +108,14 @@ class ExchangeDataViewModel @Inject constructor(
             return Color(r, g, b)
         }
 
-        val newData = _sentence.map { char ->
+        val newData = sentence.map { char ->
             CharUI(
                 char = char,
                 color = Color.Black,//getRandomColor(),
                 background = getRandomColor()
             )
         }
-        _data.value = newData
+        return newData
     }
 
     private fun sendData(value: ByteArray) {
