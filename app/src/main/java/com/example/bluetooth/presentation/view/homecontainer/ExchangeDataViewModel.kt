@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val EXCHANGE_VIEWMODEL = "EXCHANGE_VIEWMODEL"
+//private const val EXCHANGE_VIEWMODEL = "EXCHANGE_VIEWMODEL"
 
 @HiltViewModel
 class ExchangeDataViewModel @Inject constructor(
@@ -55,18 +55,26 @@ class ExchangeDataViewModel @Inject constructor(
         }
     }
 
-    init {
-        //returnTemplateData()
-        //observeSocketState()
-    }
+//    init {
+//        //observeSocketState()
+//    }
 
 
 //    private fun observeSocketState() {
 //        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
 //        viewModelScope.launch {
 //            exchangeDataRepository.getStateSocket()
-//                .distinctUntilChanged()
-//                .collectLatest { socketState ->
+//                .collectLatest {
+//
+//                }
+//        }
+//    }
+
+    private fun requestPacketData() {
+        viewModelScope.launch {
+            //exchangeDataRepository.requestData()
+        }
+    }
 //                    Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
 //                    if (socketState) {
 //                        Log.w(EXCHANGE_VIEWMODEL, "Socket connected")
@@ -74,16 +82,6 @@ class ExchangeDataViewModel @Inject constructor(
 //                    } else {
 //                        Log.w(EXCHANGE_VIEWMODEL, "Socket disconnected")
 //                    }
-//                }
-//        }
-//    }
-
-    private fun requestPacketData() {
-        viewModelScope.launch {
-            exchangeDataRepository.requestData()
-        }
-    }
-
 //    private fun continuouslyRequestData() {
 //        viewModelScope.launch {
 //            while (true) {
