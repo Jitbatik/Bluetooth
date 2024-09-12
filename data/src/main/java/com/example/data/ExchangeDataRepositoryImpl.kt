@@ -9,11 +9,8 @@ class ExchangeDataRepositoryImpl @Inject constructor(
     private val firstPatternRepository: FirstPatternRepository,
 ) : ExchangeDataRepository {
 
-//    override fun getStateSocket(): Flow<Boolean> = flow {
-//        emitAll(firstPatternRepository.getStateSocket())
-//    }
-
-    override suspend fun requestData() = firstPatternRepository.requestData()
+    //override fun getStateSocket() = firstPatternRepository.getStateSocket()
+    //override suspend fun requestData() = firstPatternRepository.requestData()
     override fun getData(): Flow<List<CharData>> = firstPatternRepository.getData()
     //private suspend fun sendToStream2(value: ByteArray) = firstPatternRepository.sendToStream(value = value)
 //    override suspend fun sendToStream(value: ByteArray): Result<Boolean> {
