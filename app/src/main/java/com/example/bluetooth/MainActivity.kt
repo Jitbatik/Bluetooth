@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.nativeappjetpaccompouse.presentation.screen.MainScreen
-import dagger.hilt.EntryPoint
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -18,9 +17,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApp()
-            BluetoothTheme {
-
-            }
         }
     }
 }

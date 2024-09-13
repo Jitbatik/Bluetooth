@@ -20,7 +20,7 @@ import com.example.bluetooth.utils.UIEvents.ClickButtonInput
 import com.example.bluetooth.utils.UIEvents.ClickButtonMenu
 import com.example.bluetooth.utils.UIEvents.ClickButtonMode
 import com.example.bluetooth.utils.UIEvents.ClickButtonUpArrow
-import com.example.bluetooth.utils.UIEvents.RequestData
+
 import com.example.domain.model.CharData
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,9 +36,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExchangeDataViewModel @Inject constructor(
-    private val exchangeDataRepository: ExchangeDataRepository,
+    exchangeDataRepository: ExchangeDataRepository,
 ) : ViewModel() {
-    private val _data = exchangeDataRepository.getData()
+    private val _data = exchangeDataRepository.observeData()
         .mapToCharUI()
         .stateIn(
             scope = viewModelScope,
@@ -55,47 +55,8 @@ class ExchangeDataViewModel @Inject constructor(
         }
     }
 
-//    init {
-//        //observeSocketState()
-//    }
 
-
-//    private fun observeSocketState() {
-//        Log.d(EXCHANGE_VIEWMODEL, "Subscribe to a stream connected")
-//        viewModelScope.launch {
-//            exchangeDataRepository.getStateSocket()
-//                .collectLatest {
-//
-//                }
-//        }
-//    }
-
-    private fun requestPacketData() {
-        viewModelScope.launch {
-            //exchangeDataRepository.requestData()
-        }
-    }
-//                    Log.d(EXCHANGE_VIEWMODEL, "Socket state changed: $socketState")
-//                    if (socketState) {
-//                        Log.w(EXCHANGE_VIEWMODEL, "Socket connected")
-//                        continuouslyRequestData()
-//                    } else {
-//                        Log.w(EXCHANGE_VIEWMODEL, "Socket disconnected")
-//                    }
-//    private fun continuouslyRequestData() {
-//        viewModelScope.launch {
-//            while (true) {
-//                try {
-//                    exchangeDataRepository.requestData()
-//                } catch (e: Exception) {
-//                    Log.e(EXCHANGE_VIEWMODEL, "Error requesting data", e)
-//                }
-//                delay(5000)
-//            }
-//        }
-//    }
-
-    private fun returnTemplateData(): List<CharUI>  {
+    private fun returnTemplateData(): List<CharUI> {
         val sentence =
             "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
@@ -124,7 +85,6 @@ class ExchangeDataViewModel @Inject constructor(
 
     fun onEvents(event: UIEvents) {
         when (event) {
-            RequestData -> requestPacketData()
             else -> sendData(generateCommand(event))
         }
     }
@@ -149,7 +109,6 @@ class ExchangeDataViewModel @Inject constructor(
             ClickButtonF -> byteArrayOf(0x00, 0x40.toByte())
             ClickButtonUpArrow -> byteArrayOf(0x00, 0x01.toByte())
             ClickButtonDownArrow -> byteArrayOf(0x00, 0x08.toByte())
-            else -> byteArrayOf(0x00, 0x00)
         }
         return baseCommand + commandSuffix
     }
