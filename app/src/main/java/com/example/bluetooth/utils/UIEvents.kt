@@ -1,7 +1,6 @@
 package com.example.bluetooth.utils
 
 enum class UIEvents {
-    RequestData,
     ClickButtonF1,
     ClickButtonF2,
     ClickButtonF3,

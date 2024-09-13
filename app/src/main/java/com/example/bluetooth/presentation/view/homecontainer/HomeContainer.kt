@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,12 +19,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.presentation.view.homecontainer.components.ButtonFBox
 import com.example.bluetooth.presentation.view.homecontainer.components.ButtonHelpBox
 import com.example.bluetooth.presentation.view.homecontainer.components.TerminalDataBox
-import com.example.bluetooth.utils.UIEvents
 
 
 @Composable
 fun HomeContainer(
-    viewModel: ExchangeDataViewModel = viewModel()
+    viewModel: ExchangeDataViewModel = viewModel(),
 ) {
     val data by viewModel.data.collectAsState()
     Box(
@@ -48,9 +45,6 @@ fun HomeContainer(
                 onEvent = viewModel::onEvents
             )
             ButtonHelpBox(onEvent = viewModel::onEvents)
-            Button(onClick = {  viewModel.onEvents(UIEvents.RequestData) }) {
-                Text(text = "test")
-            }
         }
     }
 }

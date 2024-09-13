@@ -6,12 +6,10 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class ExchangeDataRepositoryImpl @Inject constructor(
-    private val firstPatternRepository: FirstPatternRepository,
+    private val protocolDataRepository: ProtocolDataRepository,
 ) : ExchangeDataRepository {
 
-    //override fun getStateSocket() = firstPatternRepository.getStateSocket()
-    //override suspend fun requestData() = firstPatternRepository.requestData()
-    override fun getData(): Flow<List<CharData>> = firstPatternRepository.getData()
+    override fun observeData(): Flow<List<CharData>> = protocolDataRepository.observeBluetoothDataFlow()
     //private suspend fun sendToStream2(value: ByteArray) = firstPatternRepository.sendToStream(value = value)
 //    override suspend fun sendToStream(value: ByteArray): Result<Boolean> {
 //        return firstPatternRepository.sendToStream(value = value)
