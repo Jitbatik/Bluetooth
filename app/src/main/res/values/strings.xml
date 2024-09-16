@@ -9,4 +9,12 @@
     <string name="bluetooth_not_enable_title">Пожалуйста включите Bluetooth</string>
     <string name="bluetooth_not_enable_desc">Кажется, Bluetooth не включен. Для работы Bluetooth требуется его включение.</string>
     <string name="enable_bluetooth_button_text">Включить Bluetooth</string>
+    <string name="button_help_box_button_label_menu">Меню</string>
+    <string name="button_help_box_button_label_mode">Режим</string>
+    <string name="button_help_box_button_label_enter">Ввод</string>
+    <string name="button_help_box_button_label_cancel">Отмена</string>
+    <string name="button_help_box_button_label_archive">Архив</string>
+    <string name="button_help_box_button_label_f">F</string>
+    <string name="button_help_box_button_label_up_arrow">▲</string>
+    <string name="button_help_box_button_label_down_arrow">▼</string>
 </resources>

@@ -9,8 +9,16 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +33,8 @@ import com.example.bluetooth.ui.theme.psisFontFamily
 
 @Composable
 fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
+    val density = LocalDensity.current
+    val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val charsPerRow = (charUIList.size + rows - 1) / rows
 
     Box(
@@ -50,16 +60,31 @@ fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
                     }
                 }
 
+                var textSize by remember { mutableFloatStateOf(screenWidth / (rowText.length * 0.7f)) }
+                var shouldDraw by remember { mutableStateOf(false) }
+
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight(),
+                        .wrapContentHeight()
+                        .drawWithContent {
+                            if (shouldDraw) {
+                                drawContent()
+                            }
+                        },
                     text = rowText,
                     fontFamily = psisFontFamily,
-                    fontSize = 26.sp,
-                    lineHeight = 30.sp,
+                    fontSize = with(density) { textSize.toSp() },
+                    lineHeight = with(density) { (textSize * 1.2f).toSp() },
                     letterSpacing = 1.sp,
                     textAlign = TextAlign.Center,
+                    onTextLayout = { result ->
+                        if (result.didOverflowWidth) {
+                            textSize *= 0.95f
+                        } else {
+                            shouldDraw = true
+                        }
+                    }
                 )
             }
         }

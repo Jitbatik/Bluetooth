@@ -56,8 +56,7 @@ class ConnectViewModel @Inject constructor(
             if (_connectedDevice.value != null) {
                 connectRepository.disconnectFromDevice()
                 _connectedDevice.value = null
-            }
-            else {
+            } else {
                 connectRepository.connectToDevice(
                     bluetoothDevice,
                     //connectUUID = "00000000-deca-fade-deca-deafdecacafe"
