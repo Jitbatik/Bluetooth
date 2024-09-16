@@ -17,23 +17,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bluetooth.R
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.utils.UIEvents
 
 @Composable
 fun ButtonHelpBox(onEvent: (UIEvents) -> Unit) {
     val buttonLabels = listOf(
-        "Меню",
-        "Режим",
-        "Ввод",
-        "Отмена",
-        "Архив",
-        "F",
-        "↑",
-        "↓",
+        stringResource(R.string.button_help_box_button_label_menu),
+        stringResource(R.string.button_help_box_button_label_mode),
+        stringResource(R.string.button_help_box_button_label_enter),
+        stringResource(R.string.button_help_box_button_label_cancel),
+        stringResource(R.string.button_help_box_button_label_archive),
+        stringResource(R.string.button_help_box_button_label_f),
+        stringResource(R.string.button_help_box_button_label_up_arrow),
+        stringResource(R.string.button_help_box_button_label_down_arrow),
     )
 
     LazyVerticalGrid(
