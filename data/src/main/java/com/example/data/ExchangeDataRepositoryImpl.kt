@@ -9,10 +9,9 @@ class ExchangeDataRepositoryImpl @Inject constructor(
     private val protocolDataRepository: ProtocolDataRepository,
 ) : ExchangeDataRepository {
 
-    override fun observeData(): Flow<List<CharData>> = protocolDataRepository.observeBluetoothDataFlow()
-    //private suspend fun sendToStream2(value: ByteArray) = firstPatternRepository.sendToStream(value = value)
-//    override suspend fun sendToStream(value: ByteArray): Result<Boolean> {
-//        return firstPatternRepository.sendToStream(value = value)
-//    }
+    override fun observeData(): Flow<List<CharData>> =
+        protocolDataRepository.observeBluetoothDataFlow()
 
+    override suspend fun sendToStream(value: ByteArray) =
+        protocolDataRepository.sendToStream(value = value)
 }
