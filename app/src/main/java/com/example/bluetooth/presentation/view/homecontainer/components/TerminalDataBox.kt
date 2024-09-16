@@ -79,6 +79,7 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
         val b = (0..255).random()
         return Color(r, g, b)
     }
+
     val data = sentence.map { char ->
         CharUI(
             char = char,

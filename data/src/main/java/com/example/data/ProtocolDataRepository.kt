@@ -109,19 +109,6 @@ class ProtocolDataRepository @Inject constructor(
                 }
             }
         }
-
-
-//        canRead.collectLatest { isReading ->
-//            if (isReading) {
-//                try {
-//                    requestMissingBluetoothPackets(socket, packetBuffer)
-//                    delay(5000)
-//                } catch (e: Exception) {
-//                    Log.e(FIRST_PATTERN_REPOSITORY, "Error in requesting data: ${e.message}")
-//                    canRead.value = false
-//                }
-//            }
-//        }
     }
 
     /**
@@ -216,6 +203,11 @@ class ProtocolDataRepository @Inject constructor(
         val presentIndices = packetBuffer.map { it.index }.toSet()
 
         return requiredIndices.subtract(presentIndices).toList()
+    }
+
+    fun sendToStream(value: ByteArray) {
+        val socket = getActiveBluetoothSocket() ?: return
+        dataStreamRepository.sendToStream(socket = socket, value = value)
     }
 
     companion object {

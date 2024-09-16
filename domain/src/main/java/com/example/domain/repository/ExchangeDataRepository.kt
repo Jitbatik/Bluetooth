@@ -5,6 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ExchangeDataRepository {
     fun observeData(): Flow<List<CharData>>
-   // suspend fun sendToStream(value: ByteArray): Result<Boolean>
-
+    suspend fun sendToStream(value: ByteArray)
 }
