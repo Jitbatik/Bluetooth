@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,11 +32,16 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
 import com.example.bluetooth.model.DescriptionSettings
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.domain.utils.SettingsManager
 
 @Composable
 fun WirelessNetworkSettings(descriptionSettings: DescriptionSettings) {
+    val context = LocalContext.current
+    val settingsManager = remember { SettingsManager(context) }
+
+    var isChecked by remember { mutableStateOf(settingsManager.isEnabledChecked()) }
+    var wirelessNetworkMask by remember { mutableStateOf(settingsManager.getBluetoothMask()) }
     var isExpanded by remember { mutableStateOf(false) }
-    var isChecked by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -74,13 +80,19 @@ fun WirelessNetworkSettings(descriptionSettings: DescriptionSettings) {
                 Text(text = descriptionSettings.descriptionSwitch)
                 Switch(
                     checked = isChecked,
-                    onCheckedChange = { isChecked = it }
+                    onCheckedChange = {
+                        settingsManager.saveEnabledChecked(it)
+                        isChecked = it
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = "",
-                onValueChange = { },
+                value = wirelessNetworkMask,
+                onValueChange = { mask ->
+                    settingsManager.saveBluetoothMask(mask)
+                    wirelessNetworkMask = mask
+                },
                 label = { Text(descriptionSettings.hintTextField) },
                 enabled = isChecked,
                 modifier = Modifier.fillMaxWidth()

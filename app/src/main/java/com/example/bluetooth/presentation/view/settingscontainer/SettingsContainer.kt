@@ -18,8 +18,16 @@ import com.example.bluetooth.R
 import com.example.bluetooth.model.DescriptionSettings
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
+
 @Composable
-fun SettingsContainer() {
+fun SettingsContainer(
+    //viewModel: ExchangeDataViewModel = viewModel(),
+) {
+    SettingsContainerContent()
+}
+
+@Composable
+fun SettingsContainerContent() {
     val bluetoothDescriptionSettings = DescriptionSettings(
         title = stringResource(R.string.title_bluetooth),
         descriptionSwitch = stringResource(R.string.description_switch_bluetooth),
@@ -47,6 +55,6 @@ fun SettingsContainer() {
 @Composable
 private fun SettingsContainerPreview() = BluetoothTheme {
     Surface {
-        SettingsContainer()
+        SettingsContainerContent()
     }
 }

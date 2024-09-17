@@ -16,6 +16,7 @@ import com.example.data.bluetooth.receivers.BluetoothScanReceiver
 import com.example.data.bluetooth.receivers.BluetoothStateReceiver
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ScannerRepository
+import com.example.domain.utils.SettingsManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +29,6 @@ import javax.inject.Inject
 
 private typealias BluetoothDeviceModels = List<BluetoothDevice>
 
-private const val BLUETOOTH_SCANNER = "BLUETOOTH_REPOSITORY"
 
 @SuppressLint("MissingPermission")
 class ScannerRepositoryImpl @Inject constructor(
@@ -85,10 +85,10 @@ class ScannerRepositoryImpl @Inject constructor(
     private val _pairedDevices = MutableStateFlow<BluetoothDeviceModels>(emptyList())
     private fun findPairedDevices(): Result<Unit> {
         if (!_hasScanPermission) {
-            Log.e(BLUETOOTH_SCANNER, "No Bluetooth scan permission granted.")
+            Log.e(TAG, "No Bluetooth scan permission granted.")
             return Result.failure(SecurityException("No Bluetooth scan permission granted"))
         }
-        Log.d(BLUETOOTH_SCANNER, "Find paired devices")
+        Log.d(TAG, "Find paired devices")
         return try {
             val pairedDevices = _bluetoothAdapter?.bondedDevices ?: emptySet()
             val devicesList = pairedDevices.map { device ->
@@ -113,14 +113,14 @@ class ScannerRepositoryImpl @Inject constructor(
     private val _discoverDevices = MutableStateFlow<BluetoothDeviceModels>(emptyList())
     private fun findDiscoverDevices(): Result<Boolean> {
         if (!_hasScanPermission) {
-            Log.e(BLUETOOTH_SCANNER, "No Bluetooth scan permission granted.")
+            Log.e(TAG, "No Bluetooth scan permission granted.")
             return Result.failure(SecurityException("No Bluetooth scan permission granted"))
         }
         if (!_hasLocationPermission) {
-            Log.e(BLUETOOTH_SCANNER, "No Bluetooth Location permission granted.")
+            Log.e(TAG, "No Bluetooth Location permission granted.")
             return Result.failure(SecurityException("No Bluetooth Location permission granted"))
         }
-        Log.d(BLUETOOTH_SCANNER, "Find discover devices")
+        Log.d(TAG, "Find discover devices")
         ContextCompat.registerReceiver(
             context,
             _scanReceiver,
@@ -128,7 +128,7 @@ class ScannerRepositoryImpl @Inject constructor(
             ContextCompat.RECEIVER_EXPORTED
         )
 
-        Log.d(BLUETOOTH_SCANNER, "SCAN INITIATED")
+        Log.d(TAG, "SCAN INITIATED")
         val status = _bluetoothAdapter?.startDiscovery() ?: false
         return Result.success(status)
     }
@@ -147,7 +147,7 @@ class ScannerRepositoryImpl @Inject constructor(
         val pairedResult = findPairedDevices()
         if (pairedResult.isFailure) {
             Log.e(
-                BLUETOOTH_SCANNER,
+                TAG,
                 "Failed to find paired devices: ${pairedResult.exceptionOrNull()}"
             )
         }
@@ -155,7 +155,7 @@ class ScannerRepositoryImpl @Inject constructor(
         val discoverResult = findDiscoverDevices()
         if (discoverResult.isFailure) {
             Log.e(
-                BLUETOOTH_SCANNER,
+                TAG,
                 "Failed to discover devices: ${discoverResult.exceptionOrNull()}"
             )
         }
@@ -165,16 +165,30 @@ class ScannerRepositoryImpl @Inject constructor(
     }
 
     private fun updateDeviceList() {
-        val combinedDevices = (_pairedDevices.value + _discoverDevices.value).distinctBy { it.address }
+        val settingsManager = SettingsManager(context)
+
+        val isFilter = settingsManager.isEnabledChecked()
+        val bluetoothMask = settingsManager.getBluetoothMask()
+
+        val combinedDevices = (_pairedDevices.value + _discoverDevices.value)
+            .distinctBy { it.address }
+            .filter { device ->
+                if (isFilter) device.name.startsWith(bluetoothMask, ignoreCase = true) else true
+            }
         _bluetoothDeviceList.value = combinedDevices
     }
 
+
     override fun releaseResources() {
-        Log.d(BLUETOOTH_SCANNER, "RECEIVER REMOVED")
+        Log.d(TAG, "RECEIVER REMOVED")
         try {
             context.unregisterReceiver(_scanReceiver)
         } catch (e: Exception) {
-            Log.d(BLUETOOTH_SCANNER, "---------")
+            Log.d(TAG, "---------")
         }
+    }
+
+    companion object {
+        private val TAG = ScannerRepository::class.java.simpleName
     }
 }
