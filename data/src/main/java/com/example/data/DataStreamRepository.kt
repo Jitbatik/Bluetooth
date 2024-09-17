@@ -14,17 +14,16 @@ import javax.inject.Inject
 
 class DataStreamRepository @Inject constructor(
 ) {
-    private val tag = this::class.java.simpleName
     fun sendToStream(socket: BluetoothSocket, value: ByteArray) {
 
         try {
             socket.outputStream?.let { outputStream ->
                 outputStream.write(value)
                 outputStream.flush()
-                Log.d(tag, "Written to stream: ${value.joinToString(" ")}")
+                Log.d(TAG, "Written to stream: ${value.joinToString(" ")}")
             }
         } catch (e: IOException) {
-            Log.e(tag, "Error sending data to stream", e)
+            Log.e(TAG, "Error sending data to stream", e)
         }
     }
 
@@ -34,23 +33,27 @@ class DataStreamRepository @Inject constructor(
                 val buffer = ByteArray(1024)
                 socket.inputStream?.let { inputStream ->
                     val bytesRead = inputStream.read(buffer)
-                    Log.d(tag, "Read from stream: ${buffer.copyOf(bytesRead).joinToString(" ")}")
+                    Log.d(TAG, "Read from stream: ${buffer.copyOf(bytesRead).joinToString(" ")}")
                     if (bytesRead != -1) emit(buffer.copyOf(bytesRead))
 
                 }
             } catch (e: IOException) {
-                Log.e(tag, "Error reading data to stream", e)
+                Log.e(TAG, "Error reading data to stream", e)
                 break
             }
         }
 
     }.onCompletion {
         if (!canRead.value) {
-            Log.d(tag, "Flow completed as canRead is false")
+            Log.d(TAG, "Flow completed as canRead is false")
         } else {
-            Log.d(tag, "Flow completed successfully")
+            Log.d(TAG, "Flow completed successfully")
         }
     }
-        .catch { err -> Log.e(tag, "ERROR", err) }
+        .catch { err -> Log.e(TAG, "ERROR", err) }
         .flowOn(Dispatchers.IO)
+
+    companion object {
+        private val TAG = DataStreamRepository::class.java.simpleName
+    }
 }

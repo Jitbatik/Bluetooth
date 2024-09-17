@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val CONNECT_VIEWMODEL = "CONNECT_VIEWMODEL"
 
 @HiltViewModel
 class ConnectViewModel @Inject constructor(
@@ -42,7 +41,7 @@ class ConnectViewModel @Inject constructor(
     }
 
     private fun observeBluetoothDeviceList() {
-        Log.d(CONNECT_VIEWMODEL, "Subscribe to a stream device list")
+        Log.d(TAG, "Subscribe to a stream device list")
         viewModelScope.launch {
             scannerRepository.deviceList.collect { newDevices ->
                 _devices.value = newDevices
@@ -50,8 +49,8 @@ class ConnectViewModel @Inject constructor(
         }
     }
 
-    fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
-        Log.d(CONNECT_VIEWMODEL, "Handling connection to device")
+    private fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
+        Log.d(TAG, "Handling connection to device")
         viewModelScope.launch {
             if (_connectedDevice.value != null) {
                 connectRepository.disconnectFromDevice()
@@ -69,13 +68,24 @@ class ConnectViewModel @Inject constructor(
     }
 
 
-    fun scan() = viewModelScope.launch {
+    private fun scan() = viewModelScope.launch {
         try {
-            Log.d(CONNECT_VIEWMODEL, "Scanning for devices")
+            Log.d(TAG, "Scanning for devices")
             scannerRepository.startScan()
         } catch (exception: Exception) {
-            Log.e("ConnectViewModel", "Failed to Scanning devices", exception)
+            Log.e(TAG, "Failed to Scanning devices", exception)
         }
+    }
+
+    fun onEvents(event: BTDevicesScreenEvents) {
+        when (event) {
+            BTDevicesScreenEvents.StartScan -> scan()
+            is BTDevicesScreenEvents.ConnectToDevice -> handlerConnectionToDevice(event.device)
+        }
+    }
+
+    companion object {
+        private val TAG = ConnectViewModel::class.java.simpleName
     }
 }
 

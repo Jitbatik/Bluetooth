@@ -9,23 +9,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
-import com.example.bluetooth.presentation.view.connectcontainer.ConnectViewModel
+import com.example.bluetooth.presentation.view.connectcontainer.BTDevicesScreenEvents
+import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.domain.model.BluetoothDevice
 
 @Composable
 fun ScannerBox(
-    viewModel: ConnectViewModel,
+    deviceList: List<BluetoothDevice>,
+    connectedDevice: BluetoothDevice?,
+    onEvent: (BTDevicesScreenEvents) -> Unit,
 ) {
-    val deviceList by viewModel.devices.collectAsState()
-    val connectedDevice by viewModel.connectedDevice.collectAsState()
-
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -38,14 +41,14 @@ fun ScannerBox(
                 DeviceCard(bluetoothDevice = device,
                     isConnected = device == connectedDevice,
                     onConnect = { selectedDevice ->
-                        viewModel.handlerConnectionToDevice(bluetoothDevice = selectedDevice)
+                        onEvent(BTDevicesScreenEvents.ConnectToDevice(selectedDevice))
                     }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
         Button(
-            onClick = { viewModel.scan() },
+            onClick = { onEvent(BTDevicesScreenEvents.StartScan) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
@@ -55,16 +58,39 @@ fun ScannerBox(
     }
 }
 
+class ScannerBoxPreviewParameterProvider :
+    PreviewParameterProvider<Pair<List<BluetoothDevice>, BluetoothDevice?>> {
 
-//@PreviewLightDark
-//@Composable
-//fun ScannerBoxPreview() = BluetoothTheme {
-//
-//    Surface {
-//        ScannerBox(
-//            viewModel = mockViewModel,
-//            deviceList = listOf(BluetoothDevice(name = "Fake_Device", address = "12:34:56:78:90:AB")),
-//
-//        )
-//    }
-//}
+    override val values = sequenceOf(
+        Pair(
+            listOf(
+                BluetoothDevice("Device 1", "00:11:22:33:44:55"),
+                BluetoothDevice("Device 2", "00:11:22:33:44:66")
+            ),
+            BluetoothDevice("Device 1", "00:11:22:33:44:55")
+        ),
+        Pair(
+            listOf(
+                BluetoothDevice("Device 1", "00:11:22:33:44:55"),
+                BluetoothDevice("Device 2", "00:11:22:33:44:66")
+            ),
+            null
+        )
+    )
+}
+
+@PreviewLightDark
+@Composable
+fun ScannerBoxPreview(
+    @PreviewParameter(ScannerBoxPreviewParameterProvider::class)
+    data: Pair<List<BluetoothDevice>, BluetoothDevice?>
+) = BluetoothTheme {
+    Surface {
+        val (deviceList, connectedDevice) = data
+        ScannerBox(
+            deviceList = deviceList,
+            connectedDevice = connectedDevice,
+            onEvent = {},
+        )
+    }
+}
