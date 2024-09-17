@@ -24,7 +24,7 @@ fun MainContent(
     modifier: Modifier = Modifier,
     drawerState: CustomDrawerState,
     onDrawerClick: (CustomDrawerState) -> Unit,
-    screen: Screen
+    screen: Screen,
 ) {
     Scaffold(
         modifier = modifier,
@@ -50,7 +50,7 @@ fun MainContent(
 @Composable
 fun AppTopBar(
     title: String,
-    onDrawerClick: () -> Unit
+    onDrawerClick: () -> Unit,
 ) {
     TopAppBar(
         title = { Text(text = title) },
