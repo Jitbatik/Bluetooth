@@ -38,8 +38,6 @@ import javax.inject.Inject
 class ExchangeDataViewModel @Inject constructor(
     private val exchangeDataRepository: ExchangeDataRepository,
 ) : ViewModel() {
-    private val tag = this::class.java.simpleName
-
     private val _data = exchangeDataRepository.observeData()
         .mapToCharUI()
         .stateIn(
@@ -59,7 +57,7 @@ class ExchangeDataViewModel @Inject constructor(
 
 
     private fun returnTemplateData(): List<CharUI> {
-        Log.d(tag, "Start observe data from Bluetooth")
+        Log.d(TAG, "Start observe data from Bluetooth")
         val sentence =
             "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
@@ -81,14 +79,14 @@ class ExchangeDataViewModel @Inject constructor(
     }
 
     private fun sendData(value: ByteArray) {
-        Log.d(tag, "Send data: ${value.joinToString(" ")}")
+        Log.d(TAG, "Send data: ${value.joinToString(" ")}")
         viewModelScope.launch {
             exchangeDataRepository.sendToStream(value = value)
         }
     }
 
     fun onEvents(event: UIEvents) {
-        Log.d(tag, "An event has arrived")
+        Log.d(TAG, "An event has arrived")
         val command = generateCommand(event)
         sendData(command)
     }
@@ -118,8 +116,12 @@ class ExchangeDataViewModel @Inject constructor(
 
         val commandSuffix = commandMap[event] ?: byteArrayOf()
 
-        Log.d(tag, "Generate Command: ${commandSuffix.joinToString(" ")}")
+        Log.d(TAG, "Generate Command: ${commandSuffix.joinToString(" ")}")
 
         return baseCommand + commandSuffix
+    }
+
+    companion object {
+        private val TAG = ExchangeDataViewModel::class.java.simpleName
     }
 }

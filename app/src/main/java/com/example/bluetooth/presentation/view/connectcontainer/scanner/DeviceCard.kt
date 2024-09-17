@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.domain.model.BluetoothDevice
@@ -24,9 +26,9 @@ import com.example.domain.model.BluetoothDevice
 fun DeviceCard(
     bluetoothDevice: BluetoothDevice,
     isConnected: Boolean,
-    onConnect: (BluetoothDevice) -> Unit
+    onConnect: (BluetoothDevice) -> Unit,
 ) {
-    val cardColor =if (isConnected) Color.Green else MaterialTheme.colorScheme.surfaceVariant
+    val cardColor = if (isConnected) Color.Green else MaterialTheme.colorScheme.surfaceVariant
     val textColor = if (isConnected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant
     Card(
         colors = CardDefaults.cardColors(
@@ -47,28 +49,26 @@ fun DeviceCard(
     }
 }
 
-@PreviewLightDark
-@Composable
-fun DeviceCardNoConnectedPreview() = BluetoothTheme {
-    Surface {
-        DeviceCard(
-            bluetoothDevice = BluetoothDevice(name = "Fake_Device", address = "12.12.21"),
-            isConnected = false,
-            onConnect = {}
-        )
-    }
+
+class DeviceCardPreviewParameterProvider :
+    PreviewParameterProvider<Pair<BluetoothDevice, Boolean>> {
+    override val values = sequenceOf(
+        Pair(BluetoothDevice(name = "Device A", address = "12:34:56:78:90:AB"), true),
+        Pair(BluetoothDevice(name = "Device B", address = "98:76:54:32:10:FE"), false),
+    )
 }
 
 @PreviewLightDark
 @Composable
-fun DeviceCardConnectedPreview() = BluetoothTheme {
+fun DeviceCardNoConnectedPreview(
+    @PreviewParameter(DeviceCardPreviewParameterProvider::class)
+    deviceState: Pair<BluetoothDevice, Boolean>,
+) = BluetoothTheme {
     Surface {
+        val (device, isConnected) = deviceState
         DeviceCard(
-            bluetoothDevice = BluetoothDevice(
-                name = "Fake_Device",
-                address = "12.12.21",
-            ),
-            isConnected = true,
+            bluetoothDevice = device,
+            isConnected = isConnected,
             onConnect = {}
         )
     }

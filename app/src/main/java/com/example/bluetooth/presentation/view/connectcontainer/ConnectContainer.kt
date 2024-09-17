@@ -27,11 +27,13 @@ import com.example.bluetooth.presentation.view.connectcontainer.scanner.ScannerB
 
 @Composable
 fun ConnectContainer(
-    viewModel: ConnectViewModel = viewModel()
+    viewModel: ConnectViewModel = viewModel(),
 ) {
     val context = LocalContext.current
 
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
+    val devices by viewModel.devices.collectAsState()
+    val connectedDevice by viewModel.connectedDevice.collectAsState()
 
     var hasBluetoothPermission by remember(context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -71,7 +73,11 @@ fun ConnectContainer(
         ) { mode ->
             when (mode) {
                 BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED -> {
-                    ScannerBox(viewModel)
+                    ScannerBox(
+                        deviceList = devices,
+                        connectedDevice = connectedDevice,
+                        onEvent = viewModel::onEvents,
+                    )
                 }
 
                 BluetoothScreenType.BLUETOOTH_NOT_ENABLED -> {
