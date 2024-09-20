@@ -144,13 +144,13 @@ class ScannerRepositoryImpl @Inject constructor(
 
 
     override fun startScan(): Result<Boolean> {
-        val pairedResult = findPairedDevices()
-        if (pairedResult.isFailure) {
-            Log.e(
-                TAG,
-                "Failed to find paired devices: ${pairedResult.exceptionOrNull()}"
-            )
-        }
+        //val pairedResult = findPairedDevices()
+//        if (pairedResult.isFailure) {
+//            Log.e(
+//                TAG,
+//                "Failed to find paired devices: ${pairedResult.exceptionOrNull()}"
+//            )
+//        }
 
         val discoverResult = findDiscoverDevices()
         if (discoverResult.isFailure) {

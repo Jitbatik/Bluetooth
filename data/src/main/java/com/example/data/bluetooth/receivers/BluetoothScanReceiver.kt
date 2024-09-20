@@ -2,6 +2,7 @@ package com.example.data.bluetooth.receivers
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice as AndroidBluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,11 +13,10 @@ import androidx.core.content.PermissionChecker
 import com.example.data.bluetooth.mapper.toDomainModel
 import com.example.domain.model.BluetoothDevice
 
-private const val RECEIVER_ERROR = "RECEIVER_ERROR"
 
 @Suppress("DEPRECATION")
 class BluetoothScanReceiver(
-    private val onDevice: (BluetoothDevice) -> Unit
+    private val onDevice: (BluetoothDevice) -> Unit,
 ) : BroadcastReceiver() {
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -24,9 +24,10 @@ class BluetoothScanReceiver(
 
         val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             intent.getParcelableExtra(
-                android.bluetooth.BluetoothDevice.EXTRA_DEVICE,
-                android.bluetooth.BluetoothDevice::class.java)
-        else intent.getParcelableExtra(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
+                AndroidBluetoothDevice.EXTRA_DEVICE,
+                AndroidBluetoothDevice::class.java
+            )
+        else intent.getParcelableExtra(AndroidBluetoothDevice.EXTRA_DEVICE)
 
         val hasPermission = context?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -38,14 +39,17 @@ class BluetoothScanReceiver(
         } ?: false
 
         when {
-            hasPermission && intent.action == android.bluetooth.BluetoothDevice.ACTION_FOUND ->
-            {
+            hasPermission && intent.action == AndroidBluetoothDevice.ACTION_FOUND -> {
                 device?.toDomainModel()?.let(onDevice)
-                Log.d(RECEIVER_ERROR, "Device found: ${device?.name} (${device?.address})")
+                Log.d(TAG, "Device found: ${device?.name} (${device?.address})")
             }
 
-            !hasPermission -> Log.d(RECEIVER_ERROR, "DON'T HAVE PERMISSION")
+            !hasPermission -> Log.d(TAG, "DON'T HAVE PERMISSION")
         }
 
+    }
+
+    companion object {
+        private val TAG = BluetoothScanReceiver::class.java.simpleName
     }
 }

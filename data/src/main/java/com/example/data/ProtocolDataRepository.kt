@@ -100,7 +100,7 @@ class ProtocolDataRepository @Inject constructor(
         scope.launch {
             while (canRead.value) {
                 try {
-                    requestMissingBluetoothPackets(socket = socket, packetBuffer = packetBuffer)
+                    requestMissingBluetoothPackets(packetBuffer = packetBuffer)
                     delay(5000)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in requesting data: ${e.message}")
@@ -163,14 +163,13 @@ class ProtocolDataRepository @Inject constructor(
     /**
      *  Request missing Bluetooth  packets in [packetBuffer].
      * */
-    private suspend fun requestMissingBluetoothPackets(
-        socket: BluetoothSocket,
-        packetBuffer: List<DataPacket>,
-    ) {
+    private suspend fun requestMissingBluetoothPackets(packetBuffer: List<DataPacket>) {
         val missingIndices = findMissingPacketIndices(packetBuffer)
 
         missingIndices.forEach { missingIndex ->
             Log.d(TAG, "Missing index: $missingIndex")
+
+            val socket = getActiveBluetoothSocket() ?: return
 
             val command = byteArrayOf(
                 0xFE.toByte(),

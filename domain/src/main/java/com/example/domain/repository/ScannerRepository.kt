@@ -9,14 +9,10 @@ interface ScannerRepository {
 
     val deviceList: StateFlow<List<BluetoothDevice>>
 
-
     val isBluetoothActive: Flow<Boolean>
     //val hasBluetoothPermission:  Flow<Boolean>
-
 
     fun startScan(): Result<Boolean>
 
     fun releaseResources()
-
-
 }
