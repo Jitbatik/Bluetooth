@@ -19,19 +19,19 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindScannerRepository(
-        scannerRepository: ScannerRepositoryImpl
-    ) : ScannerRepository
+        scannerRepository: ScannerRepositoryImpl,
+    ): ScannerRepository
 
     @Binds
     @Singleton
     abstract fun bindConnectRepository(
-        connectRepository: ConnectRepositoryImpl
-    ) : ConnectRepository
+        connectRepository: ConnectRepositoryImpl,
+    ): ConnectRepository
 
     @Binds
     @Singleton
     abstract fun bindExchangeDataRepository(
-        exchangeDataRepository: ExchangeDataRepositoryImpl
-    ) : ExchangeDataRepository
+        exchangeDataRepository: ExchangeDataRepositoryImpl,
+    ): ExchangeDataRepository
 
 }

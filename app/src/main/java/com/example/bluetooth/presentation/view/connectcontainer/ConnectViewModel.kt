@@ -28,13 +28,18 @@ class ConnectViewModel @Inject constructor(
     )
     val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled
 
+
     private val _devices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val devices: StateFlow<List<BluetoothDevice>>
         get() = _devices.asStateFlow()
 
-    private val _connectedDevice = MutableStateFlow<BluetoothDevice?>(null)
-    val connectedDevice: StateFlow<BluetoothDevice?>
-        get() = _connectedDevice.asStateFlow()
+
+    private val _connectedDevice = connectRepository.getConnectedDevice().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null
+    )
+    val connectedDevice: StateFlow<BluetoothDevice?> = _connectedDevice
 
     init {
         observeBluetoothDeviceList()
@@ -54,19 +59,16 @@ class ConnectViewModel @Inject constructor(
         viewModelScope.launch {
             if (_connectedDevice.value != null) {
                 connectRepository.disconnectFromDevice()
-                _connectedDevice.value = null
             } else {
                 connectRepository.connectToDevice(
                     bluetoothDevice,
                     //connectUUID = "00000000-deca-fade-deca-deafdecacafe"
                     connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
                 )
-                _connectedDevice.value = bluetoothDevice
             }
 
         }
     }
-
 
     private fun scan() = viewModelScope.launch {
         try {
@@ -82,6 +84,13 @@ class ConnectViewModel @Inject constructor(
             BTDevicesScreenEvents.StartScan -> scan()
             is BTDevicesScreenEvents.ConnectToDevice -> handlerConnectionToDevice(event.device)
         }
+    }
+
+    override fun onCleared() {
+        scannerRepository.releaseResources()
+        connectRepository.releaseResources()
+        Log.d(TAG, "CLEARED Resources")
+        super.onCleared()
     }
 
     companion object {

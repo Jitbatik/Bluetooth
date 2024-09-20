@@ -16,7 +16,6 @@ class SettingsManager(context: Context) {
         preferences.edit().putBoolean(KEY_BLUETOOTH_ENABLED, enabled).apply()
     }
 
-
     fun isEnabledChecked(): Boolean {
         return preferences.getBoolean(KEY_BLUETOOTH_ENABLED, false)
     }
