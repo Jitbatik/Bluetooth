@@ -14,6 +14,7 @@ import androidx.core.content.PermissionChecker
 import androidx.core.content.getSystemService
 import com.example.data.bluetooth.receivers.BluetoothScanReceiver
 import com.example.data.bluetooth.receivers.BluetoothStateReceiver
+import com.example.data.bluetooth.receivers.ScanDiscoveryReceiver
 import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ScannerRepository
 import com.example.domain.utils.SettingsManager
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -66,6 +68,30 @@ class ScannerRepositoryImpl @Inject constructor(
                 context.unregisterReceiver(btModeReceiver)
             }
         }
+
+    override fun observeScanningState(): Flow<Boolean> = callbackFlow {
+        val intentFilter = IntentFilter().apply {
+            addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+            addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        }
+        val scanDiscoveryReceiver = ScanDiscoveryReceiver(
+            onchange = { isScanning ->
+                Log.d(TAG, "Scanning state changed: $isScanning")
+                trySend(isScanning).isSuccess
+            }
+        )
+
+        ContextCompat.registerReceiver(
+            context,
+            scanDiscoveryReceiver,
+            intentFilter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
+
+        awaitClose {
+            context.unregisterReceiver(scanDiscoveryReceiver)
+        }
+    }
 
     private val _hasScanPermission: Boolean
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -133,14 +159,13 @@ class ScannerRepositoryImpl @Inject constructor(
         return Result.success(status)
     }
 
-//    private fun stopScan(): Result<Boolean> {
-//        if (!_hasScanPermission)
-//            return Result.failure(SecurityException("No Bluetooth Location permission granted"))
-//        // stop discovery
-//        Log.d(BLUETOOTH_SCANNER, "SCAN CANCELED")
-//        val status = _bluetoothAdapter?.cancelDiscovery() ?: false
-//        return Result.success(status)
-//    }
+    override fun stopScan(): Result<Boolean> {
+        if (!_hasScanPermission)
+            return Result.failure(SecurityException("No Bluetooth Location permission granted"))
+        Log.d(TAG, "SCAN CANCELED")
+        val status = _bluetoothAdapter?.cancelDiscovery() ?: false
+        return Result.success(status)
+    }
 
 
     override fun startScan(): Result<Boolean> {
