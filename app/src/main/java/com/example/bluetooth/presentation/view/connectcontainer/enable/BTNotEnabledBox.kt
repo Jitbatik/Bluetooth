@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.view.connectcontainer
+package com.example.bluetooth.presentation.view.connectcontainer.enable
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

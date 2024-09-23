@@ -1,4 +1,4 @@
-package com.example.nativeappjetpaccompouse.presentation.components
+package com.example.bluetooth.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -19,15 +20,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.model.NavigationItem
+import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
 fun NavigationItemView(
     navigationItem: NavigationItem,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -58,3 +61,17 @@ fun NavigationItemView(
         )
     }
 }
+
+//@PreviewLightDark
+//@Composable
+//fun NavigationItemViewPreview() = BluetoothTheme {
+//    Surface {
+//        NavigationItem.entries.toTypedArray().takeLast(2).forEach { navigationItem ->
+//            NavigationItemView(
+//                navigationItem = navigationItem,
+//                selected = true,
+//                onClick = { },
+//            )
+//        }
+//    }
+//}

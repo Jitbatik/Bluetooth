@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,9 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bluetooth.presentation.view.connectcontainer.scanner.AnimatedButton
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.utils.UIEvents
 
@@ -46,9 +45,15 @@ fun ButtonFBox(
                     .clip(RectangleShape)
                     .background(Color.Gray)
             ) {
-                Button(
+                AnimatedButton(
+                    buttonColor = Color.Gray,
+                    buttonContentColor = Color.White,
+                    shadowColor = Color.DarkGray,
+                    shadowBottomOffset = 12f,
+                    buttonHeight = 50f,
+                    shape = RoundedCornerShape(0.dp),
                     onClick = {
-                        val event = when(index) {
+                        val event = when (index) {
                             0 -> UIEvents.ClickButtonF1
                             1 -> UIEvents.ClickButtonF2
                             2 -> UIEvents.ClickButtonF3
@@ -61,14 +66,6 @@ fun ButtonFBox(
                         }
                         onEvent(event)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(0.dp),
-                    shape = RectangleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray,
-                        contentColor = Color.Black
-                    )
                 ) {
                     Text(
                         text = "F${index + 1}",
@@ -80,7 +77,7 @@ fun ButtonFBox(
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun ButtonFBoxPreview() = BluetoothTheme {
     Surface {

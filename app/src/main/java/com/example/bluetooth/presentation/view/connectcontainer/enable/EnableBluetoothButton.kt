@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.view.connectcontainer
+package com.example.bluetooth.presentation.view.connectcontainer.enable
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Spacer

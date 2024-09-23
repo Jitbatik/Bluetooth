@@ -1,4 +1,4 @@
-package com.example.nativeappjetpaccompouse.presentation.screen
+package com.example.bluetooth.presentation.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
@@ -20,16 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.model.isOpened
 import com.example.bluetooth.presentation.MainContent
-import com.example.nativeappjetpaccompouse.presentation.components.Drawer
+import com.example.bluetooth.presentation.components.Drawer
 import kotlin.math.roundToInt
 
-@Preview(showSystemUi = true)
 @Composable
 fun MainScreen() {
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }

@@ -28,6 +28,12 @@ class ConnectViewModel @Inject constructor(
     )
     val isBluetoothEnabled: StateFlow<Boolean> = _isBluetoothEnabled
 
+    private val _isScanning = scannerRepository.observeScanningState().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+    val isScanning = _isScanning
 
     private val _devices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val devices: StateFlow<List<BluetoothDevice>>
@@ -70,7 +76,7 @@ class ConnectViewModel @Inject constructor(
         }
     }
 
-    private fun scan() = viewModelScope.launch {
+    private fun startScan() = viewModelScope.launch {
         try {
             Log.d(TAG, "Scanning for devices")
             scannerRepository.startScan()
@@ -79,10 +85,20 @@ class ConnectViewModel @Inject constructor(
         }
     }
 
-    fun onEvents(event: BTDevicesScreenEvents) {
+    private fun stopScan() = viewModelScope.launch {
+        try {
+            Log.d(TAG, "Stop Scanning for devices")
+            scannerRepository.stopScan()
+        } catch (exception: Exception) {
+            Log.e(TAG, "Failed to stopped Scanning devices", exception)
+        }
+    }
+
+    fun onEvents(event: ConnectContainerEvents) {
         when (event) {
-            BTDevicesScreenEvents.StartScan -> scan()
-            is BTDevicesScreenEvents.ConnectToDevice -> handlerConnectionToDevice(event.device)
+            ConnectContainerEvents.StartScan -> startScan()
+            ConnectContainerEvents.StopScan -> stopScan()
+            is ConnectContainerEvents.ConnectToDevice -> handlerConnectionToDevice(event.device)
         }
     }
 

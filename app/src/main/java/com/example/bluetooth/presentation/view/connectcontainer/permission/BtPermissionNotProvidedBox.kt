@@ -43,7 +43,6 @@ fun BtPermissionNotProvidedBox(
     }
 }
 
-
 @PreviewLightDark
 @Composable
 private fun BTPermissionNotProvidedPreview() = BluetoothTheme {

@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.model.BluetoothScreenType
+import com.example.bluetooth.presentation.view.connectcontainer.enable.BTNotEnabledBox
 import com.example.bluetooth.presentation.view.connectcontainer.permission.BtPermissionNotProvidedBox
 import com.example.bluetooth.presentation.view.connectcontainer.scanner.ScannerBox
 
@@ -34,6 +35,7 @@ fun ConnectContainer(
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
     val devices by viewModel.devices.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
+    val isScanning by viewModel.isScanning.collectAsState()
 
     var hasBluetoothPermission by remember(context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -76,6 +78,7 @@ fun ConnectContainer(
                     ScannerBox(
                         deviceList = devices,
                         connectedDevice = connectedDevice,
+                        isScanning = isScanning,
                         onEvent = viewModel::onEvents,
                     )
                 }

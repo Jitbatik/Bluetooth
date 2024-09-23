@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation
+package com.example.bluetooth.presentation.view.connectcontainer.permission
 
 import android.content.Context
 import android.content.Intent
@@ -16,15 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.connectcontainer.permission.TextPermissionProvider
-import com.example.bluetooth.presentation.view.connectcontainer.permission.TextProvider
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
 fun CustomDialog(
     textProvider: TextProvider,
     openDialog: MutableState<Boolean>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
 
     val context = LocalContext.current

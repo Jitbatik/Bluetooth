@@ -4,10 +4,10 @@ import androidx.annotation.DrawableRes
 import com.example.bluetooth.R
 import com.example.bluetooth.presentation.components.Screen
 
-enum class NavigationItem (
+enum class NavigationItem(
     val screen: Screen,
     val title: String,
-    @DrawableRes val icon: Int
+    @DrawableRes val icon: Int,
 ) {
     Home(
         screen = Screen.Home,

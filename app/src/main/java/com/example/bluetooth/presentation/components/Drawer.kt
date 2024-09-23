@@ -1,4 +1,4 @@
-package com.example.nativeappjetpaccompouse.presentation.components
+package com.example.bluetooth.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,19 +14,22 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
 import com.example.bluetooth.model.NavigationItem
+import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
 fun Drawer(
     selectedNavigationItem: NavigationItem,
     onNavigationItemClick: (NavigationItem) -> Unit,
-    onCloseClick: () -> Unit
+    onCloseClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -72,5 +75,17 @@ fun Drawer(
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@PreviewLightDark
+@Composable
+fun DrawerPreview() = BluetoothTheme {
+    Surface {
+//        Drawer(
+//            selectedNavigationItem = ,
+//            onNavigationItemClick = { },
+//            onCloseClick = { }
+//        )
     }
 }
