@@ -41,7 +41,6 @@ fun BluetoothPermissionButton(
         )
     }
 
-
     val openDialog = remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()

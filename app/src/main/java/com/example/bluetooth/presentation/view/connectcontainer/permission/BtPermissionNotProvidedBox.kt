@@ -19,7 +19,7 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 @Composable
 fun BtPermissionNotProvidedBox(
     onPermissionChanged: (Boolean) -> Unit = {},
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     Column(
         modifier = modifier,
@@ -38,6 +38,7 @@ fun BtPermissionNotProvidedBox(
             textAlign = TextAlign.Center
         )
         BluetoothPermissionButton(
+            modifier = Modifier.padding(top = 8.dp),
             onResults = onPermissionChanged
         )
     }

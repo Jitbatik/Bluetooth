@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,10 +47,13 @@ fun ButtonFBox(
                     .background(Color.Gray)
             ) {
                 AnimatedButton(
-                    buttonColor = Color.Gray,
-                    buttonContentColor = Color.White,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = Color.Gray,
+                        contentColor = Color.Black,
+                    ),
                     shadowColor = Color.DarkGray,
-                    shadowBottomOffset = 12f,
+                    shadowBottomOffset = 5f,
                     buttonHeight = 50f,
                     shape = RoundedCornerShape(0.dp),
                     onClick = {

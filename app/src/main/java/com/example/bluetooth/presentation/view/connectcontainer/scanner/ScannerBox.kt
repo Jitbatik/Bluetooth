@@ -51,7 +51,7 @@ fun ScannerBox(
             isScanning = isScanning,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(all = 16.dp)
+                .padding(all = 8.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(18.dp)
