@@ -7,9 +7,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,17 +21,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 @Composable
 fun AnimatedButton(
-    buttonColor: Color = Color.Unspecified,
-    buttonContentColor: Color = Color.Unspecified,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = ButtonDefaults.textButtonColors(
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        containerColor = MaterialTheme.colorScheme.primary,
+    ),
     shadowColor: Color,
     shadowBottomOffset: Float,
     buttonHeight: Float = 0f,
-    shape: RoundedCornerShape = RoundedCornerShape(0),
+    shape: Shape = ButtonDefaults.shape,
     border: BorderStroke? = null,
     onClick: () -> Unit,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
@@ -42,7 +47,8 @@ fun AnimatedButton(
         label = ""
     )
     val animatedButtonPadding by animateDpAsState(
-        targetValue = if (isPressed) (shadowBottomOffset * 0.5).dp else 0.dp, label = ""
+        targetValue = if (isPressed) (shadowBottomOffset * 0.5).dp else 0.dp,
+        label = ""
     )
 
     LaunchedEffect(isPressed) {
@@ -53,11 +59,9 @@ fun AnimatedButton(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(buttonHeight.dp + shadowBottomOffset.dp)
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
     ) {
-
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -76,8 +80,8 @@ fun AnimatedButton(
                 pressedElevation = 0.dp,
             ),
             colors = ButtonDefaults.buttonColors(
-                containerColor = buttonColor,
-                contentColor = buttonContentColor,
+                containerColor = colors.containerColor,
+                contentColor = colors.contentColor,
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,4 +96,3 @@ fun AnimatedButton(
         }
     }
 }
-
