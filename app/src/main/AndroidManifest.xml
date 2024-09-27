@@ -4,14 +4,18 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:required="false" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Для Android 12 и выше -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:required="false"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" android:required="false"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:required="false"/>
-
-
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:required="false" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:required="false" />
 
 
     <application

@@ -32,25 +32,40 @@ fun ConnectContainer(
 ) {
     val context = LocalContext.current
 
+    // с этим надо что-то делать
     val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
     val devices by viewModel.devices.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
 
-    var hasBluetoothPermission by remember(context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.BLUETOOTH_SCAN
-                ) == PermissionChecker.PERMISSION_GRANTED
+    val requiredPermissions = mutableListOf<String>()
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        requiredPermissions.addAll(
+            listOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.ACCESS_FINE_LOCATION,
             )
-        else {
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PermissionChecker.PERMISSION_GRANTED
+        )
+    } else {
+        requiredPermissions.addAll(
+            listOf(
+                //12(API 31)+
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.ACCESS_FINE_LOCATION,
             )
-        }
+        )
+    }
+
+    var hasBluetoothPermission by remember {
+        mutableStateOf(
+            requiredPermissions.all { permission ->
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission
+                ) == PermissionChecker.PERMISSION_GRANTED
+            }
+        )
     }
 
     val screenType by remember(hasBluetoothPermission, isBluetoothEnabled) {
@@ -91,6 +106,7 @@ fun ConnectContainer(
 
                 BluetoothScreenType.BLUETOOTH_PERMISSION_DENIED -> {
                     BtPermissionNotProvidedBox(
+                        requiredPermissions = requiredPermissions,
                         onPermissionChanged = { hasBluetoothPermission = it },
                         modifier = Modifier.padding(12.dp)
                     )

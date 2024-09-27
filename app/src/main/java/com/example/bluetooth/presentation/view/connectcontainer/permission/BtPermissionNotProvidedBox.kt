@@ -18,6 +18,7 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
 fun BtPermissionNotProvidedBox(
+    requiredPermissions: List<String>,
     onPermissionChanged: (Boolean) -> Unit = {},
     modifier: Modifier,
 ) {
@@ -38,6 +39,7 @@ fun BtPermissionNotProvidedBox(
             textAlign = TextAlign.Center
         )
         BluetoothPermissionButton(
+            requiredPermissions = requiredPermissions,
             modifier = Modifier.padding(top = 8.dp),
             onResults = onPermissionChanged
         )
@@ -48,6 +50,9 @@ fun BtPermissionNotProvidedBox(
 @Composable
 private fun BTPermissionNotProvidedPreview() = BluetoothTheme {
     Surface {
-        BtPermissionNotProvidedBox(modifier = Modifier.padding(16.dp))
+        BtPermissionNotProvidedBox(
+            requiredPermissions = emptyList(),
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

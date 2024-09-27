@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -169,6 +168,9 @@ class ScannerRepositoryImpl @Inject constructor(
 
 
     override fun startScan(): Result<Boolean> {
+        _pairedDevices.value = emptyList()
+        _discoverDevices.value = emptyList()
+        _bluetoothDeviceList.value = emptyList()
         //val pairedResult = findPairedDevices()
 //        if (pairedResult.isFailure) {
 //            Log.e(
