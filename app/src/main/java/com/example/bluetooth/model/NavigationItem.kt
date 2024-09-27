@@ -16,7 +16,7 @@ enum class NavigationItem(
     ),
     Profile(
         screen = Screen.Connect,
-        icon = R.drawable.icon_home,
+        icon = R.drawable.icon_bluetooth,
         title = "Connect"
     ),
     Settings(

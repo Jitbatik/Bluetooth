@@ -6,10 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -31,7 +29,6 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 @Composable
 fun AnimatedScanButton(
     isScanning: Boolean,
-    modifier: Modifier = Modifier,
     onEvent: (ConnectContainerEvents) -> Unit,
     style: TextStyle = MaterialTheme.typography.titleMedium,
     colors: ButtonColors = ButtonDefaults.textButtonColors(
@@ -42,14 +39,12 @@ fun AnimatedScanButton(
     Box(
         contentAlignment = Alignment.Center,
     ) {
-
-
         AnimatedButton(
-            modifier = modifier,
             colors = colors,
             shadowColor = Color.DarkGray,
-            shadowBottomOffset = 5f,
+            shadowBottomOffset = 12f,
             buttonHeight = 50f,
+            isPressed = isScanning,
             shape = RoundedCornerShape(18.dp),
             onClick = {
                 if (isScanning) {
@@ -95,21 +90,14 @@ fun AnimatedScanButton(
 
 @PreviewLightDark
 @Composable
-fun ScannerBoxPreview(
+fun AnimatedScanButtonPreview(
 //    @PreviewParameter(ScannerBoxPreviewParameterProvider::class)
 //    data: Pair<List<BluetoothDevice>, BluetoothDevice?>,
 ) = BluetoothTheme {
     Surface {
         //val (deviceList, connectedDevice) = data
         AnimatedScanButton(
-            isScanning = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(all = 16.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.inversePrimary,
-                    shape = RoundedCornerShape(18.dp)
-                ),
+            isScanning = false,
             onEvent = {},
         )
     }

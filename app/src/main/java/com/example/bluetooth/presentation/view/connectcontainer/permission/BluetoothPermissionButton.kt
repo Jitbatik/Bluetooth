@@ -1,7 +1,6 @@
 package com.example.bluetooth.presentation.view.connectcontainer.permission
 
-import android.Manifest
-import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
@@ -21,32 +20,29 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 fun BluetoothPermissionButton(
     modifier: Modifier = Modifier,
     onResults: (Boolean) -> Unit = {},
+    requiredPermissions: List<String>,
 ) {
-
-    val requiredPermissions = mutableListOf<String>()
-    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S) {
-        requiredPermissions.addAll(
-            listOf(
-                Manifest.permission.BLUETOOTH,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        )
-    } else {
-        requiredPermissions.addAll(
-            listOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION // for scan new device
-            )
-        )
-    }
-
     val openDialog = remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { perms ->
         val hasBothPermission = requiredPermissions.all { perms[it] == true }
-        onResults(hasBothPermission)
+        if (hasBothPermission) {
+            onResults(true)
+        } else {
+            openDialog.value = true
+            Log.d("BluetoothPermissionButton", "Permissions not granted")
+            onResults(false)
+        }
+    }
+
+
+    if (openDialog.value) {
+        CustomDialog(
+            textProvider = TextPermissionProvider(),
+            openDialog = openDialog,
+            modifier = Modifier
+        )
     }
 
     Button(
@@ -59,19 +55,14 @@ fun BluetoothPermissionButton(
         Spacer(modifier = Modifier.width(2.dp))
         Text(text = "Allow Permissions")
     }
-
-    if (openDialog.value) {
-        CustomDialog(
-            textProvider = TextPermissionProvider(),
-            openDialog = openDialog,
-            modifier = Modifier
-        )
-    }
 }
 
 
 @PreviewLightDark
 @Composable
 private fun BluetoothPermissionButtonPreview() = BluetoothTheme {
-    BluetoothPermissionButton(onResults = {})
+    BluetoothPermissionButton(
+        onResults = {},
+        requiredPermissions = emptyList()
+    )
 }
