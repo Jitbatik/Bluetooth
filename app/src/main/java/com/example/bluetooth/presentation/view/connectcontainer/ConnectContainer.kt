@@ -25,18 +25,12 @@ import com.example.bluetooth.presentation.view.connectcontainer.enable.BTNotEnab
 import com.example.bluetooth.presentation.view.connectcontainer.permission.BtPermissionNotProvidedBox
 import com.example.bluetooth.presentation.view.connectcontainer.scanner.ScannerBox
 
-
 @Composable
 fun ConnectContainer(
     viewModel: ConnectViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-
-    // с этим надо что-то делать
-    val isBluetoothEnabled by viewModel.isBluetoothEnabled.collectAsState()
-    val devices by viewModel.devices.collectAsState()
-    val connectedDevice by viewModel.connectedDevice.collectAsState()
-    val isScanning by viewModel.isScanning.collectAsState()
+    val screenUiState by viewModel.connectContainerUiState.collectAsState()
 
     val requiredPermissions = mutableListOf<String>()
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -68,11 +62,11 @@ fun ConnectContainer(
         )
     }
 
-    val screenType by remember(hasBluetoothPermission, isBluetoothEnabled) {
+    val screenType by remember(hasBluetoothPermission, screenUiState.isBluetoothEnabled) {
         derivedStateOf {
             when {
-                hasBluetoothPermission && isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED
-                hasBluetoothPermission && !isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_NOT_ENABLED
+                hasBluetoothPermission && screenUiState.isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED
+                hasBluetoothPermission && !screenUiState.isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_NOT_ENABLED
                 else -> BluetoothScreenType.BLUETOOTH_PERMISSION_DENIED
             }
         }
@@ -91,9 +85,9 @@ fun ConnectContainer(
             when (mode) {
                 BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED -> {
                     ScannerBox(
-                        deviceList = devices,
-                        connectedDevice = connectedDevice,
-                        isScanning = isScanning,
+                        deviceList = screenUiState.devices,
+                        connectedDevice = screenUiState.connectedDevice,
+                        isScanning = screenUiState.isScanning,
                         onEvent = viewModel::onEvents,
                     )
                 }
@@ -115,14 +109,3 @@ fun ConnectContainer(
         }
     }
 }
-
-//@PreviewLightDark
-//@Composable
-//fun DeviceCardPreview() = BluetoothTheme {
-//    Surface {
-//        DeviceCard(
-//            bluetoothDevice = BluetoothDevice(name = "Fake_Device", address = "12.12.21"),
-//            viewModel = viewModel()
-//        )
-//    }
-//}
