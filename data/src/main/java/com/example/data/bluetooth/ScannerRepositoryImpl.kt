@@ -69,6 +69,7 @@ class ScannerRepositoryImpl @Inject constructor(
         }
 
     override fun observeScanningState(): Flow<Boolean> = callbackFlow {
+        trySend(false)
         val intentFilter = IntentFilter().apply {
             addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
