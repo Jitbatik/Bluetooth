@@ -29,6 +29,8 @@ class ProtocolDataRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
     private val dataStreamRepository: DataStreamRepository,
 ) {
+    private val tag = ProtocolDataRepository::class.java.simpleName
+
     private val _bluetoothDataPacketsFlow = MutableStateFlow<List<DataPacket>>(emptyList())
 
     /**
@@ -77,7 +79,7 @@ class ProtocolDataRepository @Inject constructor(
         val packetBuffer = mutableListOf<DataPacket>()
 
         scope.launch {
-            Log.d(TAG, "Processing incoming data")
+            Log.d(tag, "Processing incoming data")
             try {
                 dataStreamRepository.readFromStream(socket = socket, canRead = canRead)
                     .cancellable()
@@ -85,13 +87,13 @@ class ProtocolDataRepository @Inject constructor(
                     .collect {
                         packetBuffer.add(it.mapToDataPacket())
                         if (packetBuffer.size == MAX_PACKET_SIZE) {
-                            Log.d(TAG, "Data packet assembled")
+                            Log.d(tag, "Data packet assembled")
                             processAndStorePackets(packetBuffer)
                             packetBuffer.clear()
                         }
                     }
             } catch (e: Exception) {
-                Log.e(TAG, "Error in reading stream: ${e.message}")
+                Log.e(tag, "Error in reading stream: ${e.message}")
             } finally {
                 canRead.value = false
             }
@@ -101,9 +103,9 @@ class ProtocolDataRepository @Inject constructor(
             while (canRead.value) {
                 try {
                     requestMissingBluetoothPackets(packetBuffer = packetBuffer)
-                    delay(5000)
+                    //delay(4000)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error in requesting data: ${e.message}")
+                    Log.e(tag, "Error in requesting data: ${e.message}")
                     canRead.value = false
                 }
             }
@@ -167,7 +169,7 @@ class ProtocolDataRepository @Inject constructor(
         val missingIndices = findMissingPacketIndices(packetBuffer)
 
         missingIndices.forEach { missingIndex ->
-            Log.d(TAG, "Missing index: $missingIndex")
+            Log.d(tag, "Missing index: $missingIndex")
 
             val socket = getActiveBluetoothSocket() ?: return
 
@@ -189,7 +191,7 @@ class ProtocolDataRepository @Inject constructor(
         }
 
         if (missingIndices.isEmpty()) {
-            Log.d(TAG, "No missing indices")
+            Log.d(tag, "No missing indices")
         }
     }
 
@@ -211,6 +213,5 @@ class ProtocolDataRepository @Inject constructor(
     companion object {
         private const val MAX_PACKET_SIZE = 20
         private const val RETRY_DELAY_MS = 100L
-        private val TAG = ProtocolDataRepository::class.java.simpleName
     }
 }

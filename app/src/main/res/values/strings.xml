@@ -17,4 +17,8 @@
     <string name="button_help_box_button_label_f">F</string>
     <string name="button_help_box_button_label_up_arrow">▲</string>
     <string name="button_help_box_button_label_down_arrow">▼</string>
+    <string name="navigation_item_home">Home</string>
+    <string name="navigation_item_connect">Connect</string>
+    <string name="navigation_item_settings">Settings</string>
+    <string name="log_history_title">Логи приложения</string>
 </resources>

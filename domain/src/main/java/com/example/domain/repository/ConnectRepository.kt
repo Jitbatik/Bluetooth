@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface ConnectRepository {
     fun getConnectedDevice(): Flow<BluetoothDevice?>
-
     suspend fun connectToDevice(
         bluetoothDevice: BluetoothDevice,
         connectUUID: String,
@@ -13,6 +12,5 @@ interface ConnectRepository {
     ): Result<Boolean>
 
     fun disconnectFromDevice(): Result<Unit>
-
     fun releaseResources()
 }

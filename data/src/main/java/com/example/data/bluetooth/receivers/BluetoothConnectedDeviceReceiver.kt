@@ -15,6 +15,8 @@ import com.example.domain.model.BluetoothDevice as DomainBluetoothDevice
 class BluetoothConnectedDeviceReceiver(
     private val onDevice: (DomainBluetoothDevice?) -> Unit,
 ) : BroadcastReceiver() {
+    private val tag = BluetoothConnectedDeviceReceiver::class.java.simpleName
+
     @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent == null) return
@@ -26,18 +28,15 @@ class BluetoothConnectedDeviceReceiver(
         when (intent.action) {
             BluetoothDevice.ACTION_ACL_CONNECTED -> {
                 device?.toDomainModel()?.let(onDevice)
-                Log.d(TAG, "Connected device: ${device?.name} (${device?.address})")
+                Log.d(tag, "Connected device: ${device?.name} (${device?.address})")
             }
 
             BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
                 onDevice(null)
                 //device?.toDomainModel()?.let(onDevice)
-                Log.d(TAG, "Disconnected device")
+                Log.d(tag, "Disconnected device")
             }
         }
     }
 
-    companion object {
-        private val TAG = BluetoothConnectedDeviceReceiver::class.java.simpleName
-    }
 }

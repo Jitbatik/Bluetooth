@@ -18,10 +18,9 @@ import com.example.domain.model.BluetoothDevice
 import com.example.domain.repository.ConnectRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
@@ -39,34 +38,25 @@ class ConnectRepositoryImpl @Inject constructor(
     private val _bluetoothAdapter: BluetoothAdapter?
         get() = _bluetoothManager?.adapter
 
-    private val _connectedDevice = MutableStateFlow<BluetoothDevice?>(null)
-    override fun getConnectedDevice(): Flow<BluetoothDevice?> {
-        return _connectedDevice.asStateFlow()
-    }
-
-    private val _receiverConnectedDevice = BluetoothConnectedDeviceReceiver { device ->
-        _connectedDevice.update { device }
-    }
-
-    init {
-        setRemoteConnectionReceiver()
-    }
-
-    private fun setRemoteConnectionReceiver() {
+    override fun getConnectedDevice(): Flow<BluetoothDevice?> = callbackFlow {
         Log.d(TAG, "Start connection receiver")
-
-        val filters = IntentFilter().apply {
-            //addAction(android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        trySend(null)
+        val intentFilter = IntentFilter().apply {
             addAction(AndroidBluetoothDevice.ACTION_ACL_CONNECTED)
             addAction(AndroidBluetoothDevice.ACTION_ACL_DISCONNECTED)
         }
-
+        val receiverConnectedDevice = BluetoothConnectedDeviceReceiver { device ->
+            trySend(device)
+        }
         ContextCompat.registerReceiver(
             context,
-            _receiverConnectedDevice,
-            filters,
+            receiverConnectedDevice,
+            intentFilter,
             ContextCompat.RECEIVER_EXPORTED
         )
+        awaitClose {
+            context.unregisterReceiver(receiverConnectedDevice)
+        }
     }
 
     private val _hasBtPermission: Boolean
@@ -142,7 +132,7 @@ class ConnectRepositoryImpl @Inject constructor(
     override fun releaseResources() {
         Log.d(TAG, "RECEIVER REMOVED")
         try {
-            context.unregisterReceiver(_receiverConnectedDevice)
+            //context.unregisterReceiver(_receiverConnectedDevice)
             //_isConnectReceiverRegistered = false
         } catch (e: Exception) {
             Log.d(TAG, "---------")
