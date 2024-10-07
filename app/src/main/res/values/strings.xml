@@ -21,4 +21,7 @@
     <string name="navigation_item_connect">Connect</string>
     <string name="navigation_item_settings">Settings</string>
     <string name="log_history_title">Логи приложения</string>
+    <string name="text_provider_title_bluetooth">Пожалуйста, предоставьте разрешения</string>
+    <string name="text_provider_description_bluetooth">Приложению для сканирования и подключения требуются разрешения на эти действия. После обновите экран.</string>
+    <string name="text_provider_button_bluetooth">Перейти в настройки</string>
 </resources>

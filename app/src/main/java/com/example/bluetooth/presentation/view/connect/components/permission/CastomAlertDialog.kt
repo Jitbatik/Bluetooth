@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.ui.theme.BluetoothTheme
@@ -44,18 +45,14 @@ fun CustomDialog(
                         openAppSettings(context = context)
                     }
                 ) {
-                    Text(textProvider.buttonText, fontSize = 22.sp)
+                    Text(stringResource(id = textProvider.buttonText), fontSize = 22.sp)
                 }
             },
             title = {
-                Text(
-                    text = textProvider.title,
-                )
+                Text(stringResource(id = textProvider.title))
             },
             text = {
-                Text(
-                    text = textProvider.description
-                )
+                Text(stringResource(id = textProvider.description))
             },
             modifier = modifier
         )
