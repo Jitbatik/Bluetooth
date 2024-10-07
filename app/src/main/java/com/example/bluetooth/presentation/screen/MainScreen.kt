@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.model.isOpened
-import com.example.bluetooth.presentation.MainContent
-import com.example.bluetooth.presentation.components.Drawer
+import com.example.bluetooth.presentation.Content
+import com.example.bluetooth.presentation.screen.components.Drawer
 import kotlin.math.roundToInt
 
 @Composable
@@ -70,7 +70,7 @@ fun MainScreen() {
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed }
         )
-        MainContent(
+        Content(
             modifier = Modifier
                 .offset(x = animatedOffset)
                 .scale(scale = animatedScale),
@@ -80,4 +80,3 @@ fun MainScreen() {
         )
     }
 }
-
