@@ -6,6 +6,7 @@ import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.model.CharData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -25,18 +26,18 @@ import javax.inject.Inject
  * Repository for processing data via
  * [BluetoothSocket] using the UART protocol.
  * */
-class ProtocolDataRepository @Inject constructor(
+class ProtocolUARTDataRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
     private val dataStreamRepository: DataStreamRepository,
 ) {
-    private val tag = ProtocolDataRepository::class.java.simpleName
+    private val tag = ProtocolUARTDataRepository::class.java.simpleName
 
-    private val _bluetoothDataPacketsFlow = MutableStateFlow<List<DataPacket>>(emptyList())
+    private val _bluetoothUARTPacketsFlow = MutableStateFlow<List<UARTPacket>>(emptyList())
 
     /**
      * Subscribe data from Bluetooth.
      * */
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun observeBluetoothDataFlow(): Flow<List<CharData>> {
         return observeSocketState()
             .onEach { socketState ->
@@ -44,7 +45,7 @@ class ProtocolDataRepository @Inject constructor(
                 if (socketState) processIncomingBluetoothData()
             }
             .flatMapLatest {
-                _bluetoothDataPacketsFlow
+                _bluetoothUARTPacketsFlow
                     .filter { it.size == MAX_PACKET_SIZE }
                     .map { it.mapToListCharData() }
             }
@@ -60,9 +61,9 @@ class ProtocolDataRepository @Inject constructor(
     }
 
     /**
-     * Mapping list [DataPacket] to list [CharData].
+     * Mapping list [UARTPacket] to list [CharData].
      * */
-    private fun List<DataPacket>.mapToListCharData(): List<CharData> {
+    private fun List<UARTPacket>.mapToListCharData(): List<CharData> {
         return this.flatMap { it.dataBytes }.map {
             CharData(charByte = it, colorByte = 1.toByte(), backgroundByte = 0.toByte())
         }
@@ -76,7 +77,7 @@ class ProtocolDataRepository @Inject constructor(
         val canRead = MutableStateFlow(true)
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-        val packetBuffer = mutableListOf<DataPacket>()
+        val packetBuffer = mutableListOf<UARTPacket>()
 
         scope.launch {
             Log.d(tag, "Processing incoming data")
@@ -119,33 +120,33 @@ class ProtocolDataRepository @Inject constructor(
         val socket = bluetoothSocketProvider.bluetoothSocket.value
         if (socket == null || !socket.isConnected) {
             val error = "Socket is ${if (socket == null) "null" else "not connected"}"
-            Log.d("ttt", error)
+            Log.d(tag, error)
             return null
         }
         return socket
     }
 
     /**
-     * Mapping a [ByteArray] to a [DataPacket].
+     * Mapping a [ByteArray] to a [UARTPacket].
      * */
-    private fun ByteArray.mapToDataPacket(): DataPacket {
+    private fun ByteArray.mapToDataPacket(): UARTPacket {
         val index = this[5].toInt()
         val listByte = this.drop(6)
-        return DataPacket(index = index, dataBytes = listByte)
+        return UARTPacket(index = index, dataBytes = listByte)
     }
 
     /**
      * Process and store packets in the [packetBuffer].
      * */
-    private fun processAndStorePackets(packetBuffer: List<DataPacket>) =
+    private fun processAndStorePackets(packetBuffer: List<UARTPacket>) =
         packetBuffer.forEach { updateDataPacket(it) }
 
     /**
-     * Add or update a data packet in the [_bluetoothDataPacketsFlow].
+     * Add or update a data packet in the [_bluetoothUARTPacketsFlow].
      * Checks data for overwriting.
      * */
-    private fun updateDataPacket(data: DataPacket) {
-        _bluetoothDataPacketsFlow.update { currentList ->
+    private fun updateDataPacket(data: UARTPacket) {
+        _bluetoothUARTPacketsFlow.update { currentList ->
             val mutableList = currentList.toMutableList()
 
             val existingIndex = mutableList.indexOfFirst { it.index == data.index }
@@ -165,7 +166,7 @@ class ProtocolDataRepository @Inject constructor(
     /**
      *  Request missing Bluetooth  packets in [packetBuffer].
      * */
-    private suspend fun requestMissingBluetoothPackets(packetBuffer: List<DataPacket>) {
+    private suspend fun requestMissingBluetoothPackets(packetBuffer: List<UARTPacket>) {
         val missingIndices = findMissingPacketIndices(packetBuffer)
 
         missingIndices.forEach { missingIndex ->
@@ -198,7 +199,7 @@ class ProtocolDataRepository @Inject constructor(
     /**
      *  Find the  missing packet indices.
      * */
-    private fun findMissingPacketIndices(packetBuffer: List<DataPacket>): List<Int> {
+    private fun findMissingPacketIndices(packetBuffer: List<UARTPacket>): List<Int> {
         val requiredIndices = (0 until MAX_PACKET_SIZE).toSet()
         val presentIndices = packetBuffer.map { it.index }.toSet()
 
