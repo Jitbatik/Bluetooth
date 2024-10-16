@@ -20,7 +20,8 @@ class DataStreamRepository @Inject constructor(
             socket.outputStream?.let { outputStream ->
                 outputStream.write(value)
                 outputStream.flush()
-                Log.d(TAG, "Written to stream: ${value.joinToString(" ")}")
+                val unsignedBytes = value.map { it.toUByte() }
+                Log.d(TAG, "Written to stream: ${unsignedBytes.joinToString(" ")}")
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error sending data to stream", e)
@@ -33,9 +34,9 @@ class DataStreamRepository @Inject constructor(
                 val buffer = ByteArray(1024)
                 socket.inputStream?.let { inputStream ->
                     val bytesRead = inputStream.read(buffer)
-                    Log.d(TAG, "Read from stream: ${buffer.copyOf(bytesRead).joinToString(" ")}")
+                    val unsignedBytes = buffer.copyOf(bytesRead).map { it.toUByte() }
+                    Log.d(TAG, "Read from stream: ${unsignedBytes.joinToString(" ")}")
                     if (bytesRead != -1) emit(buffer.copyOf(bytesRead))
-
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Error reading data to stream", e)

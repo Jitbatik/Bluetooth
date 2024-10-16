@@ -45,16 +45,16 @@ private fun Home(
         contentAlignment = Alignment.Center
     ) {
         Column {
-            ButtonFBox(
-                buttonType = true,
-                onEvent = onEvents
-            )
+//            ButtonFBox(
+//                buttonType = true,
+//                onEvent = onEvents
+//            )
             TerminalDataBox(data, 4)
             ButtonFBox(
                 buttonType = false,
                 onEvent = onEvents
             )
-            ButtonHelpBox(onEvent = onEvents)
+//            ButtonHelpBox(onEvent = onEvents)
         }
     }
 }

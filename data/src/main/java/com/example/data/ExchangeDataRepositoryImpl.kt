@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class ExchangeDataRepositoryImpl @Inject constructor(
-    private val protocolDataRepository: ProtocolDataRepository,
+    //private val protocolDataRepository: ProtocolUARTDataRepository,
+    private val protocolDataRepository: ProtocolModbusDataRepository,
 ) : ExchangeDataRepository {
 
     override fun observeData(): Flow<List<CharData>> =
