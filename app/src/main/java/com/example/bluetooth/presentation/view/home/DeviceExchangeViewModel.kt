@@ -52,15 +52,38 @@ class DeviceExchangeViewModel @Inject constructor(
     private fun Flow<List<CharData>>.mapToCharUI(): Flow<List<CharUI>> = map { charDataList ->
         charDataList.map { charData ->
             CharUI(
-                char = charData.charByte.toInt().toChar()
+                char = String(byteArrayOf(charData.charByte), Charsets.ISO_8859_1)[0]
             )
         }
     }
 
     private fun initializeCharUIList(): List<CharUI> {
         Log.d(tag, "Start observe data from Bluetooth")
-        val initialData =
-            "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+//        val initialData =
+//            "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+
+        val byteArray = byteArrayOf(
+            0x80.toByte(),
+            0x82.toByte(),
+            0x84.toByte(),
+            0x85.toByte(),
+            0x86.toByte(),
+            0x87.toByte(),
+            0xCE.toByte(),
+            0xCE.toByte(),
+            0xCE.toByte(),
+            0xCE.toByte(),
+            0x27.toByte(),
+            0xCE.toByte(),
+            0x32.toByte(),
+            0xCE.toByte(),
+            0xCE.toByte(),
+            0xCE.toByte(),
+            0x95.toByte(),
+            0xDE.toByte(),
+            0xA0.toByte(),
+            0xE0.toByte()
+        )
 
         fun getRandomColor(): Color {
             val r = (0..255).random()
@@ -69,9 +92,9 @@ class DeviceExchangeViewModel @Inject constructor(
             return Color(r, g, b)
         }
 
-        val charUIList = initialData.map { char ->
+        val charUIList = byteArray.map { byte ->
             CharUI(
-                char = char,
+                char = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0],
                 color = Color.Black,
                 background = getRandomColor()
             )
