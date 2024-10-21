@@ -49,7 +49,7 @@ private fun Home(
 //                buttonType = true,
 //                onEvent = onEvents
 //            )
-            TerminalDataBox(data, 4)
+            TerminalDataBox(data, 28)
             ButtonFBox(
                 buttonType = false,
                 onEvent = onEvents

@@ -36,5 +36,5 @@ val Typography = Typography(
 )
 
 val psisFontFamily = FontFamily(
-    Font(R.font.psis)
+    Font(R.font.psis),
 )
