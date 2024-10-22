@@ -4,24 +4,6 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluetooth.utils.UIEvents
-import com.example.bluetooth.utils.UIEvents.ClickButtonArchive
-import com.example.bluetooth.utils.UIEvents.ClickButtonCancel
-import com.example.bluetooth.utils.UIEvents.ClickButtonDownArrow
-import com.example.bluetooth.utils.UIEvents.ClickButtonF
-import com.example.bluetooth.utils.UIEvents.ClickButtonF1
-import com.example.bluetooth.utils.UIEvents.ClickButtonF2
-import com.example.bluetooth.utils.UIEvents.ClickButtonF3
-import com.example.bluetooth.utils.UIEvents.ClickButtonF4
-import com.example.bluetooth.utils.UIEvents.ClickButtonF5
-import com.example.bluetooth.utils.UIEvents.ClickButtonF6
-import com.example.bluetooth.utils.UIEvents.ClickButtonF7
-import com.example.bluetooth.utils.UIEvents.ClickButtonF8
-import com.example.bluetooth.utils.UIEvents.ClickButtonInput
-import com.example.bluetooth.utils.UIEvents.ClickButtonMenu
-import com.example.bluetooth.utils.UIEvents.ClickButtonMode
-import com.example.bluetooth.utils.UIEvents.ClickButtonUpArrow
-
 import com.example.domain.model.CharData
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -109,40 +91,57 @@ class DeviceExchangeViewModel @Inject constructor(
         }
     }
 
-    fun onEvents(event: UIEvents) {
+    fun onEvents(event: HomeEvent) {
         Log.d(tag, "An event has arrived")
-        val command = generateCommand(event)
-        sendData(command)
+        when (event) {
+            is HomeEvent.ButtonClick -> {
+                Log.d(tag, "This is event: ${event.pressedButton}")
+                val command = generateCommand(event.pressedButton)
+                sendData(command)
+            }
+
+            is HomeEvent.TextPositionTapped -> {
+                Log.d(tag, "\"Coordinate pressed: column ${event.column}, row ${event.row}\"")
+            }
+        }
     }
 
-    private fun generateCommand(event: UIEvents): ByteArray {
+    private fun generateCommand(event: ButtonType): ByteArray {
         val baseCommand =
             byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
 
-        val commandMap = mapOf(
-            ClickButtonF1 to byteArrayOf(4, 0),
-            ClickButtonF2 to byteArrayOf(0, 80),
-            ClickButtonF3 to byteArrayOf(0, 10),
-            ClickButtonF4 to byteArrayOf(0, 2),
-            ClickButtonF5 to byteArrayOf(20, 0),
-            ClickButtonF6 to byteArrayOf(40, 0),
-            ClickButtonF7 to byteArrayOf(8, 0),
-            ClickButtonF8 to byteArrayOf(1, 0),
-            ClickButtonMenu to byteArrayOf(0, 4),
-            ClickButtonMode to byteArrayOf(0, 20),
-            ClickButtonInput to byteArrayOf(80, 0),
-            ClickButtonCancel to byteArrayOf(10, 0),
-            ClickButtonArchive to byteArrayOf(2, 0),
-            ClickButtonF to byteArrayOf(0, 40),
-            ClickButtonUpArrow to byteArrayOf(0, 1),
-            ClickButtonDownArrow to byteArrayOf(0, 8)
-        )
+        val commandSuffix = when (event) {
+            is ButtonType.F -> {
+                when (event.number) {
+                    1 -> byteArrayOf(4, 0)
+                    2 -> byteArrayOf(0, 80)
+                    3 -> byteArrayOf(0, 10)
+                    4 -> byteArrayOf(0, 2)
+                    5 -> byteArrayOf(20, 0)
+                    6 -> byteArrayOf(40, 0)
+                    7 -> byteArrayOf(8, 0)
+                    8 -> byteArrayOf(1, 0)
+                    else -> byteArrayOf()
+                }
+            }
 
-
-        val commandSuffix = commandMap[event] ?: byteArrayOf()
+            is ButtonType.Menu -> byteArrayOf(0, 4)
+            is ButtonType.Mode -> byteArrayOf(0, 20)
+            is ButtonType.Enter -> byteArrayOf(80, 0)
+            is ButtonType.Cancel -> byteArrayOf(10, 0)
+            is ButtonType.Archive -> byteArrayOf(2, 0)
+            is ButtonType.FButton -> byteArrayOf(0, 40)
+            is ButtonType.Arrow -> {
+                when (event.direction) {
+                    is ButtonType.ArrowDirection.Up -> byteArrayOf(0, 1) // ▲
+                    is ButtonType.ArrowDirection.Down -> byteArrayOf(0, 8) // ▼
+                }
+            }
+        }
 
         Log.d(tag, "Generate Command: ${commandSuffix.joinToString(" ")}")
 
         return baseCommand + commandSuffix
     }
+
 }

@@ -19,63 +19,64 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.R
 import com.example.bluetooth.presentation.view.connect.components.AnimatedButtonDecrease
+import com.example.bluetooth.presentation.view.home.ButtonType
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.bluetooth.utils.UIEvents
+import com.example.bluetooth.presentation.view.home.HomeEvent
 
 @Composable
-fun ButtonHelpBox(onEvent: (UIEvents) -> Unit) {
+fun ButtonHelpBox(onEvent: (HomeEvent) -> Unit) {
     val buttonLabels = listOf(
-        stringResource(R.string.button_help_box_button_label_menu),
-        stringResource(R.string.button_help_box_button_label_mode),
-        stringResource(R.string.button_help_box_button_label_enter),
-        stringResource(R.string.button_help_box_button_label_cancel),
-        stringResource(R.string.button_help_box_button_label_archive),
-        stringResource(R.string.button_help_box_button_label_f),
-        stringResource(R.string.button_help_box_button_label_up_arrow),
-        stringResource(R.string.button_help_box_button_label_down_arrow),
+        ButtonType.Menu,
+        ButtonType.Mode,
+        ButtonType.Enter,
+        ButtonType.Cancel,
+        ButtonType.Archive,
+        ButtonType.FButton,
+        ButtonType.Arrow(ButtonType.ArrowDirection.Up),
+        ButtonType.Arrow(ButtonType.ArrowDirection.Down),
     )
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        items(buttonLabels) { label ->
+        items(buttonLabels) { buttonType ->
             AnimatedButtonDecrease(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.textButtonColors(
                     containerColor = Color.White,
                     contentColor = Color.Black,
                 ),
                 shape = RoundedCornerShape(18.dp),
-                onClick = {
-                    val event = when (buttonLabels.indexOf(label)) {
-                        0 -> UIEvents.ClickButtonMenu
-                        1 -> UIEvents.ClickButtonMode
-                        2 -> UIEvents.ClickButtonInput
-                        3 -> UIEvents.ClickButtonCancel
-                        4 -> UIEvents.ClickButtonArchive
-                        5 -> UIEvents.ClickButtonF
-                        6 -> UIEvents.ClickButtonUpArrow
-                        7 -> UIEvents.ClickButtonDownArrow
-                        else -> throw IllegalArgumentException("Invalid index")
-                    }
-                    onEvent(event)
-                },
+                onClick = { onEvent(HomeEvent.ButtonClick(pressedButton = buttonType)) },
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = label,
+                    text = when (buttonType) {
+                        is ButtonType.Menu -> stringResource(R.string.button_help_box_button_label_menu)
+                        is ButtonType.Mode -> stringResource(R.string.button_help_box_button_label_mode)
+                        is ButtonType.Enter -> stringResource(R.string.button_help_box_button_label_enter)
+                        is ButtonType.Cancel -> stringResource(R.string.button_help_box_button_label_cancel)
+                        is ButtonType.Archive -> stringResource(R.string.button_help_box_button_label_archive)
+                        is ButtonType.FButton -> stringResource(R.string.button_help_box_button_label_f)
+                        is ButtonType.Arrow -> if (buttonType.direction is ButtonType.ArrowDirection.Up) {
+                            stringResource(R.string.button_help_box_button_label_up_arrow)
+                        } else {
+                            stringResource(R.string.button_help_box_button_label_down_arrow)
+                        }
+
+                        else -> "Unknown Button"
+                    },
                     fontSize = 16.sp
                 )
             }
         }
     }
 }
+
 
 @PreviewLightDark
 @Composable

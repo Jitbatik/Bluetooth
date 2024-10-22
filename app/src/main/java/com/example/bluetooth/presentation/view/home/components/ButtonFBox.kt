@@ -23,13 +23,14 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.connect.components.AnimatedButtonDecrease
+import com.example.bluetooth.presentation.view.home.ButtonType
+import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.bluetooth.utils.UIEvents
 
 @Composable
 fun ButtonFBox(
     buttonType: Boolean,
-    onEvent: (UIEvents) -> Unit,
+    onEvent: (HomeEvent) -> Unit,
 ) {
     val startIndex = if (buttonType) listOf(0, 1, 2, 3) else listOf(4, 5, 6, 7)
 
@@ -54,18 +55,7 @@ fun ButtonFBox(
                     ),
                     shape = RoundedCornerShape(0.dp),
                     onClick = {
-                        val event = when (index) {
-                            0 -> UIEvents.ClickButtonF1
-                            1 -> UIEvents.ClickButtonF2
-                            2 -> UIEvents.ClickButtonF3
-                            3 -> UIEvents.ClickButtonF4
-                            4 -> UIEvents.ClickButtonF5
-                            5 -> UIEvents.ClickButtonF6
-                            6 -> UIEvents.ClickButtonF7
-                            7 -> UIEvents.ClickButtonF8
-                            else -> throw IllegalArgumentException("Invalid index")
-                        }
-                        onEvent(event)
+                        onEvent(HomeEvent.ButtonClick(pressedButton = ButtonType.F(index + 1)))
                     },
                 ) {
                     Text(
