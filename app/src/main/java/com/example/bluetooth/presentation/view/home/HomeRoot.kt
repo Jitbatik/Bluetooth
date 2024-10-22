@@ -18,7 +18,6 @@ import com.example.bluetooth.presentation.view.home.components.ButtonFBox
 import com.example.bluetooth.presentation.view.home.components.ButtonHelpBox
 import com.example.bluetooth.presentation.view.home.components.TerminalDataBox
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.bluetooth.utils.UIEvents
 
 
 @Composable
@@ -36,7 +35,7 @@ fun HomeRoot(
 @Composable
 private fun Home(
     data: List<CharUI>,
-    onEvents: (UIEvents) -> Unit,
+    onEvents: (HomeEvent) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -45,16 +44,20 @@ private fun Home(
         contentAlignment = Alignment.Center
     ) {
         Column {
-//            ButtonFBox(
-//                buttonType = true,
-//                onEvent = onEvents
-//            )
-            TerminalDataBox(data, 28)
             ButtonFBox(
-                buttonType = false,
+                buttonType = true,
                 onEvent = onEvents
             )
-//            ButtonHelpBox(onEvent = onEvents)
+            TerminalDataBox(
+                charUIList = data,
+                rows = 3,
+                onEvent = onEvents,
+            )
+//            ButtonFBox(
+//                buttonType = false,
+//                onEvent = onEvents
+//            )
+            ButtonHelpBox(onEvent = onEvents)
         }
     }
 }

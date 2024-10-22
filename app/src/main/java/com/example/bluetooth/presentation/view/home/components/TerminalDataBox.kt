@@ -1,6 +1,7 @@
 package com.example.bluetooth.presentation.view.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
@@ -29,10 +31,15 @@ import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.home.CharUI
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.ui.theme.psisFontFamily
+import com.example.bluetooth.presentation.view.home.HomeEvent
 
 
 @Composable
-fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
+fun TerminalDataBox(
+    charUIList: List<CharUI>,
+    rows: Int,
+    onEvent: (HomeEvent) -> Unit,
+) {
     val density = LocalDensity.current
     val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     val charsPerRow = (charUIList.size + rows - 1) / rows
@@ -42,6 +49,19 @@ fun TerminalDataBox(charUIList: List<CharUI>, rows: Int) {
             .background(Color(0xFF61D7A4))
             .padding(top = 4.dp, bottom = 4.dp)
             .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    val x = offset.x
+                    val y = offset.y
+
+                    val textSize = screenWidth / (charsPerRow * 0.7f)
+
+                    val col = (x / textSize).toInt()
+                    val row = (y / (textSize * 1.2f)).toInt()
+
+                    onEvent(HomeEvent.TextPositionTapped(column = col, row = row))
+                }
+            }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             charUIList.chunked(charsPerRow).take(rows).forEach { row ->
@@ -114,6 +134,10 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
     }
 
     Surface {
-        TerminalDataBox(data, 4)
+        TerminalDataBox(
+            charUIList = data,
+            rows = 4,
+            onEvent = {}
+        )
     }
 }
