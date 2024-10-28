@@ -45,43 +45,40 @@ class DeviceExchangeViewModel @Inject constructor(
 //            "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
         val byteArray = byteArrayOf(
-            0x80.toByte(),
-            0x82.toByte(),
-            0x84.toByte(),
-            0x85.toByte(),
-            0x86.toByte(),
-            0x87.toByte(),
-            0xCE.toByte(),
-            0xCE.toByte(),
-            0xCE.toByte(),
-            0xCE.toByte(),
-            0x27.toByte(),
-            0xCE.toByte(),
-            0x32.toByte(),
-            0xCE.toByte(),
-            0xCE.toByte(),
-            0xCE.toByte(),
-            0x95.toByte(),
-            0xDE.toByte(),
-            0xA0.toByte(),
-            0xE0.toByte()
+            0x80.toByte(), 0x82.toByte(), 0x84.toByte(), 0x85.toByte(), 0x86.toByte(),
+            0x87.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(),
+            0x27.toByte(), 0xCE.toByte(), 0x32.toByte(), 0xCE.toByte(), 0xCE.toByte(),
+            0xCE.toByte(), 0x95.toByte(), 0xDE.toByte(), 0xA0.toByte(), 0xE0.toByte(),
+            0x80.toByte(), 0x82.toByte(), 0x84.toByte(), 0x85.toByte(), 0x86.toByte(),
+            0x87.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(),
+            0x27.toByte(), 0xCE.toByte(), 0x32.toByte(), 0xCE.toByte(), 0xCE.toByte(),
+            0xCE.toByte(), 0x95.toByte(), 0xDE.toByte(), 0xA0.toByte(), 0xE0.toByte(),
         )
-
-        fun getRandomColor(): Color {
-            val r = (0..255).random()
-            val g = (0..255).random()
-            val b = (0..255).random()
-            return Color(r, g, b)
-        }
-
-        val charUIList = byteArray.map { byte ->
+        return byteArray.map { byte ->
             CharUI(
                 char = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0],
                 color = Color.Black,
                 background = getRandomColor()
             )
         }
-        return charUIList
+    }
+
+    private fun getRandomColor(): Color {
+        val r = (0..255).random()
+        val g = (0..255).random()
+        val b = (0..255).random()
+        return Color(r, g, b)
+    }
+
+    fun onEvents(event: HomeEvent) {
+        Log.d(tag, "An event has arrived: ${event::class.simpleName}")
+
+        val command = when (event) {
+            is HomeEvent.ButtonClick -> generateCommand(event.pressedButton)
+            is HomeEvent.TextPositionTapped -> createCoordinateCommand(event)
+        }
+
+        sendData(value = command)
     }
 
     private fun sendData(value: ByteArray) {
@@ -91,57 +88,85 @@ class DeviceExchangeViewModel @Inject constructor(
         }
     }
 
-    fun onEvents(event: HomeEvent) {
-        Log.d(tag, "An event has arrived")
-        when (event) {
-            is HomeEvent.ButtonClick -> {
-                Log.d(tag, "This is event: ${event.pressedButton}")
-                val command = generateCommand(event.pressedButton)
-                sendData(command)
-            }
+//    fun onEvents(event: HomeEvent) {
+//        Log.d(tag, "An event has arrived: ${event::class.simpleName}")
+//
+//        val command = when (event) {
+//            is HomeEvent.ButtonClick -> {
+//                Log.d(tag, "Button pressed: ${event.pressedButton}")
+//                generateCommand(event.pressedButton)
+//            }
+//
+//            is HomeEvent.TextPositionTapped -> {
+//                Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row}")
+//                byteArrayOf(
+//                    0x01.toByte(), 0x17.toByte(), 0x04.toByte(),
+//                    event.column.toByte(),
+//                    event.row.toByte(), 0x00, 0x00,
+//                )
+//            }
+//        }
+//
+//        sendData(value = command)
+//    }
 
-            is HomeEvent.TextPositionTapped -> {
-                Log.d(tag, "\"Coordinate pressed: column ${event.column}, row ${event.row}\"")
-            }
-        }
-    }
+
+    private val baseUART =
+        byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
+    private val baseModbus =
+        byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
 
     private fun generateCommand(event: ButtonType): ByteArray {
-        val baseCommand =
-            byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
+        return when (event) {
+            is ButtonType.F -> generateFCommand(event.number)
+            is ButtonType.Menu -> baseUART + byteArrayOf(0, 4)
+            is ButtonType.Mode -> baseUART + byteArrayOf(0, 20)
+            is ButtonType.Enter -> baseUART + byteArrayOf(80, 0)
+            is ButtonType.Cancel -> baseUART + byteArrayOf(10, 0)
+            is ButtonType.Archive -> baseUART + byteArrayOf(2, 0)
+            is ButtonType.FButton -> baseUART + byteArrayOf(0, 40)
+            is ButtonType.Arrow -> generateArrowCommand(event.direction)
+            is ButtonType.SecondaryCancel -> baseModbus + byteArrayOf(
+                0x12.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x10.toByte()
+            )
 
-        val commandSuffix = when (event) {
-            is ButtonType.F -> {
-                when (event.number) {
-                    1 -> byteArrayOf(4, 0)
-                    2 -> byteArrayOf(0, 80)
-                    3 -> byteArrayOf(0, 10)
-                    4 -> byteArrayOf(0, 2)
-                    5 -> byteArrayOf(20, 0)
-                    6 -> byteArrayOf(40, 0)
-                    7 -> byteArrayOf(8, 0)
-                    8 -> byteArrayOf(1, 0)
-                    else -> byteArrayOf()
-                }
-            }
+            is ButtonType.SecondaryEnter -> baseModbus + byteArrayOf(
+                0x16.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x80.toByte()
+            )
 
-            is ButtonType.Menu -> byteArrayOf(0, 4)
-            is ButtonType.Mode -> byteArrayOf(0, 20)
-            is ButtonType.Enter -> byteArrayOf(80, 0)
-            is ButtonType.Cancel -> byteArrayOf(10, 0)
-            is ButtonType.Archive -> byteArrayOf(2, 0)
-            is ButtonType.FButton -> byteArrayOf(0, 40)
-            is ButtonType.Arrow -> {
-                when (event.direction) {
-                    is ButtonType.ArrowDirection.Up -> byteArrayOf(0, 1) // ▲
-                    is ButtonType.ArrowDirection.Down -> byteArrayOf(0, 8) // ▼
-                }
-            }
+            is ButtonType.SecondaryUp -> baseModbus + byteArrayOf(
+                0x19.toByte(), 0x1D.toByte(), 0x01.toByte(), 0x00.toByte()
+            )
+
+            is ButtonType.SecondaryDown -> baseModbus + byteArrayOf(
+                0x1D.toByte(), 0x1D.toByte(), 0x08.toByte(), 0x00.toByte()
+            )
         }
-
-        Log.d(tag, "Generate Command: ${commandSuffix.joinToString(" ")}")
-
-        return baseCommand + commandSuffix
     }
 
+    private fun generateFCommand(number: Int): ByteArray {
+        return when (number) {
+            1 -> baseUART + byteArrayOf(4, 0)
+            2 -> baseUART + byteArrayOf(0, 80)
+            3 -> baseUART + byteArrayOf(0, 10)
+            4 -> baseUART + byteArrayOf(0, 2)
+            5 -> baseUART + byteArrayOf(20, 0)
+            6 -> baseUART + byteArrayOf(40, 0)
+            7 -> baseUART + byteArrayOf(8, 0)
+            8 -> baseUART + byteArrayOf(1, 0)
+            else -> byteArrayOf()
+        }
+    }
+
+    private fun generateArrowCommand(direction: ButtonType.ArrowDirection): ByteArray {
+        return when (direction) {
+            ButtonType.ArrowDirection.Up -> baseModbus + byteArrayOf(0, 1) // ▲
+            ButtonType.ArrowDirection.Down -> baseModbus + byteArrayOf(0, 8) // ▼
+        }
+    }
+
+    private fun createCoordinateCommand(event: HomeEvent.TextPositionTapped): ByteArray {
+        Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row}")
+        return baseModbus + byteArrayOf(event.column.toByte(), event.row.toByte(), 0x00, 0x00)
+    }
 }
