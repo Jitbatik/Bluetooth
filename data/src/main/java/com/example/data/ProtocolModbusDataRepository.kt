@@ -5,14 +5,12 @@ import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.model.CharData
 import com.example.domain.model.ModbusPacket
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -34,11 +32,18 @@ class ProtocolModbusDataRepository @Inject constructor(
 
     private val _bluetoothModbusPacketsFlow = MutableStateFlow<List<ModbusPacket>>(emptyList())
 
+    private val originalResponse = byteArrayOf(
+        0x01.toByte(), 0x17.toByte(), 0x04.toByte(), 0x00.toByte(), 0x00.toByte(),
+        0x00.toByte(), 0x00.toByte()
+    )
+    private var response = originalResponse.copyOf()
+
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeBluetoothDataFlow(): Flow<List<CharData>> {
         return observeSocketState()
             .onEach { socketState ->
-                Log.d("SocketState", "Socket state is $socketState")
+                Log.d(tag, "Socket state is $socketState")
                 if (socketState) processIncomingBluetoothData()
             }
             .flatMapLatest {
@@ -58,52 +63,27 @@ class ProtocolModbusDataRepository @Inject constructor(
         }
     }
 
-    private fun observeSocketState(): Flow<Boolean> {
-        return bluetoothSocketProvider.bluetoothSocket
-            .map { socket -> socket != null }
-            .distinctUntilChanged()
-    }
+    private fun observeSocketState() =
+        bluetoothSocketProvider.bluetoothSocket.map { it?.isConnected == true }
 
-    private suspend fun processIncomingBluetoothData() {
-        val socket = getActiveBluetoothSocket() ?: return
+
+    private suspend fun processIncomingBluetoothData() = coroutineScope {
+        val socket = getActiveBluetoothSocket() ?: return@coroutineScope
         val canRead = MutableStateFlow(true)
-        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
         val packetBuffer = mutableListOf<ModbusPacket>()
-        val response =
-            byteArrayOf(
-                0x01.toByte(),
-                0x17.toByte(),
-                0x00.toByte(),
-                0x00.toByte(),
-                0x00.toByte(),
-                0x00.toByte()
-                //crc
-            )
 
-        scope.launch {
+        launch(Dispatchers.IO) {
             Log.d(tag, "Processing incoming data")
             try {
-                dataStreamRepository.readFromStream(socket = socket, canRead = canRead)
+                dataStreamRepository.readFromStream(socket, canRead)
                     .cancellable()
                     .takeWhile { canRead.value }
                     .collect { byteArray ->
-                        if (byteArray.size < 14) return@collect
-
-                        val modbusPacket = byteArray.mapToModbusPacket()
-
-                        if (calculateChecksum(packet = byteArray) != modbusPacket.checksum) {
-                            Log.d(tag, "Invalid checksum!")
-                            return@collect
-                        }
-                        packetBuffer.add(modbusPacket)
-                        answerTest(socket = socket, values = response)
-
-                        if (modbusPacket.startRegisterWrite == 54992) {
-                            Log.d(tag, "Data packet assemble: ${packetBuffer.count()}")
-                            processAndStorePackets(packetBuffer)
-                            packetBuffer.clear()
-                        }
+                        handleIncomingData(
+                            byteArray = byteArray,
+                            packetBuffer = packetBuffer,
+                            socket = socket
+                        )
                     }
             } catch (e: Exception) {
                 Log.e(tag, "Error in reading stream: ${e.message}")
@@ -113,18 +93,50 @@ class ProtocolModbusDataRepository @Inject constructor(
         }
     }
 
+    private fun handleIncomingData(
+        byteArray: ByteArray,
+        packetBuffer: MutableList<ModbusPacket>,
+        socket: BluetoothSocket,
+    ) {
+        if (byteArray.size < 14) return
+        val modbusPacket = byteArray.toModbusPacket() ?: return
+        packetBuffer.add(modbusPacket)
+        respondToPacket(socket)
+        if (modbusPacket.startRegisterWrite == 54992) {
+            Log.d(tag, "Data packet assemble: ${packetBuffer.size}")
+            processAndStorePackets(packetBuffer)
+            packetBuffer.clear()
+        }
+    }
+
+    private fun ByteArray.toModbusPacket(): ModbusPacket? {
+        val packet = ModbusPacket(
+            slaveAddress = this[0].toUByte().toInt(),
+            functionCode = this[1].toUByte().toInt(),
+            startRegisterRead = ((this[2].toUByte().toInt() shl 8) or this[3].toUByte().toInt()),
+            quantityRegisterRead = ((this[4].toUByte().toInt() shl 8) or this[5].toUByte().toInt()),
+            startRegisterWrite = ((this[6].toUByte().toInt() shl 8) or this[7].toUByte().toInt()),
+            quantityRegisterWrite = ((this[8].toUByte().toInt() shl 8) or this[9].toUByte()
+                .toInt()),
+            counter = this[10].toUByte().toInt(),
+            dataList = slice(11 until size - 2),
+            checksum = (this[size - 2].toUByte().toInt() shl 8) or this[size - 1].toUByte().toInt()
+        )
+        return if (packet.checksum == calculateChecksum(this)) packet else null
+    }
+
     private fun calculateChecksum(packet: ByteArray): Int {
-        val calculatedChecksum = calculateCRC16(packet.dropLast(2).toByteArray())
-        return ((calculatedChecksum and 0xFF) shl 8) or (calculatedChecksum shr 8)
+        val crc = calculateCRC16(packet.dropLast(2).toByteArray())
+        return ((crc and 0xFF) shl 8) or (crc shr 8)
     }
 
     private fun calculateCRC16(buf: ByteArray): Int {
-        var crc = 0xFFFF
+        var crc = CRC16_INITIAL
         for (byte in buf) {
             crc = crc xor (byte.toInt() and 0xFF)
             repeat(8) {
                 crc = if (crc and 0x0001 != 0) {
-                    (crc shr 1) xor 0xA001
+                    (crc shr 1) xor CRC16_POLYNOMIAL
                 } else {
                     crc shr 1
                 }
@@ -133,55 +145,29 @@ class ProtocolModbusDataRepository @Inject constructor(
         return crc
     }
 
-    private fun answerTest(socket: BluetoothSocket, values: ByteArray) {
-        val checksum = calculateChecksum(values)
-        val checksumBytes = byteArrayOf(
-            (checksum shr 8).toByte(),
-            (checksum and 0xFF).toByte()
-        )
-        dataStreamRepository.sendToStream(socket = socket, value = values + checksumBytes)
+    private fun respondToPacket(socket: BluetoothSocket) {
+        val checksum = calculateCRC16(response)
+        val answer = response + checksum.toByteArray()
+        Log.d(tag, "Respond: ${answer.joinToString(" ") { "%02X".format(it) }}")
+        dataStreamRepository.sendToStream(socket = socket, value = answer)
+        response = originalResponse.copyOf()
     }
+
+    private fun Int.toByteArray(): ByteArray =
+        byteArrayOf((this and 0xFF).toByte(), (this shr 8).toByte())
 
     private fun processAndStorePackets(packetBuffer: List<ModbusPacket>) =
         packetBuffer.forEach { updateDataPacket(it) }
 
-
     private fun updateDataPacket(data: ModbusPacket) {
         _bluetoothModbusPacketsFlow.update { currentList ->
-            val mutableList = currentList.toMutableList()
-
-            val existingIndex =
-                mutableList.indexOfFirst { it.startRegisterWrite == data.startRegisterWrite }
-
-            if (existingIndex != -1) {
-                val existingData = mutableList[existingIndex]
-                if (existingData != data) {
-                    mutableList[existingIndex] = data
-                }
-            } else mutableList.add(data)
-
-            mutableList.sortBy { it.startRegisterWrite }
-            mutableList
+            currentList.toMutableList().apply {
+                val existingIndex =
+                    indexOfFirst { it.startRegisterWrite == data.startRegisterWrite }
+                if (existingIndex != -1) this[existingIndex] = data else add(data)
+                sortBy { it.startRegisterWrite }
+            }
         }
-    }
-
-
-    private fun ByteArray.mapToModbusPacket(): ModbusPacket {
-        return ModbusPacket(
-            slaveAddress = this[0].toUByte().toInt(),
-            functionCode = this[1].toUByte().toInt(),
-            startRegisterRead = ((this[2].toUByte().toInt() shl 8) or (this[3].toUByte().toInt())),
-            quantityRegisterRead = ((this[4].toUByte().toInt() shl 8) or (this[5].toUByte()
-                .toInt())),
-            startRegisterWrite = ((this[6].toUByte().toInt() shl 8) or (this[7].toUByte().toInt())),
-            quantityRegisterWrite = ((this[8].toUByte().toInt() shl 8) or (this[9].toUByte()
-                .toInt())),
-            counter = this[10].toUByte().toInt(),
-            dataList = slice(11 until this.size - 2),
-            checksum = (this[this.size - 2].toUByte()
-                .toInt() shl 8) or (this[this.size - 1].toUByte().toInt())
-
-        )
     }
 
     private fun getActiveBluetoothSocket(): BluetoothSocket? {
@@ -195,28 +181,15 @@ class ProtocolModbusDataRepository @Inject constructor(
     }
 
     fun sendToStream(value: ByteArray) {
-        val socket = getActiveBluetoothSocket() ?: return
-        dataStreamRepository.sendToStream(socket = socket, value = value)
+        val checksum = calculateCRC16(value)
+        val unsignedValue = value + checksum.toByteArray()
+        Log.d(tag, "Command: ${unsignedValue.joinToString(" ") { "%02X".format(it) }}")
+        response = value
     }
 
     companion object {
         private const val MAX_PACKET_SIZE = 7
+        private const val CRC16_POLYNOMIAL = 0xA001
+        private const val CRC16_INITIAL = 0xFFFF
     }
-
-//testFunction(modbusPacket)
-//    private fun testFunction(packet: ModbusPacket) {
-//        Log.d(
-//            tag, "ModbusPacket(/n" +
-//                    "slaveAddress= ${packet.slaveAddress.toString(16)},\n" +
-//                    "functionCode= ${packet.functionCode.toString(16)},\n" +
-//                    "startRegisterRead= ${packet.startRegisterRead.toString(16)},\n" +
-//                    "quantityRegisterRead= ${packet.quantityRegisterRead.toString(16)},\n" +
-//                    "startRegisterWrite= ${packet.startRegisterWrite.toString(16)},\n" +
-//                    "quantityRegisterWrite= ${packet.quantityRegisterWrite.toString(16)},\n" +
-//                    "counter= ${packet.counter.toString(16)},\n" +
-//                    "dataList= [${packet.dataList.joinToString(", ") { it.toString(16) }}],\n" +
-//                    "checksum= ${packet.checksum.toString(16)}\n" +
-//                    ")"
-//        )
-//    }
 }

@@ -56,12 +56,12 @@ fun TerminalDataBox(
 
                     val textSize = screenWidth / (charsPerRow * 0.7f)
 
-                    val col = (x / textSize).toInt()
-                    val row = (y / (textSize * 1.2f)).toInt()
+                    val col = (x / textSize).toInt() + 1
+                    val row = (y / (textSize * 1.2f)).toInt() + 1
 
                     onEvent(HomeEvent.TextPositionTapped(column = col, row = row))
                 }
-            }
+            },
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             charUIList.chunked(charsPerRow).take(rows).forEach { row ->

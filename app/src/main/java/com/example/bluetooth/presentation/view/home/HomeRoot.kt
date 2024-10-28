@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.presentation.view.home.components.ButtonFBox
-import com.example.bluetooth.presentation.view.home.components.ButtonHelpBox
+import com.example.bluetooth.presentation.view.home.components.ControlButtons
 import com.example.bluetooth.presentation.view.home.components.TerminalDataBox
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
@@ -41,23 +41,24 @@ private fun Home(
         modifier = Modifier
             .padding(0.dp)
             .fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column {
-            ButtonFBox(
-                buttonType = true,
-                onEvent = onEvents
-            )
+//            ButtonFBox(
+//                buttonType = true,
+//                onEvent = onEvents
+//            )
             TerminalDataBox(
                 charUIList = data,
-                rows = 3,
+                rows = 28,
                 onEvent = onEvents,
             )
+            ControlButtons(onEvents = onEvents)
 //            ButtonFBox(
 //                buttonType = false,
 //                onEvent = onEvents
 //            )
-            ButtonHelpBox(onEvent = onEvents)
+//            ButtonHelpBox(onEvent = onEvents)
         }
     }
 }
@@ -66,7 +67,7 @@ private fun Home(
 @Composable
 private fun HomePreview() = BluetoothTheme {
     val sentence =
-        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен* ор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
     fun getRandomColor(): Color {
         val r = (0..255).random()
