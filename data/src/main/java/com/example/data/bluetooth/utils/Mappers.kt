@@ -11,7 +11,7 @@ fun List<ByteArray>.mapToListByte(): List<Byte> {
 
 fun List<Byte>.mapToListCharData(): List<CharData> {
     return map {
-        CharData(charByte = it, colorByte = 1.toByte(), backgroundByte = 0.toByte())
+        CharData(charByte = it, colorByte = 0, backgroundByte = 15)
     }
 }
 

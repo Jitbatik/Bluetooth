@@ -2,7 +2,7 @@ package com.example.bluetooth.presentation.view.home
 
 sealed interface HomeEvent {
     data class ButtonClick(val pressedButton: ButtonType) : HomeEvent
-    data class TextPositionTapped(val column: Int, val row: Int) : HomeEvent
+    data class Press(val column: Int, val row: Int) : HomeEvent
 }
 
 sealed interface ButtonType {

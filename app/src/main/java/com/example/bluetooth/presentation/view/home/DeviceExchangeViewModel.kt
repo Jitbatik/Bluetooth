@@ -34,7 +34,9 @@ class DeviceExchangeViewModel @Inject constructor(
     private fun Flow<List<CharData>>.mapToCharUI(): Flow<List<CharUI>> = map { charDataList ->
         charDataList.map { charData ->
             CharUI(
-                char = String(byteArrayOf(charData.charByte), Charsets.ISO_8859_1)[0]
+                char = String(byteArrayOf(charData.charByte), Charsets.ISO_8859_1)[0],
+                color = pal16[charData.colorByte],
+                background = pal16[charData.backgroundByte]
             )
         }
     }
@@ -75,7 +77,7 @@ class DeviceExchangeViewModel @Inject constructor(
 
         val command = when (event) {
             is HomeEvent.ButtonClick -> generateCommand(event.pressedButton)
-            is HomeEvent.TextPositionTapped -> createCoordinateCommand(event)
+            is HomeEvent.Press -> createCoordinateCommand(event)
         }
 
         sendData(value = command)
@@ -87,29 +89,6 @@ class DeviceExchangeViewModel @Inject constructor(
             exchangeDataRepository.sendToStream(value = value)
         }
     }
-
-//    fun onEvents(event: HomeEvent) {
-//        Log.d(tag, "An event has arrived: ${event::class.simpleName}")
-//
-//        val command = when (event) {
-//            is HomeEvent.ButtonClick -> {
-//                Log.d(tag, "Button pressed: ${event.pressedButton}")
-//                generateCommand(event.pressedButton)
-//            }
-//
-//            is HomeEvent.TextPositionTapped -> {
-//                Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row}")
-//                byteArrayOf(
-//                    0x01.toByte(), 0x17.toByte(), 0x04.toByte(),
-//                    event.column.toByte(),
-//                    event.row.toByte(), 0x00, 0x00,
-//                )
-//            }
-//        }
-//
-//        sendData(value = command)
-//    }
-
 
     private val baseUART =
         byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
@@ -165,8 +144,17 @@ class DeviceExchangeViewModel @Inject constructor(
         }
     }
 
-    private fun createCoordinateCommand(event: HomeEvent.TextPositionTapped): ByteArray {
-        Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row}")
+    private fun createCoordinateCommand(event: HomeEvent.Press): ByteArray {
+        Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row} ")
         return baseModbus + byteArrayOf(event.column.toByte(), event.row.toByte(), 0x00, 0x00)
+    }
+
+    companion object {
+        private val pal16 = arrayOf(
+            Color(0xFF000000), Color(0xFF0000AA), Color(0xFF00AA00), Color(0xFF00AAAA),
+            Color(0xFFAA0000), Color(0xFFAA00AA), Color(0xFFAA5500), Color(0xFFAAAAAA),
+            Color(0xFF555555), Color(0xFF5555FF), Color(0xFF55FF55), Color(0xFF55FFFF),
+            Color(0xFFFF5555), Color(0xFFFF55FF), Color(0xFFFFFF55), Color(0xFFFFFFFF)
+        )
     }
 }

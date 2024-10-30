@@ -65,7 +65,7 @@ class ProtocolUARTDataRepository @Inject constructor(
      * */
     private fun List<UARTPacket>.mapToListCharData(): List<CharData> {
         return this.flatMap { it.dataBytes }.map {
-            CharData(charByte = it, colorByte = 1.toByte(), backgroundByte = 0.toByte())
+            CharData(charByte = it, colorByte = 0, backgroundByte = 15)
         }
     }
 

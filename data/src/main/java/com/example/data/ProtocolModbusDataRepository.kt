@@ -54,14 +54,22 @@ class ProtocolModbusDataRepository @Inject constructor(
     }
 
     private fun List<ModbusPacket>.mapToListCharData(): List<CharData> {
-        return this.flatMap { it.dataList.take(it.quantityRegisterWrite) }.map { byteValue ->
-            CharData(
-                charByte = byteValue,
-                colorByte = 1.toByte(),
-                backgroundByte = 0.toByte()
-            )
+        return this.flatMap { packet ->
+            val startTest = packet.dataList.take(120)
+            val endTest = packet.dataList.drop(120).take(120)
+
+            startTest.mapIndexed { index, byteValue ->
+                val colorBackgroundByte = endTest.getOrElse(index) { 0 }
+
+                CharData(
+                    charByte = byteValue,
+                    colorByte = (colorBackgroundByte.toInt() and 0xF),
+                    backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF)
+                )
+            }
         }
     }
+
 
     private fun observeSocketState() =
         bluetoothSocketProvider.bluetoothSocket.map { it?.isConnected == true }
@@ -103,7 +111,7 @@ class ProtocolModbusDataRepository @Inject constructor(
         packetBuffer.add(modbusPacket)
         respondToPacket(socket)
         if (modbusPacket.startRegisterWrite == 54992) {
-            Log.d(tag, "Data packet assemble: ${packetBuffer.size}")
+            //Log.d(tag, "Data packet assemble: ${packetBuffer.size}")
             processAndStorePackets(packetBuffer)
             packetBuffer.clear()
         }
@@ -150,7 +158,7 @@ class ProtocolModbusDataRepository @Inject constructor(
         val answer = response + checksum.toByteArray()
         Log.d(tag, "Respond: ${answer.joinToString(" ") { "%02X".format(it) }}")
         dataStreamRepository.sendToStream(socket = socket, value = answer)
-        response = originalResponse.copyOf()
+        //response = originalResponse.copyOf()
     }
 
     private fun Int.toByteArray(): ByteArray =
