@@ -24,4 +24,22 @@
     <string name="text_provider_title_bluetooth">Пожалуйста, предоставьте разрешения</string>
     <string name="text_provider_description_bluetooth">Приложению для сканирования и подключения требуются разрешения на эти действия. После обновите экран.</string>
     <string name="text_provider_button_bluetooth">Перейти в настройки</string>
+    <string name="button_help_box_button_label_burner">Горелка</string>
+    <string name="button_help_box_button_label_stop">Стоп</string>
+    <string name="button_help_box_button_label_open">Открыть</string>
+    <string name="button_help_box_button_label_close">Закрыть</string>
+
+    <string name="button_help_box_button_label_one">1</string>
+    <string name="button_help_box_button_label_two">2</string>
+    <string name="button_help_box_button_label_three">3</string>
+    <string name="button_help_box_button_label_four">4</string>
+    <string name="button_help_box_button_label_five">5</string>
+    <string name="button_help_box_button_label_six">6</string>
+    <string name="button_help_box_button_label_seven">7</string>
+    <string name="button_help_box_button_label_eight">8</string>
+    <string name="button_help_box_button_label_nine">9</string>
+    <string name="button_help_box_button_label_zero">0</string>
+    <string name="button_help_box_button_label_minus">-</string>
+    <string name="button_help_box_button_label_point">.</string>
+    <string name="button_help_box_button_label_delete">-*</string>
 </resources>

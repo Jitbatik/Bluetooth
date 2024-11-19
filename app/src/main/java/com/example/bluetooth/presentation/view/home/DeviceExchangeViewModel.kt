@@ -5,6 +5,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.CharData
+import com.example.domain.model.ControllerConfig
+import com.example.domain.model.KeyMode
+import com.example.domain.model.Range
+import com.example.domain.model.Rotate
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +26,15 @@ class DeviceExchangeViewModel @Inject constructor(
 ) : ViewModel() {
     private val tag = DeviceExchangeViewModel::class.java.simpleName
 
+    //TODO: Убрать после тестов
+    private val _test = exchangeDataRepository.getAnswerTest()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = ""
+        )
+    val test: StateFlow<String> = _test
+
     private val _data = exchangeDataRepository.observeData()
         .mapToCharUI()
         .stateIn(
@@ -31,12 +44,25 @@ class DeviceExchangeViewModel @Inject constructor(
         )
     val data: StateFlow<List<CharUI>> = _data
 
+    private val _controllerConfig = exchangeDataRepository.observeControllerConfig()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = ControllerConfig(
+                range = Range(startRow = 0, endRow = 0, startCol = 0, endCol = 0),
+                keyMode = KeyMode.NONE,
+                rotate = Rotate.PORTRAIT,
+                isBorder = false,
+            )
+        )
+    val controllerConfig: StateFlow<ControllerConfig> = _controllerConfig
+
     private fun Flow<List<CharData>>.mapToCharUI(): Flow<List<CharUI>> = map { charDataList ->
         charDataList.map { charData ->
             CharUI(
                 char = String(byteArrayOf(charData.charByte), Charsets.ISO_8859_1)[0],
                 color = pal16[charData.colorByte],
-                background = pal16[charData.backgroundByte]
+                background = pal16[charData.backgroundByte],
             )
         }
     }
@@ -48,19 +74,19 @@ class DeviceExchangeViewModel @Inject constructor(
 
         val byteArray = byteArrayOf(
             0x80.toByte(), 0x82.toByte(), 0x84.toByte(), 0x85.toByte(), 0x86.toByte(),
-            0x87.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(),
-            0x27.toByte(), 0xCE.toByte(), 0x32.toByte(), 0xCE.toByte(), 0xCE.toByte(),
-            0xCE.toByte(), 0x95.toByte(), 0xDE.toByte(), 0xA0.toByte(), 0xE0.toByte(),
-            0x80.toByte(), 0x82.toByte(), 0x84.toByte(), 0x85.toByte(), 0x86.toByte(),
-            0x87.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(), 0xCE.toByte(),
-            0x27.toByte(), 0xCE.toByte(), 0x32.toByte(), 0xCE.toByte(), 0xCE.toByte(),
+            0x87.toByte(), 0x27.toByte(), 0x32.toByte(),
             0xCE.toByte(), 0x95.toByte(), 0xDE.toByte(), 0xA0.toByte(), 0xE0.toByte(),
         )
-        return byteArray.map { byte ->
+        val resultArray = ByteArray(280)
+        for (i in resultArray.indices) {
+            resultArray[i] = byteArray[i % byteArray.size]
+        }
+
+        return resultArray.map { byte ->
             CharUI(
                 char = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0],
                 color = Color.Black,
-                background = getRandomColor()
+                background = getRandomColor(),
             )
         }
     }
@@ -86,9 +112,14 @@ class DeviceExchangeViewModel @Inject constructor(
     private fun sendData(value: ByteArray) {
         Log.d(tag, "Send data: ${value.joinToString(" ") { (it.toInt() and 0xFF).toString() }}")
         viewModelScope.launch {
-            exchangeDataRepository.sendToStream(value = value)
+            try {
+                exchangeDataRepository.sendToStream(value = value)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to send data: ${e.message}")
+            }
         }
     }
+
 
     private val baseUART =
         byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
@@ -98,27 +129,97 @@ class DeviceExchangeViewModel @Inject constructor(
     private fun generateCommand(event: ButtonType): ByteArray {
         return when (event) {
             is ButtonType.F -> generateFCommand(event.number)
-            is ButtonType.Menu -> baseUART + byteArrayOf(0, 4)
-            is ButtonType.Mode -> baseUART + byteArrayOf(0, 20)
-            is ButtonType.Enter -> baseUART + byteArrayOf(80, 0)
-            is ButtonType.Cancel -> baseUART + byteArrayOf(10, 0)
-            is ButtonType.Archive -> baseUART + byteArrayOf(2, 0)
-            is ButtonType.FButton -> baseUART + byteArrayOf(0, 40)
+            ButtonType.Menu -> baseUART + byteArrayOf(0, 4)
+            ButtonType.Mode -> baseUART + byteArrayOf(0, 20)
+            ButtonType.Enter -> baseUART + byteArrayOf(80, 0)
+            ButtonType.Cancel -> baseUART + byteArrayOf(10, 0)
+            ButtonType.Archive -> baseUART + byteArrayOf(2, 0)
+            ButtonType.FButton -> baseUART + byteArrayOf(0, 40)
             is ButtonType.Arrow -> generateArrowCommand(event.direction)
-            is ButtonType.SecondaryCancel -> baseModbus + byteArrayOf(
+            ButtonType.SecondaryCancel -> baseModbus + byteArrayOf(
                 0x12.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x10.toByte()
             )
 
-            is ButtonType.SecondaryEnter -> baseModbus + byteArrayOf(
+            ButtonType.SecondaryEnter -> baseModbus + byteArrayOf(
                 0x16.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x80.toByte()
             )
 
-            is ButtonType.SecondaryUp -> baseModbus + byteArrayOf(
+            ButtonType.SecondaryUp -> baseModbus + byteArrayOf(
                 0x19.toByte(), 0x1D.toByte(), 0x01.toByte(), 0x00.toByte()
             )
 
-            is ButtonType.SecondaryDown -> baseModbus + byteArrayOf(
+            ButtonType.SecondaryDown -> baseModbus + byteArrayOf(
                 0x1D.toByte(), 0x1D.toByte(), 0x08.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Burner -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x20.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Close -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x08.toByte()
+            )
+
+            ButtonType.Open -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x01.toByte()
+            )
+
+            ButtonType.SecondaryF -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x40.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Stop -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x04.toByte(), 0x00.toByte()
+            )
+
+            //TODO: у кнопки F двойной код + какая-то кнопка
+            //TODO: вторая клавиатура доделать + рефакторинг
+            ButtonType.One -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x04.toByte()
+            )
+
+            ButtonType.Two -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x80.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Three -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x10.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Four -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x02.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Five -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x20.toByte()
+            )
+
+            ButtonType.Six -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x40.toByte()
+            )
+
+            ButtonType.Seven -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x08.toByte()
+            )
+
+            ButtonType.Eight -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x01.toByte()
+            )
+
+            ButtonType.Nine -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x04.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Zero -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x00.toByte(), 0x02.toByte()
+            )
+
+            ButtonType.Minus -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x08.toByte(), 0x00.toByte()
+            )
+
+            ButtonType.Point -> baseModbus + byteArrayOf(
+                0x00, 0x00, 0x20.toByte(), 0x00.toByte()
             )
         }
     }
