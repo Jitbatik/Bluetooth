@@ -4,7 +4,11 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.domain.model.CharData
+import com.example.domain.model.ControllerConfig
+import com.example.domain.model.KeyMode
 import com.example.domain.model.ModbusPacket
+import com.example.domain.model.Range
+import com.example.domain.model.Rotate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -13,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
@@ -53,6 +58,60 @@ class ProtocolModbusDataRepository @Inject constructor(
             }
     }
 
+    //TODO("сделать код чище и удобнее")
+    fun observeControllerConfigFlow() = flow {
+        _bluetoothModbusPacketsFlow.collect { packets ->
+            if (packets.size >= 2) {
+                val mergedData = listOf(packets[0].startRegisterRead, packets[1].startRegisterRead)
+                emit(processControllerConfig(mergedData))
+            } else {
+                emit(
+                    ControllerConfig(
+                        range = Range(startRow = 0, endRow = 0, startCol = 0, endCol = 0),
+                    )
+                )
+            }
+        }
+    }
+
+
+    private fun processControllerConfig(startRegisterRead: List<Int>): ControllerConfig {
+        val highByteFirst = (startRegisterRead[0] shr 8) and 0xFF
+        val lowByteFirst = startRegisterRead[0] and 0xFF
+
+        val highByteTwo = (startRegisterRead[1] shr 8) and 0xFF
+        val lowByteTwo = startRegisterRead[1] and 0xFF
+
+        val adrrFirst = ((highByteFirst shl 8) or (lowByteFirst and 0xFF))
+        val insFirst = (((adrrFirst shl 2) + 0x100) and 0x3f00) or ((adrrFirst + 1) and 0x3f)
+
+        val adrrTwo = ((highByteTwo shl 8) or (lowByteTwo and 0xFF))
+        val insTwo = (((adrrTwo shl 2) + 0x100) and 0x3f00) or ((adrrTwo + 1) and 0x3f)
+
+        val rotate = if ((adrrFirst and 0x4000) != 0) Rotate.PORTRAIT else Rotate.LANDSCAPE
+        val keyMode = when (adrrFirst and 0x3000) {
+            0x0000 -> KeyMode.BASIC
+            0x1000 -> KeyMode.NUMERIC
+            0x2000 -> KeyMode.NONE
+            else -> KeyMode.NONE
+        }
+        val range = Range(
+            startRow = (insFirst shr 8) and 0xFF,
+            endRow = (insTwo shr 8) and 0xFF,
+            startCol = insFirst and 0xFF,
+            endCol = insTwo and 0xFF,
+        )
+
+        val isBorder = true //TODO: потом сделать проверку для оптимизации
+        return ControllerConfig(
+            range = range,
+            rotate = rotate,
+            keyMode = keyMode,
+            isBorder = isBorder
+        )
+    }
+
+
     private fun List<ModbusPacket>.mapToListCharData(): List<CharData> {
         return this.flatMap { packet ->
             val startTest = packet.dataList.take(120)
@@ -64,7 +123,7 @@ class ProtocolModbusDataRepository @Inject constructor(
                 CharData(
                     charByte = byteValue,
                     colorByte = (colorBackgroundByte.toInt() and 0xF),
-                    backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF)
+                    backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF),
                 )
             }
         }
@@ -153,9 +212,16 @@ class ProtocolModbusDataRepository @Inject constructor(
         return crc
     }
 
+    //TODO: Убрать после тестов
+    //
+    private val _answerFlowTest = MutableStateFlow("Command send")
+    fun getAnswerTest(): Flow<String> = _answerFlowTest
+    //
+
     private fun respondToPacket(socket: BluetoothSocket) {
         val checksum = calculateCRC16(response)
         val answer = response + checksum.toByteArray()
+        _answerFlowTest.value = answer.joinToString(" ") { "%02X".format(it) }
         Log.d(tag, "Respond: ${answer.joinToString(" ") { "%02X".format(it) }}")
         dataStreamRepository.sendToStream(socket = socket, value = answer)
         //response = originalResponse.copyOf()

@@ -1,332 +1,263 @@
 package com.example.bluetooth.presentation.view.home.components
 
-import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.home.CharUI
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.ui.theme.psisFontFamily
+import com.example.domain.model.ControllerConfig
+import com.example.domain.model.KeyMode
+import com.example.domain.model.Range
+import com.example.domain.model.Rotate
 
 
-@Composable
-fun TerminalDataBox12(
-    charUIList: List<CharUI>,
-    rows: Int,
-    onEvent: (HomeEvent) -> Unit,
-) {
-    val density = LocalDensity.current
-    val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-    val charsPerRow = (charUIList.size + rows - 1) / rows
-
-
-    Box(
-        modifier = Modifier
-            .background(color = Color.Black)
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    val x = offset.x
-                    val y = offset.y
-
-                    val textSize = screenWidth / (charsPerRow * 0.7f)
-
-                    val col = (x / textSize).toInt() + 1
-                    val row = (y / (textSize * 1.2f)).toInt() + 1
-                    Log.d(
-                        "test",
-                        "Coordinate pressed: column $col, row $row"
-                    )
-                    onEvent(HomeEvent.Press(column = col, row = row))
-                }
-            },
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            charUIList.chunked(charsPerRow).take(rows).forEach { row ->
-                val rowText = buildAnnotatedString {
-                    row.forEach { charUI ->
-                        val textColor = charUI.color
-                        val backgroundColor = charUI.background
-                        withStyle(
-                            SpanStyle(
-                                color = textColor,
-                                background = backgroundColor,
-                            )
-                        ) {
-                            append(charUI.char)
-                        }
-                    }
-                }
-
-                var textSize by remember { mutableFloatStateOf(screenWidth / (rowText.length * 0.7f)) }
-                var shouldDraw by remember { mutableStateOf(false) }
-
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .drawWithContent {
-                            if (shouldDraw) {
-                                drawContent()
-                            }
-                        },
-                    text = rowText,
-                    fontFamily = psisFontFamily,
-                    fontSize = with(density) { textSize.toSp() },
-                    lineHeight = with(density) { (textSize * 1.2f).toSp() },
-                    letterSpacing = 1.sp,
-                    textAlign = TextAlign.Center,
-                    onTextLayout = { result ->
-                        if (result.didOverflowWidth) {
-                            textSize *= 0.95f
-                        } else {
-                            shouldDraw = true
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
-
-@SuppressLint("ReturnFromAwaitPointerEventScope")
+//TODO: проверить рекомпозиции
+//TODO: SelectionCanvas__
+@NonRestartableComposable
 @Composable
 fun TerminalDataBox(
     charUIList: List<CharUI>,
-    rows: Int,
+    isBorder: Boolean,
+    range: Range,
+    lines: Int,
     onEvent: (HomeEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-    val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-    val charsPerRow = (charUIList.size + rows - 1) / rows
-
+    val charPerLine = (charUIList.size + lines - 1) / lines
+    var cellSize by remember { mutableStateOf(Pair(0f, 0f)) }
+    var gridOffset by remember { mutableStateOf(Offset(0f, 0f)) }
     Box(
-        modifier = Modifier
-            .background(color = Color.Black)
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    val textSize = screenWidth / (charsPerRow * 0.7f)
-                    while (true) {
-                        val down = awaitPointerEvent().changes.firstOrNull { it.pressed }
-                        if (down != null) {
-                            var previousPosition = down.position
-                            val initialCol = (previousPosition.x / textSize).toInt() + 1
-                            val initialRow = (previousPosition.y / (textSize * 1.2f)).toInt() + 1
-//                            val initialCol =
-//                                (down.position.x / (screenWidth / charsPerRow)).toInt() + 1
-//                            val initialRow =
-//                                (down.position.y / (screenWidth / charsPerRow)).toInt() + 1
-
-                            Log.d(
-                                "test",
-                                "Coordinate pressed $initialCol, $initialRow"
-                            )
-                            onEvent(HomeEvent.Press(initialCol, initialRow))
-
-                            down.consume()
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                var isPressed = false
-
-                                event.changes.forEach { change ->
-                                    if (change.pressed) {
-                                        val col =
-                                            (change.position.x / textSize).toInt() + 1
-                                        val row =
-                                            (change.position.y / (textSize * 1.2f)).toInt() + 1
-
-                                        if (change.position != previousPosition) {
-                                            Log.d(
-                                                "test",
-                                                "Move to coordinate $col, $row"
-                                            )
-                                            onEvent(HomeEvent.Press(col, row))
-                                            previousPosition = change.position
-                                        }
-
-                                        isPressed = true
-                                        change.consume()
-                                    } else {
-                                        change.consume()
-                                    }
-                                }
-                                if (!isPressed) {
-                                    val finalCol =
-                                        (previousPosition.x / textSize).toInt() + 1
-                                    val finalRow =
-                                        (previousPosition.y / (textSize * 1.2f)).toInt() + 1
-
-                                    Log.d(
-                                        "test",
-                                        "Coordinate release $finalCol, $finalRow"
-                                    )
-                                    onEvent(HomeEvent.Press(0, 0))
-                                    break
-                                }
-                            }
-                        }
-                    }
+        modifier = modifier,
+    ) {
+        CharGrid(
+            charUIList = charUIList,
+            columns = charPerLine,
+            rows = lines,
+            onEvent = onEvent,
+            onCellSizeChanged = { cellWidth, cellHeight, offset ->
+                if (cellSize != Pair(cellWidth, cellHeight)) {
+                    cellSize = Pair(cellWidth, cellHeight)
+                    gridOffset = offset
                 }
             },
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            charUIList.chunked(charsPerRow).take(rows).forEach { row ->
-                val rowText = buildAnnotatedString {
-                    row.forEach { charUI ->
-                        val textColor = charUI.color
-                        val backgroundColor = charUI.background
-                        withStyle(
-                            SpanStyle(
-                                color = textColor,
-                                background = backgroundColor,
-                            )
-                        ) {
-                            append(charUI.char)
-                        }
-                    }
-                }
-
-                var textSize by remember { mutableFloatStateOf(screenWidth / (rowText.length * 0.7f)) }
-                var shouldDraw by remember { mutableStateOf(false) }
-
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .drawWithContent {
-                            if (shouldDraw) {
-                                drawContent()
-                            }
-                        },
-                    text = rowText,
-                    fontFamily = psisFontFamily,
-                    fontSize = with(density) { textSize.toSp() },
-                    lineHeight = with(density) { (textSize * 1.2f).toSp() },
-                    letterSpacing = 1.sp,
-                    textAlign = TextAlign.Center,
-                    onTextLayout = { result ->
-                        if (result.didOverflowWidth) {
-                            textSize *= 0.95f
-                        } else {
-                            shouldDraw = true
-                        }
-                    }
-                )
-            }
+        )
+        if (isBorder) {
+            SelectionCanvas__(
+                cellSize = cellSize,
+                gridOffset = gridOffset,
+                range = range,
+            )
         }
     }
 }
 
 
+@NonRestartableComposable
 @Composable
-fun TerminalDataBox_(
+private fun CharGrid(
     charUIList: List<CharUI>,
+    columns: Int,
     rows: Int,
     onEvent: (HomeEvent) -> Unit,
+    onCellSizeChanged: (cellWidth: Float, cellHeight: Float, offset: Offset) -> Unit,
 ) {
-    val density = LocalDensity.current
-    val screenWidth = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-    val charsPerRow = (charUIList.size + rows - 1) / rows
-
-    Box(
-        modifier = Modifier
-            .background(color = Color.Black)
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = { offset ->
-                        val x = offset.x
-                        val y = offset.y
-
-                        val textSize = screenWidth / (charsPerRow * 0.7f)
-
-                        val col = (x / textSize).toInt() + 1
-                        val row = (y / (textSize * 1.2f)).toInt() + 1
-                        Log.d("test", "Нажата координата:  ${col}, $row")
-                        onEvent(HomeEvent.Press(col, row))
-                        tryAwaitRelease()
-                        Log.d("test", "Нажатие прекратилось ${col}, $row")
-                        onEvent(HomeEvent.Press(0, 0))
-                    }
-                )
-            },
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            charUIList.chunked(charsPerRow).take(rows).forEach { row ->
-                val rowText = buildAnnotatedString {
-                    row.forEach { charUI ->
-                        val textColor = charUI.color
-                        val backgroundColor = charUI.background
-                        withStyle(
-                            SpanStyle(
-                                color = textColor,
-                                background = backgroundColor,
-                            )
-                        ) {
-                            append(charUI.char)
-                        }
-                    }
+    val rowsContent = charUIList.chunked(columns).take(rows)
+    val annotatedString = buildAnnotatedString {
+        rowsContent.forEachIndexed { rowIndex, rowItems ->
+            rowItems.forEach { charUI ->
+                withStyle(
+                    style = SpanStyle(
+                        color = charUI.color,
+                        background = charUI.background
+                    )
+                ) {
+                    append(charUI.char)
                 }
-
-                var textSize by remember { mutableFloatStateOf(screenWidth / (rowText.length * 0.7f)) }
-                var shouldDraw by remember { mutableStateOf(false) }
-
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .drawWithContent {
-                            if (shouldDraw) {
-                                drawContent()
-                            }
-                        },
-                    text = rowText,
-                    fontFamily = psisFontFamily,
-                    fontSize = with(density) { textSize.toSp() },
-                    lineHeight = with(density) { (textSize * 1.2f).toSp() },
-                    letterSpacing = 1.sp,
-                    textAlign = TextAlign.Center,
-                    onTextLayout = { result ->
-                        if (result.didOverflowWidth) {
-                            textSize *= 0.95f
-                        } else {
-                            shouldDraw = true
-                        }
-                    }
-                )
+            }
+            if (rowIndex < rowsContent.size - 1) {
+                append("\n")
             }
         }
     }
+
+    var cellWidth by remember { mutableFloatStateOf(0f) }
+    var cellHeight by remember { mutableFloatStateOf(0f) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = annotatedString,
+            fontFamily = psisFontFamily,
+            fontSize = 17.sp,
+            lineHeight = 16.sp,
+            textAlign = TextAlign.Center,
+            maxLines = rows,
+            modifier = Modifier
+                .onGloballyPositioned { layoutCoordinates ->
+                    val gridSize = layoutCoordinates.size
+                    if (gridSize != IntSize.Zero) {
+                        val newWidth = gridSize.width / columns.toFloat()
+                        val newHeight = gridSize.height / rows.toFloat()
+
+                        val offset = layoutCoordinates.positionInParent()
+                        if (cellWidth != newWidth || cellHeight != newHeight) {
+                            cellWidth = newWidth
+                            cellHeight = newHeight
+                            onCellSizeChanged(cellWidth, cellHeight, offset)
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = { offset ->
+                            val col = ((offset.x) / cellWidth).toInt() + 1
+                            val row = ((offset.y) / cellHeight).toInt() + 1
+                            onEvent(HomeEvent.Press(col, row))
+                            tryAwaitRelease()
+                            onEvent(HomeEvent.Press(0, 0))
+                        }
+                    )
+                },
+            //TODO: допилить авторазмер текста
+        )
+    }
 }
 
+@NonRestartableComposable
+@Composable
+fun SelectionCanvas__(
+    cellSize: Pair<Float, Float>,
+    gridOffset: Offset,
+    range: Range,
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "")
+    val animatedValue by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = ""
+    )
+    val topLeft = remember(range, cellSize, gridOffset) {
+        Offset(
+            gridOffset.x + (range.startCol - 1) * cellSize.first,
+            gridOffset.y + (range.startRow - 1) * cellSize.second
+        )
+    }
+    val bottomRight = remember(range, cellSize, gridOffset) {
+        Offset(
+            gridOffset.x + (range.endCol - 1) * cellSize.first,
+            gridOffset.y + (range.endRow - 1) * cellSize.second
+        )
+    }
+    val width = remember(topLeft, bottomRight) { bottomRight.x - topLeft.x }
+    val height = remember(topLeft, bottomRight) { bottomRight.y - topLeft.y }
+
+    Canvas(
+        modifier = Modifier
+            .size(width.dp, height.dp)
+    ) {
+        val strokeWidth = 2.dp.toPx()
+        val colors = listOf(Color.Blue, Color.Red, Color.Green, Color.Blue)
+
+        val topGradient = Brush.linearGradient(
+            colors = colors,
+            start = Offset(topLeft.x + width * animatedValue, topLeft.y),
+            end = Offset(topLeft.x + width * animatedValue - width, topLeft.y),
+            tileMode = TileMode.Repeated
+        )
+        drawLine(
+            brush = topGradient,
+            start = topLeft,
+            end = Offset(bottomRight.x, topLeft.y),
+            strokeWidth = strokeWidth
+        )
+
+        val rightGradient = Brush.linearGradient(
+            colors = colors,
+            start = Offset(bottomRight.x, topLeft.y + height * animatedValue),
+            end = Offset(bottomRight.x, topLeft.y + height * animatedValue - height),
+            tileMode = TileMode.Repeated
+        )
+        drawLine(
+            brush = rightGradient,
+            start = Offset(bottomRight.x, topLeft.y),
+            end = Offset(bottomRight.x, bottomRight.y),
+            strokeWidth = strokeWidth
+        )
+
+        val bottomGradient = Brush.linearGradient(
+            colors = colors,
+            start = Offset(bottomRight.x - width * animatedValue, bottomRight.y),
+            end = Offset(bottomRight.x - width * animatedValue + width, bottomRight.y),
+            tileMode = TileMode.Repeated
+        )
+        drawLine(
+            brush = bottomGradient,
+            start = Offset(topLeft.x, bottomRight.y),
+            end = bottomRight,
+            strokeWidth = strokeWidth
+        )
+
+        val leftGradient = Brush.linearGradient(
+            colors = colors,
+            start = Offset(topLeft.x, bottomRight.y - height * animatedValue),
+            end = Offset(topLeft.x, bottomRight.y - height * animatedValue + height),
+            tileMode = TileMode.Repeated
+        )
+        drawLine(
+            brush = leftGradient,
+            start = topLeft,
+            end = Offset(topLeft.x, bottomRight.y),
+            strokeWidth = strokeWidth
+        )
+    }
+}
 
 @PreviewLightDark
 @Composable
@@ -345,15 +276,26 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
         CharUI(
             char = char,
             color = Color.Black, //getRandomColor(),
-            background = getRandomColor()
+            background = getRandomColor(),
         )
     }
+    val testConfig = ControllerConfig(
+        range = Range(startRow = 6, endRow = 6, startCol = 1, endCol = 12),
+        keyMode = KeyMode.NONE,
+        rotate = Rotate.PORTRAIT,
+        isBorder = false,
+    )
 
     Surface {
-        TerminalDataBox(
-            charUIList = data,
-            rows = 4,
-            onEvent = {}
-        )
+
+        Column {
+            TerminalDataBox(
+                charUIList = data,
+                isBorder = testConfig.isBorder,
+                range = testConfig.range,
+                lines = 4,
+                onEvent = {}
+            )
+        }
     }
 }
