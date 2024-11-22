@@ -23,9 +23,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.connect.components.AnimatedButtonDecrease
-import com.example.bluetooth.presentation.view.home.ButtonType
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.domain.model.ButtonType
 
 @Composable
 fun ButtonFBox(
@@ -55,7 +55,7 @@ fun ButtonFBox(
                     ),
                     shape = RoundedCornerShape(0.dp),
                     onClick = {
-                        onEvent(HomeEvent.ButtonClick(pressedButton = ButtonType.F(index + 1)))
+                        onEvent(HomeEvent.ButtonClick(pressedButton = ButtonType.F)) //(index + 1)
                     },
                 ) {
                     Text(
