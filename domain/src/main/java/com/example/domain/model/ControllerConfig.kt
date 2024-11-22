@@ -16,8 +16,8 @@ data class Range(
 
 
 enum class KeyMode {
-    BASIC, // кнопки + стрелочками
-    NUMERIC, // кнопки + цифрами
+    BASIC,
+    NUMERIC,
     NONE
 }
 

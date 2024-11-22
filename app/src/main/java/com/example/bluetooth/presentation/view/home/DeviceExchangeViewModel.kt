@@ -4,11 +4,13 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.domain.model.ButtonType
 import com.example.domain.model.CharData
 import com.example.domain.model.ControllerConfig
 import com.example.domain.model.KeyMode
 import com.example.domain.model.Range
 import com.example.domain.model.Rotate
+import com.example.domain.model.Command
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -102,152 +104,30 @@ class DeviceExchangeViewModel @Inject constructor(
         Log.d(tag, "An event has arrived: ${event::class.simpleName}")
 
         val command = when (event) {
-            is HomeEvent.ButtonClick -> generateCommand(event.pressedButton)
-            is HomeEvent.Press -> createCoordinateCommand(event)
+            is HomeEvent.ButtonClick -> Command(
+                coordinateX = 0,
+                coordinateY = 0,
+                type = event.pressedButton
+            )
+            is HomeEvent.Press -> Command(
+                coordinateX = event.column,
+                coordinateY = event.row,
+                type = ButtonType.None
+            )
         }
 
-        sendData(value = command)
+        sendData(command = command)
     }
 
-    private fun sendData(value: ByteArray) {
-        Log.d(tag, "Send data: ${value.joinToString(" ") { (it.toInt() and 0xFF).toString() }}")
+    private fun sendData(command: Command) {
+        Log.d(tag, "Send data: $command")
         viewModelScope.launch {
             try {
-                exchangeDataRepository.sendToStream(value = value)
+                exchangeDataRepository.sendToStream(value = command)
             } catch (e: Exception) {
                 Log.e(tag, "Failed to send data: ${e.message}")
             }
         }
-    }
-
-
-    private val baseUART =
-        byteArrayOf(0xFE.toByte(), 0x08.toByte(), 0x80.toByte(), 0x00, 0x00, 0x00, 0x00, 0x00)
-    private val baseModbus =
-        byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
-
-    private fun generateCommand(event: ButtonType): ByteArray {
-        return when (event) {
-            is ButtonType.F -> generateFCommand(event.number)
-            ButtonType.Menu -> baseUART + byteArrayOf(0, 4)
-            ButtonType.Mode -> baseUART + byteArrayOf(0, 20)
-            ButtonType.Enter -> baseUART + byteArrayOf(80, 0)
-            ButtonType.Cancel -> baseUART + byteArrayOf(10, 0)
-            ButtonType.Archive -> baseUART + byteArrayOf(2, 0)
-            ButtonType.FButton -> baseUART + byteArrayOf(0, 40)
-            is ButtonType.Arrow -> generateArrowCommand(event.direction)
-            ButtonType.SecondaryCancel -> baseModbus + byteArrayOf(
-                0x12.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x10.toByte()
-            )
-
-            ButtonType.SecondaryEnter -> baseModbus + byteArrayOf(
-                0x16.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x80.toByte()
-            )
-
-            ButtonType.SecondaryUp -> baseModbus + byteArrayOf(
-                0x19.toByte(), 0x1D.toByte(), 0x01.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.SecondaryDown -> baseModbus + byteArrayOf(
-                0x1D.toByte(), 0x1D.toByte(), 0x08.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Burner -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x20.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Close -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x08.toByte()
-            )
-
-            ButtonType.Open -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x01.toByte()
-            )
-
-            ButtonType.SecondaryF -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x40.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Stop -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x04.toByte(), 0x00.toByte()
-            )
-
-            //TODO: у кнопки F двойной код + какая-то кнопка
-            //TODO: вторая клавиатура доделать + рефакторинг
-            ButtonType.One -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x04.toByte()
-            )
-
-            ButtonType.Two -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x80.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Three -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x10.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Four -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x02.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Five -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x20.toByte()
-            )
-
-            ButtonType.Six -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x40.toByte()
-            )
-
-            ButtonType.Seven -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x08.toByte()
-            )
-
-            ButtonType.Eight -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x01.toByte()
-            )
-
-            ButtonType.Nine -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x04.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Zero -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x00.toByte(), 0x02.toByte()
-            )
-
-            ButtonType.Minus -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x08.toByte(), 0x00.toByte()
-            )
-
-            ButtonType.Point -> baseModbus + byteArrayOf(
-                0x00, 0x00, 0x20.toByte(), 0x00.toByte()
-            )
-        }
-    }
-
-    private fun generateFCommand(number: Int): ByteArray {
-        return when (number) {
-            1 -> baseUART + byteArrayOf(4, 0)
-            2 -> baseUART + byteArrayOf(0, 80)
-            3 -> baseUART + byteArrayOf(0, 10)
-            4 -> baseUART + byteArrayOf(0, 2)
-            5 -> baseUART + byteArrayOf(20, 0)
-            6 -> baseUART + byteArrayOf(40, 0)
-            7 -> baseUART + byteArrayOf(8, 0)
-            8 -> baseUART + byteArrayOf(1, 0)
-            else -> byteArrayOf()
-        }
-    }
-
-    private fun generateArrowCommand(direction: ButtonType.ArrowDirection): ByteArray {
-        return when (direction) {
-            ButtonType.ArrowDirection.Up -> baseModbus + byteArrayOf(0, 1) // ▲
-            ButtonType.ArrowDirection.Down -> baseModbus + byteArrayOf(0, 8) // ▼
-        }
-    }
-
-    private fun createCoordinateCommand(event: HomeEvent.Press): ByteArray {
-        Log.d(tag, "Coordinate pressed: column ${event.column}, row ${event.row} ")
-        return baseModbus + byteArrayOf(event.column.toByte(), event.row.toByte(), 0x00, 0x00)
     }
 
     companion object {

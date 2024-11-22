@@ -19,21 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.R
 import com.example.bluetooth.presentation.view.connect.components.AnimatedButtonDecrease
-import com.example.bluetooth.presentation.view.home.ButtonType
+
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.bluetooth.presentation.view.home.HomeEvent
+import com.example.domain.model.ButtonType
 
 @Composable
 fun ButtonHelpBox(onEvent: (HomeEvent) -> Unit) {
     val buttonLabels = listOf(
-        ButtonType.Menu,
-        ButtonType.Mode,
+//        ButtonType.Menu,
+//        ButtonType.Mode,
         ButtonType.Enter,
         ButtonType.Cancel,
-        ButtonType.Archive,
-        ButtonType.FButton,
-        ButtonType.Arrow(ButtonType.ArrowDirection.Up),
-        ButtonType.Arrow(ButtonType.ArrowDirection.Down),
+//        ButtonType.Archive,
+//        ButtonType.FButton,
+//        ButtonType.Arrow(ButtonType.ArrowDirection.Up),
+//        ButtonType.Arrow(ButtonType.ArrowDirection.Down),
     )
 
     LazyVerticalGrid(
@@ -56,17 +57,17 @@ fun ButtonHelpBox(onEvent: (HomeEvent) -> Unit) {
             ) {
                 Text(
                     text = when (buttonType) {
-                        is ButtonType.Menu -> stringResource(R.string.button_help_box_button_label_menu)
-                        is ButtonType.Mode -> stringResource(R.string.button_help_box_button_label_mode)
+//                        is ButtonType.Menu -> stringResource(R.string.button_help_box_button_label_menu)
+//                        is ButtonType.Mode -> stringResource(R.string.button_help_box_button_label_mode)
                         is ButtonType.Enter -> stringResource(R.string.button_help_box_button_label_enter)
                         is ButtonType.Cancel -> stringResource(R.string.button_help_box_button_label_cancel)
-                        is ButtonType.Archive -> stringResource(R.string.button_help_box_button_label_archive)
-                        is ButtonType.FButton -> stringResource(R.string.button_help_box_button_label_f)
-                        is ButtonType.Arrow -> if (buttonType.direction is ButtonType.ArrowDirection.Up) {
-                            stringResource(R.string.button_help_box_button_label_up_arrow)
-                        } else {
-                            stringResource(R.string.button_help_box_button_label_down_arrow)
-                        }
+//                        is ButtonType.Archive -> stringResource(R.string.button_help_box_button_label_archive)
+//                        is ButtonType.FButton -> stringResource(R.string.button_help_box_button_label_f)
+//                        is ButtonType.Arrow -> if (buttonType.direction is ButtonType.ArrowDirection.Up) {
+//                            stringResource(R.string.button_help_box_button_label_up_arrow)
+//                        } else {
+//                            stringResource(R.string.button_help_box_button_label_down_arrow)
+//                        }
 
                         else -> "Unknown Button"
                     },

@@ -11,8 +11,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,7 +30,6 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -126,13 +123,13 @@ private fun CharGrid(
     Box(
         modifier = Modifier
             .fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Text(
             text = annotatedString,
             fontFamily = psisFontFamily,
-            fontSize = 17.sp,
-            lineHeight = 16.sp,
+            fontSize = 16.sp,
+            lineHeight = 15.sp,
             textAlign = TextAlign.Center,
             maxLines = rows,
             modifier = Modifier
@@ -166,7 +163,6 @@ private fun CharGrid(
     }
 }
 
-@NonRestartableComposable
 @Composable
 fun SelectionCanvas__(
     cellSize: Pair<Float, Float>,
