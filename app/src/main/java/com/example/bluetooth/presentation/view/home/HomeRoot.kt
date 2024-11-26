@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,13 +34,6 @@ import com.example.domain.model.Rotate
 fun HomeRoot(
     viewModel: DeviceExchangeViewModel = viewModel(),
 ) {
-//    val data by viewModel.data.collectAsState()
-//    val controllerConfig by viewModel.controllerConfig.collectAsState()
-//    val test by viewModel.test.collectAsState()
-//    val onEvents: (HomeEvent) -> Unit = remember {
-//        { event -> viewModel.onEvents(event) }
-//    }
-
     Home(
         state = HomeState(
             data = viewModel.data.collectAsState().value,

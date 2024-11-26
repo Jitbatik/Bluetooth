@@ -1,7 +1,6 @@
 package com.example.data
 
 import com.example.domain.model.CharData
-import com.example.domain.model.Command
 import com.example.domain.model.ControllerConfig
 import com.example.domain.repository.ExchangeDataRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +17,7 @@ class ExchangeDataRepositoryImpl @Inject constructor(
     override fun observeControllerConfig(): Flow<ControllerConfig> =
         protocolDataRepository.observeControllerConfigFlow()
 
-    override suspend fun sendToStream(value: Command) =
+    override suspend fun sendToStream(value: ByteArray) =
         protocolDataRepository.sendToStream(value = value)
 
     //TODO: Убрать после тестов
