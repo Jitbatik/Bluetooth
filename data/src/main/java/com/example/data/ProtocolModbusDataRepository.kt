@@ -3,9 +3,7 @@ package com.example.data
 import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
-import com.example.domain.model.ButtonType
 import com.example.domain.model.CharData
-import com.example.domain.model.Command
 import com.example.domain.model.ControllerConfig
 import com.example.domain.model.KeyMode
 import com.example.domain.model.ModbusPacket
@@ -255,56 +253,11 @@ class ProtocolModbusDataRepository @Inject constructor(
         return socket
     }
 
-    fun sendToStream(value: Command) {
-        val command = generateCommand(value)
-        val checksum = calculateCRC16(command)
-        val unsignedValue = command + checksum.toByteArray()
+    fun sendToStream(value: ByteArray) {
+        val checksum = calculateCRC16(value)
+        val unsignedValue = value + checksum.toByteArray()
         Log.d(tag, "Command: ${unsignedValue.joinToString(" ") { "%02X".format(it) }}")
-        response = command
-    }
-
-    private fun generateCommand(value: Command): ByteArray {
-        val baseModbus = byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
-        return if (value.type == ButtonType.None) {
-            baseModbus + byteArrayOf(
-                value.coordinateX.toByte(),
-                value.coordinateY.toByte(),
-                0x00,
-                0x00
-            )
-        } else {
-            baseModbus + handleButton(type = value.type)
-        }
-    }
-
-    //todo: кнопка F or между второй кнопкой
-    private fun handleButton(type: ButtonType): ByteArray {
-        return when (type) {
-            ButtonType.Close -> byteArrayOf(0x00, 0x00, 0x00.toByte(), 0x00.toByte())
-            ButtonType.Open -> byteArrayOf(0x00, 0x00, 0x00, 0x00)
-            ButtonType.Stop -> byteArrayOf(0x00, 0x00, 0x00, 0x00)
-            ButtonType.Burner -> byteArrayOf(0x00, 0x00, 0x20.toByte(), 0x00.toByte())
-            ButtonType.F -> byteArrayOf(0x00, 0x00, 0x40, 0x00)
-            ButtonType.Cancel -> byteArrayOf(0x12.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x10.toByte())
-            ButtonType.Enter -> byteArrayOf(0x16.toByte(), 0x1D.toByte(), 0x00.toByte(), 0x80.toByte())
-            ButtonType.ArrowUp -> byteArrayOf(0x19.toByte(), 0x1D.toByte(), 0x01.toByte(), 0x00.toByte())
-            ButtonType.ArrowDown -> byteArrayOf(0x1D.toByte(), 0x1D.toByte(), 0x08.toByte(), 0x00.toByte())
-
-            ButtonType.One -> byteArrayOf(0x00, 0x00, 0x00, 0x04)
-            ButtonType.Two -> byteArrayOf(0x00, 0x00, 0x80.toByte(), 0x00)
-            ButtonType.Three -> byteArrayOf(0x00, 0x00, 0x10, 0x00)
-            ButtonType.Four -> byteArrayOf(0x00, 0x00, 0x02, 0x00)
-            ButtonType.Five -> byteArrayOf(0x00, 0x00, 0x00, 0x20)
-            ButtonType.Six -> byteArrayOf(0x00, 0x00, 0x00, 0x40)
-            ButtonType.Seven -> byteArrayOf(0x00, 0x00, 0x00, 0x08)
-            ButtonType.Eight -> byteArrayOf(0x00, 0x00, 0x00, 0x01)
-            ButtonType.Nine -> byteArrayOf(0x00, 0x00, 0x04, 0x00)
-            ButtonType.Zero -> byteArrayOf(0x00, 0x00, 0x00, 0x02)
-            ButtonType.Minus -> byteArrayOf(0x00, 0x00, 0x08, 0x00)
-            ButtonType.Point -> byteArrayOf(0x00, 0x00, 0x20, 0x00)
-
-            ButtonType.None -> byteArrayOf(0x00, 0x00, 0x00, 0x00)
-        }
+        response = value
     }
 
     companion object {

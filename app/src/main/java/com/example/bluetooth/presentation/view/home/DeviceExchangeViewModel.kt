@@ -10,7 +10,6 @@ import com.example.domain.model.ControllerConfig
 import com.example.domain.model.KeyMode
 import com.example.domain.model.Range
 import com.example.domain.model.Rotate
-import com.example.domain.model.Command
 import com.example.domain.repository.ExchangeDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -102,24 +101,35 @@ class DeviceExchangeViewModel @Inject constructor(
 
     fun onEvents(event: HomeEvent) {
         Log.d(tag, "An event has arrived: ${event::class.simpleName}")
-
         val command = when (event) {
-            is HomeEvent.ButtonClick -> Command(
-                coordinateX = 0,
-                coordinateY = 0,
-                type = event.pressedButton
+            is HomeEvent.ButtonClick -> processButtonCommand(
+                primary = event.pressedButton,
+                secondary = event.secondaryButton
             )
-            is HomeEvent.Press -> Command(
-                coordinateX = event.column,
-                coordinateY = event.row,
-                type = ButtonType.None
-            )
+            is HomeEvent.Press -> generateCommand(colum = event.column, row = event.row)
         }
-
         sendData(command = command)
     }
 
-    private fun sendData(command: Command) {
+    private fun processButtonCommand(
+        primary: ButtonType,
+        secondary: ButtonType? = null
+    ): ByteArray {
+        val primaryCommand = handleButton(primary)
+        val command = secondary?.let {
+            primaryCommand.orWith(handleButton(it)).toByteArray()
+        } ?: primaryCommand.toByteArray()
+
+        return baseModbus + command
+    }
+
+    private fun IntArray.orWith(other: IntArray): IntArray {
+        return this.zip(other) { a, b -> a or b }.toIntArray()
+    }
+
+    private fun IntArray.toByteArray(): ByteArray = map { it.toByte() }.toByteArray()
+
+    private fun sendData(command: ByteArray) {
         Log.d(tag, "Send data: $command")
         viewModelScope.launch {
             try {
@@ -129,6 +139,45 @@ class DeviceExchangeViewModel @Inject constructor(
             }
         }
     }
+
+    private val baseModbus = byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
+
+    private fun generateCommand(colum: Int, row: Int): ByteArray {
+        return baseModbus + byteArrayOf(
+            colum.toByte(),
+            row.toByte(),
+            0x00,
+            0x00
+        )
+    }
+
+    //todo: кнопка F or между второй кнопкой
+    private fun handleButton(type: ButtonType): IntArray {
+        val command = when (type) {
+            ButtonType.Burner -> intArrayOf(0x00, 0x00, 0x20, 0x00)
+            ButtonType.F -> intArrayOf(0x00, 0x00, 0x40, 0x00)
+            ButtonType.Cancel -> intArrayOf(0x12, 0x1D, 0x00, 0x10)
+            ButtonType.Enter -> intArrayOf(0x16, 0x1D, 0x00, 0x80)
+            ButtonType.ArrowUp -> intArrayOf(0x19, 0x1D, 0x01, 0x00)
+            ButtonType.ArrowDown -> intArrayOf(0x1D, 0x1D, 0x08, 0x00)
+            ButtonType.One -> intArrayOf(0x00, 0x00, 0x00, 0x04)
+            ButtonType.Two -> intArrayOf(0x00, 0x00, 0x80, 0x00)
+            ButtonType.Three -> intArrayOf(0x00, 0x00, 0x10, 0x00)
+            ButtonType.Four -> intArrayOf(0x00, 0x00, 0x02, 0x00)
+            ButtonType.Five -> intArrayOf(0x00, 0x00, 0x00, 0x20)
+            ButtonType.Six -> intArrayOf(0x00, 0x00, 0x00, 0x40)
+            ButtonType.Seven, ButtonType.Close -> intArrayOf(0x00, 0x00, 0x00, 0x08)
+            ButtonType.Eight, ButtonType.Open -> intArrayOf(0x00, 0x00, 0x00, 0x01)
+            ButtonType.Nine, ButtonType.Stop -> intArrayOf(0x00, 0x00, 0x04, 0x00)
+            ButtonType.Zero -> intArrayOf(0x00, 0x00, 0x00, 0x02)
+            ButtonType.Minus -> intArrayOf(0x00, 0x00, 0x08, 0x00)
+            ButtonType.Point -> intArrayOf(0x00, 0x00, 0x20, 0x00)
+
+            ButtonType.None -> intArrayOf(0x00, 0x00, 0x00, 0x00)
+        }
+        return command
+    }
+
 
     companion object {
         private val pal16 = arrayOf(
