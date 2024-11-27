@@ -29,10 +29,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.home.ControlButtonData
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.presentation.view.home.state.ButtonState
-import com.example.domain.model.ButtonType
+import com.example.bluetooth.presentation.view.home.state.ButtonType
 
 
 //TODO: рекомпозиция
@@ -42,7 +41,7 @@ import com.example.domain.model.ButtonType
 @Composable
 fun ControlButtons(
     onEvents: (HomeEvent) -> Unit,
-    buttons: List<ControlButtonData>,
+    buttons: List<ButtonType>,
     modifier: Modifier = Modifier,
     buttonColors: ButtonColors = ButtonDefaults.textButtonColors(
         containerColor = Color.Gray,
@@ -50,32 +49,34 @@ fun ControlButtons(
     ),
     buttonShape: Shape = RoundedCornerShape(0.dp)
 ) {
-    val buttonStates = remember { mutableStateMapOf<ControlButtonData, ButtonState>() }
-    fun handlePressStart(button: ControlButtonData) {
-        buttonStates[button] = ButtonState.Pressed
-        val noteButton = buttonStates.entries.find { it.value == ButtonState.Note }?.key
-        onEvents(
-            HomeEvent.ButtonClick(
-                pressedButton = button.buttonType,
-                secondaryButton = noteButton?.buttonType,
-            )
-        )
+    val buttonStates = remember { mutableStateMapOf<ButtonType, ButtonState>() }
+    fun handlePressStart(button: ButtonType) {
+        onEvents(HomeEvent.ButtonClick(pressedButton = button))
+//        buttonStates[button] = ButtonState.Pressed
+//        val noteButton = buttonStates.entries.find { it.value == ButtonState.Note }?.key
+//        onEvents(
+//            HomeEvent.ButtonClick(
+//                pressedButton = button.buttonType,
+//                secondaryButton = noteButton?.buttonType,
+//            )
+//        )
     }
 
-    fun handlePressEnd(button: ControlButtonData) {
-        val activeButtonsCount = buttonStates.values.count { it != ButtonState.Idle }
-        if (activeButtonsCount > 1) {
-            buttonStates.keys.forEach { key -> buttonStates[key] = ButtonState.Idle }
-            onEvents(HomeEvent.Press(0, 0))
-        } else {
-            when (button.buttonType) {
-                ButtonType.F -> buttonStates[button] = ButtonState.Note
-                else -> {
-                    buttonStates[button] = ButtonState.Idle
-                    onEvents(HomeEvent.Press(0, 0))
-                }
-            }
-        }
+    fun handlePressEnd(button: ButtonType) {
+        onEvents(HomeEvent.Press(0, 0))
+//        val activeButtonsCount = buttonStates.values.count { it != ButtonState.Idle }
+//        if (activeButtonsCount > 1) {
+//            buttonStates.keys.forEach { key -> buttonStates[key] = ButtonState.Idle }
+//            onEvents(HomeEvent.Press(0, 0))
+//        } else {
+//            when (button.buttonType) {
+//                ButtonType.F -> buttonStates[button] = ButtonState.Note
+//                else -> {
+//                    buttonStates[button] = ButtonState.Idle
+//                    onEvents(HomeEvent.Press(0, 0))
+//                }
+//            }
+//        }
     }
 
     LazyVerticalGrid(
@@ -85,13 +86,16 @@ fun ControlButtons(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier
     ) {
-        items(buttons, key = { it.buttonType.toKey() }) { button ->
+        items(
+            items = buttons,
+            key = { it.name }
+        ) { button ->
             val currentState = buttonStates[button] ?: ButtonState.Idle
             ControlButtonItem(
                 button = button,
                 isButton = currentState,
                 onPressStart = { handlePressStart(button) },
-                onPressEnd = {  handlePressEnd(button) },
+                onPressEnd = { handlePressEnd(button) },
                 buttonColors = buttonColors,
                 buttonShape = buttonShape
             )
@@ -100,11 +104,9 @@ fun ControlButtons(
 }
 
 
-
-
 @Composable
 private fun ControlButtonItem(
-    button: ControlButtonData,
+    button: ButtonType,
     isButton: ButtonState,
     onPressStart: () -> Unit,
     onPressEnd: () -> Unit,

@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.model.ButtonType
+import com.example.bluetooth.presentation.view.home.state.ButtonType
 import com.example.domain.model.CharData
 import com.example.domain.model.ControllerConfig
 import com.example.domain.model.KeyMode
@@ -106,6 +106,7 @@ class DeviceExchangeViewModel @Inject constructor(
                 primary = event.pressedButton,
                 secondary = event.secondaryButton
             )
+
             is HomeEvent.Press -> generateCommand(colum = event.column, row = event.row)
         }
         sendData(command = command)
@@ -154,26 +155,26 @@ class DeviceExchangeViewModel @Inject constructor(
     //todo: кнопка F or между второй кнопкой
     private fun handleButton(type: ButtonType): IntArray {
         val command = when (type) {
-            ButtonType.Burner -> intArrayOf(0x00, 0x00, 0x20, 0x00)
+            ButtonType.BURNER -> intArrayOf(0x00, 0x00, 0x20, 0x00)
             ButtonType.F -> intArrayOf(0x00, 0x00, 0x40, 0x00)
-            ButtonType.Cancel -> intArrayOf(0x12, 0x1D, 0x00, 0x10)
-            ButtonType.Enter -> intArrayOf(0x16, 0x1D, 0x00, 0x80)
-            ButtonType.ArrowUp -> intArrayOf(0x19, 0x1D, 0x01, 0x00)
-            ButtonType.ArrowDown -> intArrayOf(0x1D, 0x1D, 0x08, 0x00)
-            ButtonType.One -> intArrayOf(0x00, 0x00, 0x00, 0x04)
-            ButtonType.Two -> intArrayOf(0x00, 0x00, 0x80, 0x00)
-            ButtonType.Three -> intArrayOf(0x00, 0x00, 0x10, 0x00)
-            ButtonType.Four -> intArrayOf(0x00, 0x00, 0x02, 0x00)
-            ButtonType.Five -> intArrayOf(0x00, 0x00, 0x00, 0x20)
-            ButtonType.Six -> intArrayOf(0x00, 0x00, 0x00, 0x40)
-            ButtonType.Seven, ButtonType.Close -> intArrayOf(0x00, 0x00, 0x00, 0x08)
-            ButtonType.Eight, ButtonType.Open -> intArrayOf(0x00, 0x00, 0x00, 0x01)
-            ButtonType.Nine, ButtonType.Stop -> intArrayOf(0x00, 0x00, 0x04, 0x00)
-            ButtonType.Zero -> intArrayOf(0x00, 0x00, 0x00, 0x02)
-            ButtonType.Minus -> intArrayOf(0x00, 0x00, 0x08, 0x00)
-            ButtonType.Point -> intArrayOf(0x00, 0x00, 0x20, 0x00)
+            ButtonType.CANCEL -> intArrayOf(0x12, 0x1D, 0x00, 0x10)
+            ButtonType.ENTER -> intArrayOf(0x16, 0x1D, 0x00, 0x80)
+            ButtonType.ARROW_UP -> intArrayOf(0x19, 0x1D, 0x01, 0x00)
+            ButtonType.ARROW_DOWN -> intArrayOf(0x1D, 0x1D, 0x08, 0x00)
+            ButtonType.ONE -> intArrayOf(0x00, 0x00, 0x00, 0x04)
+            ButtonType.TWO -> intArrayOf(0x00, 0x00, 0x80, 0x00)
+            ButtonType.THREE -> intArrayOf(0x00, 0x00, 0x10, 0x00)
+            ButtonType.FOUR -> intArrayOf(0x00, 0x00, 0x02, 0x00)
+            ButtonType.FIVE -> intArrayOf(0x00, 0x00, 0x00, 0x20)
+            ButtonType.SIX -> intArrayOf(0x00, 0x00, 0x00, 0x40)
+            ButtonType.SEVEN, ButtonType.CLOSE -> intArrayOf(0x00, 0x00, 0x00, 0x08)
+            ButtonType.EIGHT, ButtonType.OPEN -> intArrayOf(0x00, 0x00, 0x00, 0x01)
+            ButtonType.NINE, ButtonType.STOP -> intArrayOf(0x00, 0x00, 0x04, 0x00)
+            ButtonType.ZERO -> intArrayOf(0x00, 0x00, 0x00, 0x02)
+            ButtonType.MINUS -> intArrayOf(0x00, 0x00, 0x08, 0x00)
+            ButtonType.POINT -> intArrayOf(0x00, 0x00, 0x20, 0x00)
 
-            ButtonType.None -> intArrayOf(0x00, 0x00, 0x00, 0x00)
+//            ButtonType1.None -> intArrayOf(0x00, 0x00, 0x00, 0x00)
         }
         return command
     }
