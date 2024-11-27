@@ -102,26 +102,21 @@ class DeviceExchangeViewModel @Inject constructor(
     fun onEvents(event: HomeEvent) {
         Log.d(tag, "An event has arrived: ${event::class.simpleName}")
         val command = when (event) {
-            is HomeEvent.ButtonClick -> processButtonCommand(
-                primary = event.pressedButton,
-                secondary = event.secondaryButton
-            )
-
+            is HomeEvent.ButtonClick -> processButtonCommand(activeButtons = event.buttons,)
             is HomeEvent.Press -> generateCommand(colum = event.column, row = event.row)
         }
         sendData(command = command)
     }
 
     private fun processButtonCommand(
-        primary: ButtonType,
-        secondary: ButtonType? = null
+        activeButtons: List<ButtonType>,
     ): ByteArray {
-        val primaryCommand = handleButton(primary)
-        val command = secondary?.let {
-            primaryCommand.orWith(handleButton(it)).toByteArray()
-        } ?: primaryCommand.toByteArray()
-
-        return baseModbus + command
+        return if (activeButtons.isNotEmpty()) {
+            val combinedCommand = activeButtons
+                .map { button -> handleButton(button) }
+                .reduce { acc, array -> acc.orWith(array) }
+            baseModbus + combinedCommand.toByteArray()
+        } else baseModbus + intArrayOf(0x00, 0x00, 0x00, 0x00).toByteArray()
     }
 
     private fun IntArray.orWith(other: IntArray): IntArray {
@@ -143,16 +138,9 @@ class DeviceExchangeViewModel @Inject constructor(
 
     private val baseModbus = byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
 
-    private fun generateCommand(colum: Int, row: Int): ByteArray {
-        return baseModbus + byteArrayOf(
-            colum.toByte(),
-            row.toByte(),
-            0x00,
-            0x00
-        )
-    }
+    private fun generateCommand(colum: Int, row: Int): ByteArray =
+        baseModbus + byteArrayOf(colum.toByte(), row.toByte(), 0x00, 0x00)
 
-    //todo: кнопка F or между второй кнопкой
     private fun handleButton(type: ButtonType): IntArray {
         val command = when (type) {
             ButtonType.BURNER -> intArrayOf(0x00, 0x00, 0x20, 0x00)
@@ -173,8 +161,6 @@ class DeviceExchangeViewModel @Inject constructor(
             ButtonType.ZERO -> intArrayOf(0x00, 0x00, 0x00, 0x02)
             ButtonType.MINUS -> intArrayOf(0x00, 0x00, 0x08, 0x00)
             ButtonType.POINT -> intArrayOf(0x00, 0x00, 0x20, 0x00)
-
-//            ButtonType1.None -> intArrayOf(0x00, 0x00, 0x00, 0x00)
         }
         return command
     }

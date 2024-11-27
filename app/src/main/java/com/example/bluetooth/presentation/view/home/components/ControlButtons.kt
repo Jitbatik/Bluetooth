@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +37,9 @@ import com.example.bluetooth.presentation.view.home.state.ButtonType
 
 //TODO: рекомпозиция
 //todo: влияют onPressStart onPressEnd background
-// как мне выбрать F и еще одну кнопку пока у одной кнопки статус Note если да отпрвляем их в оневент
+
+//TODO: думаю можно еще отрефакторить
+// и вынести buttonStates handlePress* и toggleFState(toggleButtonState)
 
 @Composable
 fun ControlButtons(
@@ -50,33 +53,31 @@ fun ControlButtons(
     buttonShape: Shape = RoundedCornerShape(0.dp)
 ) {
     val buttonStates = remember { mutableStateMapOf<ButtonType, ButtonState>() }
-    fun handlePressStart(button: ButtonType) {
-        onEvents(HomeEvent.ButtonClick(pressedButton = button))
-//        buttonStates[button] = ButtonState.Pressed
-//        val noteButton = buttonStates.entries.find { it.value == ButtonState.Note }?.key
-//        onEvents(
-//            HomeEvent.ButtonClick(
-//                pressedButton = button.buttonType,
-//                secondaryButton = noteButton?.buttonType,
-//            )
-//        )
-    }
+    val toggleFState = remember { mutableStateOf(false) }
+    val isReset = remember { mutableStateOf(false) }
+    val handlePressStart: (ButtonType) -> Unit = { button ->
+        if (button == ButtonType.F) toggleFState.value = !toggleFState.value
+        buttonStates[button] = ButtonState.PRESSED
 
-    fun handlePressEnd(button: ButtonType) {
-        onEvents(HomeEvent.Press(0, 0))
-//        val activeButtonsCount = buttonStates.values.count { it != ButtonState.Idle }
-//        if (activeButtonsCount > 1) {
-//            buttonStates.keys.forEach { key -> buttonStates[key] = ButtonState.Idle }
-//            onEvents(HomeEvent.Press(0, 0))
-//        } else {
-//            when (button.buttonType) {
-//                ButtonType.F -> buttonStates[button] = ButtonState.Note
-//                else -> {
-//                    buttonStates[button] = ButtonState.Idle
-//                    onEvents(HomeEvent.Press(0, 0))
-//                }
-//            }
-//        }
+        val activeButtons = buttonStates.filterValues { it != ButtonState.DEFAULT }
+        if (activeButtons.count() > 1) isReset.value = !isReset.value
+
+        onEvents(HomeEvent.ButtonClick(buttons = activeButtons.keys.toList()))
+    }
+    
+    val handlePressEnd: (ButtonType) -> Unit = { button ->
+        buttonStates[button] = when {
+            button == ButtonType.F -> if (toggleFState.value) ButtonState.ACTIVE else ButtonState.DEFAULT
+            else -> ButtonState.DEFAULT
+        }
+
+        if (button != ButtonType.F || !toggleFState.value) onEvents(HomeEvent.Press(0, 0))
+        if (isReset.value) {
+            isReset.value = !isReset.value
+            toggleFState.value = !toggleFState.value
+            buttonStates.keys.forEach { key -> buttonStates[key] = ButtonState.DEFAULT }
+            onEvents(HomeEvent.Press(0, 0))
+        }
     }
 
     LazyVerticalGrid(
@@ -90,10 +91,9 @@ fun ControlButtons(
             items = buttons,
             key = { it.name }
         ) { button ->
-            val currentState = buttonStates[button] ?: ButtonState.Idle
             ControlButtonItem(
                 button = button,
-                isButton = currentState,
+                isButton = buttonStates[button] ?: ButtonState.DEFAULT,
                 onPressStart = { handlePressStart(button) },
                 onPressEnd = { handlePressEnd(button) },
                 buttonColors = buttonColors,
@@ -127,9 +127,9 @@ private fun ControlButtonItem(
             )
             .background(
                 color = when (isButton) {
-                    ButtonState.Note -> Color(0xff0f8c8a)
-                    ButtonState.Pressed -> Color.DarkGray
-                    ButtonState.Idle -> buttonColors.containerColor
+                    ButtonState.ACTIVE -> Color(0xff0f8c8a)
+                    ButtonState.PRESSED -> Color.DarkGray
+                    ButtonState.DEFAULT -> buttonColors.containerColor
                 },
                 shape = buttonShape
             ),

@@ -14,7 +14,7 @@ data class HomeState(
 )
 
 enum class ButtonState {
-    Idle,
-    Pressed,
-    Note
+    DEFAULT,
+    PRESSED,
+    ACTIVE,
 }
