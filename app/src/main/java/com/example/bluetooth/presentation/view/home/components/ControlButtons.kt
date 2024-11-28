@@ -17,6 +17,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,16 +36,12 @@ import com.example.bluetooth.presentation.view.home.state.ButtonState
 import com.example.bluetooth.presentation.view.home.state.ButtonType
 
 
-//TODO: рекомпозиция
-//todo: влияют onPressStart onPressEnd background
-
 //TODO: думаю можно еще отрефакторить
 // и вынести buttonStates handlePress* и toggleFState(toggleButtonState)
-
 @Composable
 fun ControlButtons(
     onEvents: (HomeEvent) -> Unit,
-    buttons: List<ButtonType>,
+    buttons: MutableState<List<ButtonType>>,
     modifier: Modifier = Modifier,
     buttonColors: ButtonColors = ButtonDefaults.textButtonColors(
         containerColor = Color.Gray,
@@ -64,7 +61,7 @@ fun ControlButtons(
 
         onEvents(HomeEvent.ButtonClick(buttons = activeButtons.keys.toList()))
     }
-    
+
     val handlePressEnd: (ButtonType) -> Unit = { button ->
         buttonStates[button] = when {
             button == ButtonType.F -> if (toggleFState.value) ButtonState.ACTIVE else ButtonState.DEFAULT
@@ -88,7 +85,7 @@ fun ControlButtons(
         modifier = modifier
     ) {
         items(
-            items = buttons,
+            items = buttons.value,
             key = { it.name }
         ) { button ->
             ControlButtonItem(

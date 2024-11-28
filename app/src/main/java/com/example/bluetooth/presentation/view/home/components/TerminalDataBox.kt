@@ -50,7 +50,7 @@ import com.example.domain.model.Rotate
 
 //TODO: проверить рекомпозиции
 //TODO: SelectionCanvas__
-@NonRestartableComposable
+//@NonRestartableComposable
 @Composable
 fun TerminalDataBox(
     charUIList: List<CharUI>,
