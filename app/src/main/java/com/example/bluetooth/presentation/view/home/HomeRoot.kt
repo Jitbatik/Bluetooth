@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,21 +36,29 @@ import com.example.domain.model.Rotate
 fun HomeRoot(
     viewModel: DeviceExchangeViewModel = viewModel(),
 ) {
+    val data by viewModel.data.collectAsState()
+    val controllerConfig by viewModel.controllerConfig.collectAsState()
+    val test by viewModel.test.collectAsState()
+    val onEvents: (HomeEvent) -> Unit = remember {
+        { event -> viewModel.onEvents(event) }
+    }
+
     Home(
         state = HomeState(
-            data = viewModel.data.collectAsState().value,
-            controllerConfig = viewModel.controllerConfig.collectAsState().value,
-            onEvents = remember { { event -> viewModel.onEvents(event) } },
-            test = viewModel.test.collectAsState().value,
+            data = data,
+            controllerConfig = controllerConfig,
+            onEvents = onEvents,
+            test = test,
         ),
     )
 }
 
-//@NonRestartableComposable
+@NonRestartableComposable
 @Composable
 private fun Home(state: HomeState) {
-    val buttons =
-        remember(state.controllerConfig.keyMode) { getButtonsForKeyMode(state.controllerConfig.keyMode) }
+    val buttons = remember(state.controllerConfig.keyMode) {
+        mutableStateOf(getButtonsForKeyMode(state.controllerConfig.keyMode))
+    }
     Box(
         modifier = Modifier
             .padding(0.dp)
@@ -89,39 +100,42 @@ private fun Home(state: HomeState) {
     }
 }
 
-val basicButtons = listOf(
-    ButtonType.CLOSE,
-    ButtonType.OPEN,
-    ButtonType.STOP,
-    ButtonType.BURNER,
-    ButtonType.F,
-    ButtonType.CANCEL,
-    ButtonType.ENTER,
-    ButtonType.ARROW_UP,
-    ButtonType.ARROW_DOWN
-)
+object ButtonLists {
+    val basic = listOf(
+        ButtonType.CLOSE,
+        ButtonType.OPEN,
+        ButtonType.STOP,
+        ButtonType.BURNER,
+        ButtonType.F,
+        ButtonType.CANCEL,
+        ButtonType.ENTER,
+        ButtonType.ARROW_UP,
+        ButtonType.ARROW_DOWN
+    )
 
-val advancedButtons = listOf(
-    ButtonType.ONE,
-    ButtonType.TWO,
-    ButtonType.THREE,
-    ButtonType.FOUR,
-    ButtonType.FIVE,
-    ButtonType.SIX,
-    ButtonType.SEVEN,
-    ButtonType.EIGHT,
-    ButtonType.NINE,
-    ButtonType.ZERO,
-    ButtonType.MINUS,
-    ButtonType.POINT,
-    ButtonType.CANCEL,
-    ButtonType.ENTER
-)
+    val advanced = listOf(
+        ButtonType.ONE,
+        ButtonType.TWO,
+        ButtonType.THREE,
+        ButtonType.FOUR,
+        ButtonType.FIVE,
+        ButtonType.SIX,
+        ButtonType.SEVEN,
+        ButtonType.EIGHT,
+        ButtonType.NINE,
+        ButtonType.ZERO,
+        ButtonType.MINUS,
+        ButtonType.POINT,
+        ButtonType.CANCEL,
+        ButtonType.ENTER
+    )
+}
+
 
 private fun getButtonsForKeyMode(keyMode: KeyMode): List<ButtonType> {
     return when (keyMode) {
-        KeyMode.BASIC -> basicButtons
-        else -> advancedButtons
+        KeyMode.BASIC -> ButtonLists.basic
+        else -> ButtonLists.advanced
     }
 }
 
