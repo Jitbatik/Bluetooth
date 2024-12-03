@@ -2,18 +2,18 @@
 agp = "8.7.2"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.0"
-coreKtx = "1.13.1"
+coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.4"
-activityCompose = "1.9.1"
-composeBom = "2024.06.00"
+lifecycleRuntimeKtx = "2.8.7"
+activityCompose = "1.9.3"
+composeBom = "2024.11.00"
 appcompat = "1.7.0"
 material = "1.12.0"
 
 
-lifecycleLivedataKtx = "2.8.3"
+lifecycleLivedataKtx = "2.8.7"
 converterGsonVersion = "2.9.0"
 loggingInterceptor = "5.0.0-alpha.12"
 hiltVersion = "2.51"
@@ -22,7 +22,7 @@ retrofit = "2.9.0"
 roomRuntime = "2.6.1"
 kotlinCompose = "2.0.0"
 kapt-version = "1.6.20"
-runtimeLivedata = "1.6.8"
+runtimeLivedata = "1.7.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
