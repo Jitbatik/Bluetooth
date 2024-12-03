@@ -10,7 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,19 +49,18 @@ import com.example.domain.model.Range
 import com.example.domain.model.Rotate
 
 
-//TODO: проверить рекомпозиции
-//TODO: SelectionCanvas__
-//@NonRestartableComposable
+//TODO: рекомпозиции TerminalDataBox
+@NonRestartableComposable
 @Composable
 fun TerminalDataBox(
-    charUIList: List<CharUI>,
+    charUIList: () -> List<CharUI>,
     isBorder: Boolean,
     range: Range,
     lines: Int,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val charPerLine = (charUIList.size + lines - 1) / lines
+//    val charPerLine by remember { mutableIntStateOf((charUIList().size + lines - 1) / lines) }
     var cellSize by remember { mutableStateOf(Pair(0f, 0f)) }
     var gridOffset by remember { mutableStateOf(Offset(0f, 0f)) }
     Box(
@@ -68,7 +68,7 @@ fun TerminalDataBox(
     ) {
         CharGrid(
             charUIList = charUIList,
-            columns = charPerLine,
+            //columns = charPerLine,
             rows = lines,
             onEvent = onEvent,
             onCellSizeChanged = { cellWidth, cellHeight, offset ->
@@ -79,7 +79,7 @@ fun TerminalDataBox(
             },
         )
         if (isBorder) {
-            SelectionCanvas__(
+            SelectionCanvas(
                 cellSize = cellSize,
                 gridOffset = gridOffset,
                 range = range,
@@ -89,19 +89,20 @@ fun TerminalDataBox(
 }
 
 
-@NonRestartableComposable
+//todo: рекомпозиция charUIList меняется
 @Composable
 private fun CharGrid(
-    charUIList: List<CharUI>,
-    columns: Int,
+    charUIList: () -> List<CharUI>,
     rows: Int,
     onEvent: (HomeEvent) -> Unit,
     onCellSizeChanged: (cellWidth: Float, cellHeight: Float, offset: Offset) -> Unit,
 ) {
-    val rowsContent = charUIList.chunked(columns).take(rows)
+    val test = charUIList()
+    val charInLine = test.size / rows
+    val rowsContent = test.chunked(charInLine)
     val annotatedString = buildAnnotatedString {
-        rowsContent.forEachIndexed { rowIndex, rowItems ->
-            rowItems.forEach { charUI ->
+        rowsContent.forEachIndexed { index, line ->
+            line.forEach { charUI ->
                 withStyle(
                     style = SpanStyle(
                         color = charUI.color,
@@ -111,32 +112,40 @@ private fun CharGrid(
                     append(charUI.char)
                 }
             }
-            if (rowIndex < rowsContent.size - 1) {
+            if (index < rowsContent.size - 1) {
                 append("\n")
             }
         }
     }
+    var fontSize by remember { mutableStateOf(16.sp) }
 
     var cellWidth by remember { mutableFloatStateOf(0f) }
     var cellHeight by remember { mutableFloatStateOf(0f) }
-
     Box(
         modifier = Modifier
-            .fillMaxSize(),
+            .onSizeChanged { size ->
+                val containerWidthPx = size.width.toFloat()
+                fontSize = when {
+                    containerWidthPx < 100f -> 12.sp
+                    containerWidthPx < 200f -> 16.sp
+                    else -> 18.sp
+                }
+            }
+
+            .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
         Text(
             text = annotatedString,
             fontFamily = psisFontFamily,
-            fontSize = 16.sp,
-            lineHeight = 15.sp,
+            fontSize = fontSize,
+            lineHeight = fontSize,
             textAlign = TextAlign.Center,
-            maxLines = rows,
             modifier = Modifier
                 .onGloballyPositioned { layoutCoordinates ->
                     val gridSize = layoutCoordinates.size
                     if (gridSize != IntSize.Zero) {
-                        val newWidth = gridSize.width / columns.toFloat()
+                        val newWidth = gridSize.width / charInLine.toFloat()
                         val newHeight = gridSize.height / rows.toFloat()
 
                         val offset = layoutCoordinates.positionInParent()
@@ -158,13 +167,12 @@ private fun CharGrid(
                         }
                     )
                 },
-            //TODO: допилить авторазмер текста
         )
     }
 }
 
 @Composable
-fun SelectionCanvas__(
+fun SelectionCanvas(
     cellSize: Pair<Float, Float>,
     gridOffset: Offset,
     range: Range,
@@ -286,7 +294,7 @@ private fun TerminalDataBoxPreview() = BluetoothTheme {
 
         Column {
             TerminalDataBox(
-                charUIList = data,
+                charUIList = { data },
                 isBorder = testConfig.isBorder,
                 range = testConfig.range,
                 lines = 4,

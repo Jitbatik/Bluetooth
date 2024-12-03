@@ -31,7 +31,7 @@ import com.example.domain.model.KeyMode
 import com.example.domain.model.Range
 import com.example.domain.model.Rotate
 
-
+@NonRestartableComposable
 @Composable
 fun HomeRoot(
     viewModel: DeviceExchangeViewModel = viewModel(),
@@ -42,7 +42,6 @@ fun HomeRoot(
     val onEvents: (HomeEvent) -> Unit = remember {
         { event -> viewModel.onEvents(event) }
     }
-
     Home(
         state = HomeState(
             data = data,
@@ -53,6 +52,7 @@ fun HomeRoot(
     )
 }
 
+//TODO: рекомпозиции Home
 @NonRestartableComposable
 @Composable
 private fun Home(state: HomeState) {
@@ -77,7 +77,7 @@ private fun Home(state: HomeState) {
                 )
             }
             TerminalDataBox(
-                charUIList = state.data,
+                charUIList = { state.data },
                 isBorder = state.controllerConfig.isBorder,
                 range = state.controllerConfig.range,
                 lines = 28,
@@ -161,7 +161,7 @@ private fun HomePreview() = BluetoothTheme {
     }
     val testConfig = ControllerConfig(
         range = Range(startRow = 6, endRow = 6, startCol = 1, endCol = 12),
-        keyMode = KeyMode.NUMERIC,
+        keyMode = KeyMode.NONE,
         rotate = Rotate.PORTRAIT,
         isBorder = false,
     )
