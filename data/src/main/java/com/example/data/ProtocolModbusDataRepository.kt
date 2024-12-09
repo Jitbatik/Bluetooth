@@ -15,6 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -34,19 +35,15 @@ class ProtocolModbusDataRepository @Inject constructor(
     private val dataStreamRepository: DataStreamRepository,
 ) {
     private val tag = ProtocolModbusDataRepository::class.java.simpleName
-
     private val _bluetoothModbusPacketsFlow = MutableStateFlow<List<ModbusPacket>>(emptyList())
 
-    private val originalResponse = byteArrayOf(
-        0x01.toByte(), 0x17.toByte(), 0x04.toByte(), 0x00.toByte(), 0x00.toByte(),
-        0x00.toByte(), 0x00.toByte()
-    )
-    private var response = originalResponse.copyOf()
+    private var response = ORIGINAL_RESPONSE.copyOf()
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun observeBluetoothDataFlow(): Flow<List<CharData>> {
-        return observeSocketState()
+    fun observeBluetoothDataFlow(): Flow<List<CharData>> =
+        observeSocketState()
+            .distinctUntilChanged()
             .onEach { socketState ->
                 Log.d(tag, "Socket state is $socketState")
                 if (socketState) processIncomingBluetoothData()
@@ -56,24 +53,25 @@ class ProtocolModbusDataRepository @Inject constructor(
                     .filter { it.size == MAX_PACKET_SIZE }
                     .map { it.mapToListCharData() }
             }
-    }
 
-    //TODO("сделать код чище и удобнее")
+    private fun observeSocketState() =
+        bluetoothSocketProvider.bluetoothSocket.map { it?.isConnected == true }
+
     fun observeControllerConfigFlow() = flow {
         _bluetoothModbusPacketsFlow.collect { packets ->
-            if (packets.size >= 2) {
-                val mergedData = listOf(packets[0].startRegisterRead, packets[1].startRegisterRead)
-                emit(processControllerConfig(mergedData))
-            } else {
-                emit(
+            emit(
+                if (packets.size >= 2) {
+                    val mergedData =
+                        listOf(packets[0].startRegisterRead, packets[1].startRegisterRead)
+                    processControllerConfig(mergedData)
+                } else {
                     ControllerConfig(
                         range = Range(startRow = 0, endRow = 0, startCol = 0, endCol = 0),
                     )
-                )
-            }
+                }
+            )
         }
     }
-
 
     private fun processControllerConfig(startRegisterRead: List<Int>): ControllerConfig {
         val highByteFirst = (startRegisterRead[0] shr 8) and 0xFF
@@ -111,29 +109,22 @@ class ProtocolModbusDataRepository @Inject constructor(
         )
     }
 
+    private fun List<ModbusPacket>.mapToListCharData(): List<CharData> = flatMap { packet ->
+        val startTest = packet.dataList.take(120)
+        val endTest = packet.dataList.drop(120).take(120)
 
-    private fun List<ModbusPacket>.mapToListCharData(): List<CharData> {
-        return this.flatMap { packet ->
-            val startTest = packet.dataList.take(120)
-            val endTest = packet.dataList.drop(120).take(120)
-
-            startTest.mapIndexed { index, byteValue ->
-                val colorBackgroundByte = endTest.getOrElse(index) { 0 }
-
-                CharData(
-                    charByte = byteValue,
-                    colorByte = (colorBackgroundByte.toInt() and 0xF),
-                    backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF),
-                )
-            }
+        startTest.mapIndexed { index, byteValue ->
+            val colorBackgroundByte = endTest.getOrElse(index) { 0 }
+            CharData(
+                charByte = byteValue,
+                colorByte = (colorBackgroundByte.toInt() and 0xF),
+                backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF),
+            )
         }
     }
 
 
-    private fun observeSocketState() =
-        bluetoothSocketProvider.bluetoothSocket.map { it?.isConnected == true }
-
-
+    //todo: canRead socketState
     private suspend fun processIncomingBluetoothData() = coroutineScope {
         val socket = getActiveBluetoothSocket() ?: return@coroutineScope
         val canRead = MutableStateFlow(true)
@@ -165,15 +156,17 @@ class ProtocolModbusDataRepository @Inject constructor(
         packetBuffer: MutableList<ModbusPacket>,
         socket: BluetoothSocket,
     ) {
-        if (byteArray.size < 14) return
+        if (byteArray.size < MIN_PACKET_SIZE) return
         val modbusPacket = byteArray.toModbusPacket() ?: return
         packetBuffer.add(modbusPacket)
         respondToPacket(socket)
-        if (modbusPacket.startRegisterWrite == 54992) {
-            processAndStorePackets(packetBuffer)
+        if (modbusPacket.isFinalPacket()) {
+            processPacketBuffer(packetBuffer)
             packetBuffer.clear()
         }
     }
+
+    private fun ModbusPacket.isFinalPacket() = startRegisterWrite == FINAL_PACKET_REGISTER
 
     private fun ByteArray.toModbusPacket(): ModbusPacket? {
         val packet = ModbusPacket(
@@ -221,16 +214,15 @@ class ProtocolModbusDataRepository @Inject constructor(
         val checksum = calculateCRC16(response)
         val answer = response + checksum.toByteArray()
         _answerFlowTest.value = answer.joinToString(" ") { "%02X".format(it) }
-        Log.d(tag, "Respond: ${answer.joinToString(" ") { "%02X".format(it) }}")
+        Log.d(tag, "Respond: ${_answerFlowTest.value}")
         dataStreamRepository.sendToStream(socket = socket, value = answer)
-        //response = originalResponse.copyOf()
     }
 
     private fun Int.toByteArray(): ByteArray =
         byteArrayOf((this and 0xFF).toByte(), (this shr 8).toByte())
 
-    private fun processAndStorePackets(packetBuffer: List<ModbusPacket>) =
-        packetBuffer.forEach { updateDataPacket(it) }
+    private fun processPacketBuffer(packetBuffer: List<ModbusPacket>) =
+        packetBuffer.forEach(::updateDataPacket)
 
     private fun updateDataPacket(data: ModbusPacket) {
         _bluetoothModbusPacketsFlow.update { currentList ->
@@ -261,7 +253,12 @@ class ProtocolModbusDataRepository @Inject constructor(
     }
 
     companion object {
+        private const val FINAL_PACKET_REGISTER = 54992
+        private const val MIN_PACKET_SIZE = 14
         private const val MAX_PACKET_SIZE = 7
+        private val ORIGINAL_RESPONSE = byteArrayOf(
+            0x01, 0x17, 0x04, 0x00, 0x00, 0x00, 0x00
+        )
         private const val CRC16_POLYNOMIAL = 0xA001
         private const val CRC16_INITIAL = 0xFFFF
     }

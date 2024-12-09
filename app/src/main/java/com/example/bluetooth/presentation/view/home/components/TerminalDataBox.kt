@@ -127,8 +127,8 @@ private fun CharGrid(
                 val containerWidthPx = size.width.toFloat()
                 fontSize = when {
                     containerWidthPx < 100f -> 12.sp
-                    containerWidthPx < 200f -> 16.sp
-                    else -> 18.sp
+                    containerWidthPx < 200f -> 14.sp
+                    else -> 15.sp
                 }
             }
 
