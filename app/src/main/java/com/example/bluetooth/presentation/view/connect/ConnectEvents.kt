@@ -1,6 +1,7 @@
 package com.example.bluetooth.presentation.view.connect
 
-import com.example.domain.model.BluetoothDevice
+import com.example.bluetooth.model.BluetoothDevice
+
 
 sealed interface ConnectEvents {
     data object StartScan : ConnectEvents

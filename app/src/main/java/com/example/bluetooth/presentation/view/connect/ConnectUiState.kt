@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.view.connect
 
-import com.example.domain.model.BluetoothDevice
+import com.example.bluetooth.model.BluetoothDevice
 
 data class ConnectUiState(
     val isBluetoothEnabled: Boolean = false,

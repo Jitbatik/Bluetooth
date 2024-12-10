@@ -14,9 +14,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.example.bluetooth.model.BluetoothDevice
 import com.example.bluetooth.presentation.view.connect.ConnectEvents
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.domain.model.BluetoothDevice
+
 
 @Composable
 fun ScannerBox(

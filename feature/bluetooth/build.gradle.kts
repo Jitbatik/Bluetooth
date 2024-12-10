@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.di"
-    compileSdk = 35
+    namespace = "com.example.bluetooth"
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -36,24 +36,8 @@ android {
 }
 
 dependencies {
-
-    implementation(project(":domain"))
-    implementation(project(":data"))
-
-    implementation(project(":feature:bluetooth"))
-
-
-//    //hilt
     implementation(libs.dagger.hilt)
     kapt(libs.dagger.hilt.compiler)
-//    //room
-    implementation (libs.androidx.room.runtime)
-//    //okhttp
-    implementation(libs.ok.http)
-    implementation (libs.logging.interceptor)
-//    //retrofit
-    implementation (libs.retrofit2.retrofit)
-    implementation (libs.retrofit2.converter.gson)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

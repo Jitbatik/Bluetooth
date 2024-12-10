@@ -1,9 +1,8 @@
-package com.example.data.bluetooth
+package com.example.bluetooth.data
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -11,13 +10,13 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
-import androidx.core.content.getSystemService
-import com.example.data.bluetooth.receivers.BluetoothScanReceiver
-import com.example.data.bluetooth.receivers.BluetoothStateReceiver
-import com.example.data.bluetooth.receivers.ScanDiscoveryReceiver
-import com.example.domain.model.BluetoothDevice
-import com.example.domain.repository.ScannerRepository1
-import com.example.domain.utils.SettingsManager
+import com.example.bluetooth.data.utils.BluetoothService
+import com.example.bluetooth.data.receivers.BluetoothScanReceiver
+import com.example.bluetooth.data.receivers.BluetoothStateReceiver
+import com.example.bluetooth.data.receivers.ScanDiscoveryReceiver
+import com.example.bluetooth.data.utils.SettingsManager
+import com.example.bluetooth.domain.ScannerRepository
+import com.example.bluetooth.model.BluetoothDevice
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -30,22 +29,11 @@ import javax.inject.Inject
 
 private typealias BluetoothDeviceModels = List<BluetoothDevice>
 
-
 @SuppressLint("MissingPermission")
-class BluetoothService @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    private val bluetoothManager by lazy { context.getSystemService<BluetoothManager>() }
-    val bluetoothAdapter: BluetoothAdapter?
-        get() = bluetoothManager?.adapter
-}
-
-
-@SuppressLint("MissingPermission")
-class ScannerRepositoryImpl1 @Inject constructor(
+class ScannerRepositoryImpl @Inject constructor(
     private val bluetoothService: BluetoothService,
     @ApplicationContext private val context: Context,
-) : ScannerRepository1 {
+) : ScannerRepository {
 
     // _pairedDevices + _availableDevices ||| single device
     private val _bluetoothDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
@@ -225,6 +213,6 @@ class ScannerRepositoryImpl1 @Inject constructor(
     }
 
     companion object {
-        private val TAG = ScannerRepository1::class.java.simpleName
+        private val TAG = ScannerRepository::class.java.simpleName
     }
 }

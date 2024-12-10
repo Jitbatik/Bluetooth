@@ -3,9 +3,9 @@ package com.example.bluetooth.presentation.view.connect
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.model.BluetoothDevice
-import com.example.domain.repository.ConnectRepository
-import com.example.domain.repository.ScannerRepository
+import com.example.bluetooth.domain.ConnectRepository
+import com.example.bluetooth.domain.ScannerRepository
+import com.example.bluetooth.model.BluetoothDevice
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
