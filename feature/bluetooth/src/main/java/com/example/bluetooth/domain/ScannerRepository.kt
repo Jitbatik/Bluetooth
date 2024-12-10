@@ -1,10 +1,10 @@
-package com.example.domain.repository
+package com.example.bluetooth.domain
 
-import com.example.domain.model.BluetoothDevice
+import com.example.bluetooth.model.BluetoothDevice
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
-interface ScannerRepository1 {
+interface ScannerRepository {
     val deviceList: StateFlow<List<BluetoothDevice>>
     val isBluetoothActive: Flow<Boolean>
 

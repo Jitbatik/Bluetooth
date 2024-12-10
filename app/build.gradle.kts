@@ -68,6 +68,8 @@ dependencies {
 
     implementation(project(":domain"))
     implementation(project(":di"))
+    implementation(project(":feature:bluetooth"))
+
     implementation(libs.androidx.hilt.navigation.compose)
 
     //hilt

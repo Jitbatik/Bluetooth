@@ -3,7 +3,6 @@ package com.example.data.bluetooth
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.IntentFilter
@@ -11,11 +10,10 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
-import androidx.core.content.getSystemService
 import com.example.data.bluetooth.provider.BluetoothSocketProvider
 import com.example.data.bluetooth.receivers.BluetoothConnectedDeviceReceiver
 import com.example.domain.model.BluetoothDevice
-import com.example.domain.repository.ConnectRepository
+import com.example.domain.repository.ConnectRepository1
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -29,14 +27,14 @@ import android.bluetooth.BluetoothDevice as AndroidBluetoothDevice
 
 
 @SuppressLint("MissingPermission")
-class ConnectRepositoryImpl @Inject constructor(
+class ConnectRepositoryImpl1 @Inject constructor(
+    private val bluetoothService: BluetoothService,
     @ApplicationContext private val context: Context,
     private val bluetoothSocketProvider: BluetoothSocketProvider,
-) : ConnectRepository {
+) : ConnectRepository1 {
 
-    private val _bluetoothManager by lazy { context.getSystemService<BluetoothManager>() }
     private val _bluetoothAdapter: BluetoothAdapter?
-        get() = _bluetoothManager?.adapter
+        get() = bluetoothService.bluetoothAdapter
 
     override fun getConnectedDevice(): Flow<BluetoothDevice?> = callbackFlow {
         Log.d(TAG, "Start connection receiver")
@@ -140,7 +138,7 @@ class ConnectRepositoryImpl @Inject constructor(
     }
 
     companion object {
-        private val TAG = ConnectRepositoryImpl::class.java.simpleName
+        private val TAG = ConnectRepositoryImpl1::class.java.simpleName
     }
 }
 

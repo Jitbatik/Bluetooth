@@ -1,4 +1,4 @@
-package com.example.data.bluetooth.provider
+package com.example.bluetooth.data.utils
 
 import android.bluetooth.BluetoothSocket
 import kotlinx.coroutines.flow.MutableStateFlow

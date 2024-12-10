@@ -102,7 +102,7 @@ class DeviceExchangeViewModel @Inject constructor(
     fun onEvents(event: HomeEvent) {
         Log.d(tag, "An event has arrived: ${event::class.simpleName}")
         val command = when (event) {
-            is HomeEvent.ButtonClick -> processButtonCommand(activeButtons = event.buttons,)
+            is HomeEvent.ButtonClick -> processButtonCommand(activeButtons = event.buttons)
             is HomeEvent.Press -> generateCommand(colum = event.column, row = event.row)
         }
         sendData(command = command)

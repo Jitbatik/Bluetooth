@@ -1,9 +1,9 @@
-package com.example.domain.repository
+package com.example.bluetooth.domain
 
-import com.example.domain.model.BluetoothDevice
+import com.example.bluetooth.model.BluetoothDevice
 import kotlinx.coroutines.flow.Flow
 
-interface ConnectRepository1 {
+interface ConnectRepository {
     fun getConnectedDevice(): Flow<BluetoothDevice?>
     suspend fun connectToDevice(
         bluetoothDevice: BluetoothDevice,

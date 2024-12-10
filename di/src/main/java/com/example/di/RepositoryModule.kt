@@ -1,11 +1,11 @@
 package com.example.di
 
+import com.example.bluetooth.data.ConnectRepositoryImpl
+import com.example.bluetooth.data.ScannerRepositoryImpl
+import com.example.bluetooth.domain.ConnectRepository
+import com.example.bluetooth.domain.ScannerRepository
 import com.example.data.ExchangeDataRepositoryImpl
-import com.example.data.bluetooth.ConnectRepositoryImpl
-import com.example.data.bluetooth.ScannerRepositoryImpl
-import com.example.domain.repository.ConnectRepository
 import com.example.domain.repository.ExchangeDataRepository
-import com.example.domain.repository.ScannerRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
