@@ -1,4 +1,4 @@
-package com.example.data.bluetooth.receivers
+package com.example.bluetooth.data.receivers
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -7,9 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.example.data.bluetooth.mapper.toDomainModel
+import com.example.bluetooth.data.utils.toDomainModel
 
-import com.example.domain.model.BluetoothDevice as DomainBluetoothDevice
+import com.example.bluetooth.model.BluetoothDevice as DomainBluetoothDevice
 
 @Suppress("DEPRECATION")
 class BluetoothConnectedDeviceReceiver(
