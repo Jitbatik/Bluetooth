@@ -11,5 +11,8 @@ class BluetoothSocketProvider @Inject constructor() {
     private val _bluetoothSocket = MutableStateFlow<BluetoothSocket?>(null)
     val bluetoothSocket: StateFlow<BluetoothSocket?> get() = _bluetoothSocket
 
-    fun setSocket(socket: BluetoothSocket?) { _bluetoothSocket.value = socket }
+    fun updateSocket(newSocket: BluetoothSocket?) { _bluetoothSocket.value = newSocket }
+//    fun clearSocket() {
+//        _bluetoothSocket.value = null
+//    }
 }

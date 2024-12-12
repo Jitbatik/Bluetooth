@@ -101,7 +101,7 @@ class ConnectRepositoryImpl @Inject constructor(
             _btClientSocket?.let { socket ->
                 socket.connect()
                 Log.d(TAG, "CLIENT CONNECTED")
-                bluetoothSocketProvider.setSocket(socket)
+                bluetoothSocketProvider.updateSocket(socket)
             }
             Result.success(true)
         } catch (e: IOException) {
@@ -117,7 +117,7 @@ class ConnectRepositoryImpl @Inject constructor(
             _btClientSocket?.close()
             Log.d(TAG, "CLOSING CONNECTION")
             _btClientSocket = null
-            bluetoothSocketProvider.setSocket(null)
+            bluetoothSocketProvider.updateSocket(null)
             Result.success(Unit)
         } catch (e: IOException) {
             Log.d(TAG, "CANNOT CLOSE CONNECTION")
