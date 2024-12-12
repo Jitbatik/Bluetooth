@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.data"
-    compileSdk = 35
+    namespace = "com.example.transfer"
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -36,27 +36,10 @@ android {
 }
 
 dependencies {
-
-    implementation(project(":domain"))
     implementation(project(":feature:bluetooth"))
-    implementation(project(":feature:transfer"))
-
-    //room
-    implementation (libs.androidx.room.runtime)
-//    //noinspection KaptUsageInsteadOfKsp
-    kapt (libs.androidx.room.compiler)
-    implementation (libs.androidx.room.ktx)
-//    //okhttp
-    implementation(libs.ok.http)
-    implementation (libs.logging.interceptor)
-//    //retrofit
-    implementation (libs.retrofit2.retrofit)
-    implementation (libs.retrofit2.converter.gson)
-//    //hilt
+    implementation(project(":domain"))
     implementation(libs.dagger.hilt)
     kapt(libs.dagger.hilt.compiler)
-
-
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

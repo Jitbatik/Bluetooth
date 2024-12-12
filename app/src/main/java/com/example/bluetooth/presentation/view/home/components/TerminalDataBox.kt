@@ -68,7 +68,6 @@ fun TerminalDataBox(
     ) {
         CharGrid(
             charUIList = charUIList,
-            //columns = charPerLine,
             rows = lines,
             onEvent = onEvent,
             onCellSizeChanged = { cellWidth, cellHeight, offset ->
@@ -98,7 +97,7 @@ private fun CharGrid(
     onCellSizeChanged: (cellWidth: Float, cellHeight: Float, offset: Offset) -> Unit,
 ) {
     val test = charUIList()
-    val charInLine = test.size / rows
+    val charInLine = if (test.isNotEmpty()) test.size / rows else 0
     val rowsContent = test.chunked(charInLine)
     val annotatedString = buildAnnotatedString {
         rowsContent.forEachIndexed { index, line ->

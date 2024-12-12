@@ -2,7 +2,7 @@ package com.example.data
 
 import android.bluetooth.BluetoothSocket
 import android.util.Log
-import com.example.data.bluetooth.provider.BluetoothSocketProvider
+import com.example.bluetooth.data.utils.BluetoothSocketProvider
 import com.example.domain.model.CharData
 import com.example.domain.model.ControllerConfig
 import com.example.domain.model.KeyMode
