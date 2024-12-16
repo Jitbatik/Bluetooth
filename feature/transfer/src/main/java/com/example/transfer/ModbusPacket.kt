@@ -1,4 +1,4 @@
-package com.example.domain.model
+package com.example.transfer
 
 data class ModbusPacket(
     val slaveAddress: Int,

@@ -41,8 +41,6 @@ class DataStreamRepository @Inject constructor(
             socket.outputStream?.let { outputStream ->
                 outputStream.write(value)
                 outputStream.flush()
-                val unsignedBytes = value.map { it.toUByte() }
-                Log.d(TAG, "Written to stream: ${unsignedBytes.joinToString(" ")}")
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error sending data to stream", e)
