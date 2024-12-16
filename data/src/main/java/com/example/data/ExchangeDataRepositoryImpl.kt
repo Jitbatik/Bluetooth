@@ -3,14 +3,15 @@ package com.example.data
 import com.example.domain.model.CharData
 import com.example.domain.model.ControllerConfig
 import com.example.domain.repository.ExchangeDataRepository
+import com.example.transfer.ProtocolModbusDataRepository
 import com.example.transfer.ProtocolUARTDataRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class ExchangeDataRepositoryImpl @Inject constructor(
     //private val protocolDataRepository: ProtocolDataRepository,
-//    private val protocolDataRepository: ProtocolModbusDataRepository,
-    private val protocolDataRepository: ProtocolUARTDataRepository,
+    private val protocolDataRepository: ProtocolModbusDataRepository,
+//    private val protocolDataRepository: ProtocolUARTDataRepository,
 ) : ExchangeDataRepository {
 
     override fun observeData(): Flow<List<CharData>> =
