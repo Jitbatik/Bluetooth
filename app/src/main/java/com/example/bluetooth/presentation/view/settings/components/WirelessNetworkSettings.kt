@@ -30,9 +30,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
+import com.example.bluetooth.data.utils.SettingsManager
 import com.example.bluetooth.model.DescriptionSettings
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.domain.utils.SettingsManager
+
 
 @Composable
 fun WirelessNetworkSettings(descriptionSettings: DescriptionSettings) {

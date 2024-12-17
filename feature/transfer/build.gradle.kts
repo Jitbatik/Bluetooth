@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.transfer"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -37,7 +37,6 @@ android {
 
 dependencies {
     implementation(project(":feature:bluetooth"))
-    implementation(project(":domain"))
     implementation(libs.dagger.hilt)
     kapt(libs.dagger.hilt.compiler)
 

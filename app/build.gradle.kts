@@ -26,9 +26,30 @@ android {
         }
     }
 
+    flavorDimensions += "version"
+    val productFlavorsConfig: Map<*, *>? = rootProject.extra["productFlavorsConfig"] as? Map<*, *>
+    productFlavors {
+        create("pult") {
+            dimension = "version"
+            applicationIdSuffix = ".pult"
+            versionNameSuffix = "-pult"
+        }
+        create("lift") {
+            dimension = "version"
+            applicationIdSuffix = ".lift"
+            versionNameSuffix = "-lift"
+        }
+        create("uart") {
+            dimension = "version"
+            applicationIdSuffix = ".uart"
+            versionNameSuffix = "-uart"
+        }
+    }
+
     buildTypes {
         debug {
-            // Конфигурации для debug версии
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
         }
         release {
             isMinifyEnabled = false
@@ -66,9 +87,9 @@ composeCompiler {
 
 dependencies {
 
-    implementation(project(":domain"))
     implementation(project(":di"))
     implementation(project(":feature:bluetooth"))
+    implementation(project(":feature:transfer"))
 
     implementation(libs.androidx.hilt.navigation.compose)
 
