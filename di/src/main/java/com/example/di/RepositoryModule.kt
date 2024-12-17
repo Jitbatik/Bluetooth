@@ -4,8 +4,9 @@ import com.example.bluetooth.data.ConnectRepositoryImpl
 import com.example.bluetooth.data.ScannerRepositoryImpl
 import com.example.bluetooth.domain.ConnectRepository
 import com.example.bluetooth.domain.ScannerRepository
-import com.example.data.ExchangeDataRepositoryImpl
-import com.example.domain.repository.ExchangeDataRepository
+import com.example.transfer.domain.ProtocolDataRepository
+import com.example.transfer.data.ProtocolPultDataRepository
+import com.example.transfer.data.ProtocolUARTDataRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -30,8 +31,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindExchangeDataRepository(
-        exchangeDataRepository: ExchangeDataRepositoryImpl,
-    ): ExchangeDataRepository
-
+    abstract fun bindProtocolDataRepository(
+        protocolDataRepository: ProtocolPultDataRepository,
+    ): ProtocolDataRepository
 }
