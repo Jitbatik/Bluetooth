@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.bluetooth.presentation.view.home.state.HomeState
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode

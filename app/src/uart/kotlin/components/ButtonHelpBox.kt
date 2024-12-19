@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.connect.components.AnimatedButtonDecrease
 import com.example.bluetooth.presentation.view.home.HomeEvent
-import com.example.bluetooth.presentation.view.home.state.ButtonType
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable

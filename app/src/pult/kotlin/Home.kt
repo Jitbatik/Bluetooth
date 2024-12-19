@@ -15,8 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.presentation.view.home.components.ControlButtons
-import com.example.bluetooth.presentation.view.home.state.ButtonType
-import com.example.bluetooth.presentation.view.home.state.HomeState
+import com.example.bluetooth.presentation.view.home.HomeState
 import com.example.transfer.model.KeyMode
 import components.TerminalDataBox
 

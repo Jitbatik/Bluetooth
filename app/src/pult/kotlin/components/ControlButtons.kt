@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.presentation.view.home.HomeEvent
-import com.example.bluetooth.presentation.view.home.state.ButtonState
-import com.example.bluetooth.presentation.view.home.state.ButtonType
+import ButtonState
+import ButtonType
 
 
 //TODO: думаю можно еще отрефакторить
