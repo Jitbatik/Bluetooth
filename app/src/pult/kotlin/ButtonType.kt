@@ -1,5 +1,3 @@
-package com.example.bluetooth.presentation.view.home.state
-
 import androidx.annotation.StringRes
 import com.example.bluetooth.R
 
@@ -26,4 +24,10 @@ enum class ButtonType(@StringRes val labelRes: Int) {
     ZERO(labelRes = R.string.button_help_box_button_label_zero),
     MINUS(labelRes = R.string.button_help_box_button_label_minus),
     POINT(labelRes = R.string.button_help_box_button_label_point),
+}
+
+enum class ButtonState {
+    DEFAULT,
+    PRESSED,
+    ACTIVE,
 }

@@ -11,7 +11,7 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.presentation.view.home.state.HomeState
+import com.example.bluetooth.presentation.view.home.HomeState
 import components.ButtonFBox
 import components.ButtonHelpBox
 
