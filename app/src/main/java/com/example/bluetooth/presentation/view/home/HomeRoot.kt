@@ -42,7 +42,7 @@ fun HomeRoot(
 @Composable
 private fun HomePreview() = BluetoothTheme {
     val sentence =
-        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен* ор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен  Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
+        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
 
     fun getRandomColor(): Color {
         val r = (0..255).random()
@@ -51,6 +51,12 @@ private fun HomePreview() = BluetoothTheme {
         return Color(r, g, b)
     }
 
+//    val hexInput = arrayOf(0x00, 0x32, 0x00, 0x48, 0x00, 0x48)
+//    val data1 = hexInput.map { byte ->
+//        CharUI(
+//            char = byte.toChar(),
+//        )
+//    }
     val data = sentence.map { char ->
         CharUI(
             char = char,
@@ -58,6 +64,7 @@ private fun HomePreview() = BluetoothTheme {
             background = getRandomColor(),
         )
     }
+
     val testConfig = ControllerConfig(
         range = Range(startRow = 6, endRow = 6, startCol = 1, endCol = 12),
         keyMode = KeyMode.NONE,
