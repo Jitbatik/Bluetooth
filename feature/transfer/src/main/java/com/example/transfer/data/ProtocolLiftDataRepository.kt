@@ -47,14 +47,9 @@ class ProtocolLiftDataRepository @Inject constructor(
             dataStreamRepository.observeSocketStream()
                 .collect { byteArray ->
                     val dataPacket = byteArray.toLiftPacket()
-                    Log.d(Tag, "Data: ${byteArray.joinToString(" ")}")
-
+                    Log.d(Tag, "DataFull: ${byteArray.joinToString(" ") { "%02X".format(it) }}")
                     dataPacket?.let {
-                        bufferMutex.withLock {
-                            val test = it.mapToListCharData()
-//                            Log.d(Tag, "Test: ${test}")
-                            send(test)
-                        }
+                        bufferMutex.withLock { send(it.mapToListCharData()) }
                     }
                 }
         }
@@ -75,11 +70,14 @@ class ProtocolLiftDataRepository @Inject constructor(
     }
 
     override fun sendToStream(value: ByteArray) {
-        dataStreamRepository.sendToStream(value = value)
+        val test = value + calculateCRC16(value).toByteArray()
+        Log.d(Tag, "Send data: ${test.joinToString(" ") { "%02X".format(it) }}")
+        dataStreamRepository.sendToStream(value = test)
     }
-    //todo азобраться почему не катит 01 03 00 80 00 20 44 12
+
     private suspend fun requestMissingBluetoothPackets() {
-        val command = byteArrayOf(0x01, 0x03, 0x00.toByte(), 0x80.toByte(), 0x00.toByte(), 0x20.toByte())
+        val command =
+            byteArrayOf(0x01, 0x03, 0x00.toByte(), 0x40.toByte(), 0x00.toByte(), 0x28.toByte())
         val test = command + calculateCRC16(command).toByteArray()
         Log.d(Tag, "Send2: ${test.joinToString(" ") { "%02X".format(it) }}")
         dataStreamRepository.sendToStream(value = test)
@@ -106,7 +104,7 @@ class ProtocolLiftDataRepository @Inject constructor(
 
 
     private fun ByteArray.toLiftPacket(): LiftPacket? {
-//        if (size < MIN_PACKET_SIZE) return null
+        if (size < MIN_PACKET_SIZE) return null
         val packet = LiftPacket(
             slaveAddress = this[0].toIntUnsigned(),
             functionCode = this[1].toIntUnsigned(),
@@ -116,26 +114,26 @@ class ProtocolLiftDataRepository @Inject constructor(
         )
         return if (packet.checksum == calculateChecksum(this)) packet else null
     }
+
     private fun calculateChecksum(packet: ByteArray): Int {
         val crc = calculateCRC16(packet.dropLast(2).toByteArray())
         return ((crc and 0xFF) shl 8) or (crc shr 8)
     }
 
     private fun LiftPacket.mapToListCharData(): List<CharData> {
-        return dataList.flatMap { reg ->
-            calculateTest(reg.toInt()).map { byte ->
-                CharData(charByte = byte.toByte())
-            }
+        return dataList.chunked(2).flatMap { pair ->
+            if (pair.size == 2) listOf(CharData(charByte = pair[1]), CharData(charByte = pair[0]))
+            else listOf(CharData(charByte = pair[0]))
         }
     }
 
-    private fun calculateTest(value: Int): List<Int> = listOf((value shr 8) and 0xFF, value and 0xFF)
 
     private fun Byte.toIntUnsigned(): Int = toUByte().toInt()
     private fun ByteArray.toWord(offset: Int): Int =
         ((this[offset].toIntUnsigned() shl 8) or this[offset + 1].toIntUnsigned())
 
     companion object {
+        private const val MIN_PACKET_SIZE = 10
         private const val CRC16_INITIAL = 0xFFFF
         private const val CRC16_POLYNOMIAL = 0xA001
         private const val RETRY_DELAY_MS = 100L

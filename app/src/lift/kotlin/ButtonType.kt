@@ -2,6 +2,8 @@ import androidx.annotation.StringRes
 import com.example.bluetooth.R
 
 enum class ButtonType(@StringRes val labelRes: Int) {
-    //todo заглушка на реализацию
-    CLOSE(labelRes = R.string.button_help_box_button_label_close),
+    ARROW_DOWN(R.string.button_help_box_button_label_down_arrow),
+    ARROW_UP(R.string.button_help_box_button_label_up_arrow),
+    CANCEL(R.string.button_help_box_button_label_cancel),
+    ENTER(R.string.button_help_box_button_label_enter),
 }

@@ -25,9 +25,3 @@ enum class ButtonType(@StringRes val labelRes: Int) {
     MINUS(labelRes = R.string.button_help_box_button_label_minus),
     POINT(labelRes = R.string.button_help_box_button_label_point),
 }
-
-enum class ButtonState {
-    DEFAULT,
-    PRESSED,
-    ACTIVE,
-}
