@@ -105,7 +105,6 @@ class DataExchangeViewModel @Inject constructor(
     }
 
     private fun sendData(command: ByteArray) {
-        Log.d(tag, "Send data: $command")
         viewModelScope.launch {
             try {
                 protocolDataRepository.sendToStream(value = command)

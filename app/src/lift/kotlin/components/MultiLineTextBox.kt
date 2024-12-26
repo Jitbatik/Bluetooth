@@ -21,7 +21,8 @@ fun MultiLineTextBox(
     modifier: Modifier = Modifier,
 ) {
     val charList = charUIList()
-    val rows = charList.chunked(charList.size / lines)
+    val chunkSize = if (charList.isEmpty()) 20 else maxOf(1, charList.size / lines) // Устанавливаем минимум 1
+    val rows = charList.chunked(chunkSize)
     val rowTexts = rows.map { row -> row.joinToString("") { it.char.toString() } }
 
     Box(
