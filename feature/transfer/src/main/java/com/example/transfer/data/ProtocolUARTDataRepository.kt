@@ -3,7 +3,7 @@ package com.example.transfer.data
 import android.util.Log
 import com.example.bluetooth.data.DataStreamRepository
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.model.CharData
+import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.Range
 import com.example.transfer.model.UARTPacket
@@ -22,15 +22,15 @@ import javax.inject.Inject
 
 class ProtocolUARTDataRepository @Inject constructor(
     private val dataStreamRepository: DataStreamRepository,
-): ProtocolDataRepository {
+) : ProtocolDataRepository {
     private val tag = ProtocolUARTDataRepository::class.java.simpleName
 
-    //TODO: Убрать после тестов
+
     private val _answerFlowTest = MutableStateFlow("Command send")
     override fun getAnswerTest(): Flow<String> = _answerFlowTest
     //
 
-    override fun observeData(): Flow<List<CharData>> = channelFlow {
+    override fun observeData(command: ByteArray): Flow<List<ByteData>> = channelFlow {
         Log.d(tag, "Initializing Bluetooth data flow")
         val packetBuffer = mutableListOf<UARTPacket>()
         val canRead = AtomicBoolean(true) //false
@@ -100,12 +100,12 @@ class ProtocolUARTDataRepository @Inject constructor(
         }
     }
 
-    private fun List<UARTPacket>.mapToListCharData(): List<CharData> {
-        return this.sortedBy  { it.index }
+    private fun List<UARTPacket>.mapToListCharData(): List<ByteData> {
+        return this.sortedBy { it.index }
             .flatMap { it.dataBytes }
             .map {
-                CharData(
-                    charByte = it,
+                ByteData(
+                    byte = it,
                     colorByte = 0,
                     backgroundByte = 15,
                 )

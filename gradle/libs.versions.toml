@@ -7,8 +7,8 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.9.3"
-composeBom = "2024.11.00"
+activityCompose = "1.10.1"
+composeBom = "2025.02.00"
 appcompat = "1.7.0"
 material = "1.12.0"
 
@@ -22,10 +22,12 @@ retrofit = "2.9.0"
 roomRuntime = "2.6.1"
 kotlinCompose = "2.0.0"
 kapt-version = "1.6.20"
-runtimeLivedata = "1.7.5"
+runtimeLivedata = "1.7.8"
+ycharts = "2.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -60,6 +62,8 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleLivedataKtx" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+ycharts = { module = "co.yml:ycharts", version.ref = "ycharts" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

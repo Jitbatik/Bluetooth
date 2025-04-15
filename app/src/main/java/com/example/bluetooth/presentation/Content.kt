@@ -1,5 +1,6 @@
 package com.example.bluetooth.presentation
 
+import navigation.Extracted
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -12,43 +13,39 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
-import com.example.bluetooth.presentation.screen.Screen
-import com.example.bluetooth.presentation.view.connect.ConnectRoot
-import com.example.bluetooth.presentation.view.home.HomeRoot
-import com.example.bluetooth.presentation.view.settings.SettingsRoot
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import navigation.NavigationItem
 
 @Composable
 fun Content(
     modifier: Modifier = Modifier,
     drawerState: CustomDrawerState,
     onDrawerClick: (CustomDrawerState) -> Unit,
-    screen: Screen,
+    currentRoute: String
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
             AppTopBar(
-                title = screen.title,
+                title = NavigationItem.fromRoute(currentRoute)?.title?.let { stringResource(it) }
+                    ?: "",
                 onDrawerClick = { onDrawerClick(drawerState.opposite()) }
             )
         },
         content = { paddingValues ->
             Box(modifier = modifier.padding(paddingValues)) {
-                when (screen) {
-                    is Screen.Home -> HomeRoot()
-                    is Screen.Connect -> ConnectRoot()
-                    is Screen.Settings -> SettingsRoot()
-                }
+                Extracted(currentRoute)
             }
         }
     )
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,20 +84,22 @@ private fun AppTopBarPreview(
     )
 }
 
-private class ContentPreviewParameterProvider : PreviewParameterProvider<Screen> {
+private class ContentPreviewParameterProvider : PreviewParameterProvider<String> {
     override val values = sequenceOf(
-        Screen.Home, Screen.Connect, Screen.Settings
+        NavigationItem.Home.route,
+        NavigationItem.Connect.route,
+        NavigationItem.Settings.route
     )
 }
 
 @PreviewLightDark
 @Composable
 private fun ContentPreview(
-    @PreviewParameter(ContentPreviewParameterProvider::class) screen: Screen
+    @PreviewParameter(ContentPreviewParameterProvider::class) route: String
 ) = BluetoothTheme {
     Content(
         drawerState = CustomDrawerState.Opened,
         onDrawerClick = { },
-        screen = screen,
+        currentRoute = route,
     )
 }

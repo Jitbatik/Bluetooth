@@ -9,6 +9,9 @@
     <string name="bluetooth_not_enable_title">Пожалуйста включите Bluetooth</string>
     <string name="bluetooth_not_enable_desc">Кажется, Bluetooth не включен. Для работы приложения требуется его включение.</string>
     <string name="enable_bluetooth_button_text">Включить Bluetooth</string>
+    <string name="location_not_enable_title">Пожалуйста включите Геолокацию</string>
+    <string name="location_not_enable_desc">Кажется, Геолокация не включена. Для работы приложения требуется его включение.</string>
+    <string name="location_bluetooth_button_text">Включить Геолокацию</string>
     <string name="button_help_box_button_label_menu">Меню</string>
     <string name="button_help_box_button_label_mode">Режим</string>
     <string name="button_help_box_button_label_enter">Ввод</string>
@@ -17,7 +20,9 @@
     <string name="button_help_box_button_label_f">F</string>
     <string name="button_help_box_button_label_up_arrow">▲</string>
     <string name="button_help_box_button_label_down_arrow">▼</string>
+    <string name="button_help_box_button_label_plus">+</string>
     <string name="navigation_item_home">Home</string>
+    <string name="navigation_item_parameters">Parameters</string>
     <string name="navigation_item_connect">Connect</string>
     <string name="navigation_item_settings">Settings</string>
     <string name="log_history_title">Логи приложения</string>

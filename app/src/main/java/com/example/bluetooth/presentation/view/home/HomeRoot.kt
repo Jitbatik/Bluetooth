@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.view.home
 
-import Home
+import ui.screens.Home
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
@@ -22,18 +22,21 @@ import com.example.transfer.model.Rotate
 fun HomeRoot(
     viewModel: DataExchangeViewModel = viewModel(),
 ) {
-    val data by viewModel.data.collectAsState()
+    val screenData by viewModel.data.collectAsState()
     val controllerConfig by viewModel.controllerConfig.collectAsState()
     val test by viewModel.test.collectAsState()
+    val isConnected by viewModel.isConnected.collectAsState()
     val onEvents: (HomeEvent) -> Unit = remember {
         { event -> viewModel.onEvents(event) }
     }
+
     Home(
         state = HomeState(
-            data = data,
+            data = screenData,
             controllerConfig = controllerConfig,
             onEvents = onEvents,
             test = test,
+            isConnected = isConnected,
         ),
     )
 }
@@ -53,8 +56,8 @@ private fun HomePreview() = BluetoothTheme {
     }
 
     val data = sentence.map { char ->
-        CharUI(
-            char = char,
+        DataUI(
+            data = char.toString(),
             color = Color.Black, //getRandomColor(),
             background = getRandomColor(),
         )
@@ -72,6 +75,7 @@ private fun HomePreview() = BluetoothTheme {
                 controllerConfig = testConfig,
                 onEvents = {},
                 test = "test",
+                isConnected = false
             ),
         )
     }

@@ -1,8 +1,6 @@
-package com.example.bluetooth.presentation.view.home.state
+package com.example.bluetooth.presentation.view.home
 
 import androidx.compose.runtime.Stable
-import com.example.bluetooth.presentation.view.home.CharUI
-import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.transfer.model.ControllerConfig
 
 @Stable
@@ -12,9 +10,3 @@ data class HomeState(
     val test: String,
     val onEvents: (HomeEvent) -> Unit,
 )
-
-enum class ButtonState {
-    DEFAULT,
-    PRESSED,
-    ACTIVE,
-}

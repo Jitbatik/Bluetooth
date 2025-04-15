@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.screen.components
+package com.example.bluetooth.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,8 +26,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import navigation.NavigationItem
 
 @Composable
 fun NavigationItemView(

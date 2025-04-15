@@ -27,7 +27,7 @@ import com.example.bluetooth.presentation.view.home.CharUI
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.ui.theme.psisFontFamily
 
-//todo: рекомпозиция charUIList меняется
+//todo рекомпозиция charUIList меняется
 @Composable
 fun CharGrid(
     charUIList: () -> List<CharUI>,

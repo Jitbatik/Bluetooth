@@ -23,12 +23,14 @@ class ConnectViewModel @Inject constructor(
 
     private val _connectUiState = combine(
         scannerRepository.isBluetoothActive.distinctUntilChanged(),
+        scannerRepository.isLocationActive.distinctUntilChanged(),
         scannerRepository.deviceList,
         connectRepository.getConnectedDevice().distinctUntilChanged(),
         scannerRepository.observeScanningState().distinctUntilChanged(),
-    ) { isBluetoothEnabled, devices, connectedDevice, isScanning ->
+    ) { isBluetoothEnabled, isLocationEnable, devices, connectedDevice, isScanning ->
         ConnectUiState(
             isBluetoothEnabled = isBluetoothEnabled,
+            isLocationEnable = isLocationEnable,
             devices = devices,
             connectedDevice = connectedDevice,
             isScanning = isScanning,

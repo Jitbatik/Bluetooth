@@ -3,7 +3,8 @@ package com.example.transfer.data
 import android.util.Log
 import com.example.bluetooth.data.DataStreamRepository
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.model.CharData
+import com.example.transfer.domain.usecase.Command
+import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
 import com.example.transfer.model.PultPacket
@@ -25,12 +26,10 @@ class ProtocolPultDataRepository @Inject constructor(
     private var response = ORIGINAL_RESPONSE.copyOf()
     private val _bluetoothModbusPacketsConfigFlow = MutableStateFlow(ControllerConfig())
 
-    //TODO: Убрать после тестов
     private val _answerFlowTest = MutableStateFlow("Command send")
     override fun getAnswerTest(): Flow<String> = _answerFlowTest
-    //
 
-    override fun observeData(): Flow<List<CharData>> = flow {
+    override fun observeData(command: ByteArray): Flow<List<ByteData>> = flow {
         Log.d(tag, "Initializing Bluetooth data flow")
         val packetBuffer = mutableListOf<PultPacket>()
 
@@ -84,7 +83,7 @@ class ProtocolPultDataRepository @Inject constructor(
     private fun processPacketBuffer(
         packetBuffer: MutableList<PultPacket>,
         byteArray: ByteArray
-    ): List<CharData> {
+    ): List<ByteData> {
         val modbusPacket = byteArray.toModbusPacket() ?: return emptyList()
 
         val existingIndex =
@@ -127,14 +126,14 @@ class ProtocolPultDataRepository @Inject constructor(
         return if (packet.checksum == calculateChecksum(this)) packet else null
     }
 
-    private fun List<PultPacket>.mapToListCharData(): List<CharData> = flatMap { packet ->
+    private fun List<PultPacket>.mapToListCharData(): List<ByteData> = flatMap { packet ->
         val charBytes = packet.dataList.take(120)
         val colorBytes = packet.dataList.drop(120).take(120)
 
         charBytes.mapIndexed { index, charByte ->
             val colorBackgroundByte = colorBytes.getOrElse(index) { 0 }
-            CharData(
-                charByte = charByte,
+            ByteData(
+                byte = charByte,
                 colorByte = (colorBackgroundByte.toInt() and 0xF),
                 backgroundByte = ((colorBackgroundByte.toInt() shr 4) and 0xF),
             )

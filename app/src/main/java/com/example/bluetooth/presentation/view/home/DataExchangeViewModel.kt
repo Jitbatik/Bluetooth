@@ -4,13 +4,12 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluetooth.presentation.view.home.state.ButtonType
+import com.example.transfer.domain.ProtocolDataRepository
 import com.example.transfer.model.CharData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
 import com.example.transfer.model.Range
 import com.example.transfer.model.Rotate
-import com.example.transfer.domain.ProtocolDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DataExchangeViewModel @Inject constructor(
     private val protocolDataRepository: ProtocolDataRepository,
+    private val eventHandler: EventHandler
 ) : ViewModel() {
     private val tag = DataExchangeViewModel::class.java.simpleName
 
@@ -100,32 +100,11 @@ class DataExchangeViewModel @Inject constructor(
 
     fun onEvents(event: HomeEvent) {
         Log.d(tag, "An event has arrived: ${event::class.simpleName}")
-        val command = when (event) {
-            is HomeEvent.ButtonClick -> processButtonCommand(activeButtons = event.buttons)
-            is HomeEvent.Press -> generateCommand(colum = event.column, row = event.row)
-        }
-        sendData(command = command)
+        val command = eventHandler.handleEvent(event)
+        sendData(command)
     }
-
-    private fun processButtonCommand(
-        activeButtons: List<ButtonType>,
-    ): ByteArray {
-        return if (activeButtons.isNotEmpty()) {
-            val combinedCommand = activeButtons
-                .map { button -> handleButton(button) }
-                .reduce { acc, array -> acc.orWith(array) }
-            baseModbus + combinedCommand.toByteArray()
-        } else baseModbus + intArrayOf(0x00, 0x00, 0x00, 0x00).toByteArray()
-    }
-
-    private fun IntArray.orWith(other: IntArray): IntArray {
-        return this.zip(other) { a, b -> a or b }.toIntArray()
-    }
-
-    private fun IntArray.toByteArray(): ByteArray = map { it.toByte() }.toByteArray()
 
     private fun sendData(command: ByteArray) {
-        Log.d(tag, "Send data: $command")
         viewModelScope.launch {
             try {
                 protocolDataRepository.sendToStream(value = command)
@@ -134,36 +113,6 @@ class DataExchangeViewModel @Inject constructor(
             }
         }
     }
-
-    private val baseModbus = byteArrayOf(0x01.toByte(), 0x17.toByte(), 0x04.toByte())
-
-    private fun generateCommand(colum: Int, row: Int): ByteArray =
-        baseModbus + byteArrayOf(colum.toByte(), row.toByte(), 0x00, 0x00)
-
-    private fun handleButton(type: ButtonType): IntArray {
-        val command = when (type) {
-            ButtonType.BURNER -> intArrayOf(0x00, 0x00, 0x20, 0x00)
-            ButtonType.F -> intArrayOf(0x00, 0x00, 0x40, 0x00)
-            ButtonType.CANCEL -> intArrayOf(0x12, 0x1D, 0x00, 0x10)
-            ButtonType.ENTER -> intArrayOf(0x16, 0x1D, 0x00, 0x80)
-            ButtonType.ARROW_UP -> intArrayOf(0x19, 0x1D, 0x01, 0x00)
-            ButtonType.ARROW_DOWN -> intArrayOf(0x1D, 0x1D, 0x08, 0x00)
-            ButtonType.ONE -> intArrayOf(0x00, 0x00, 0x00, 0x04)
-            ButtonType.TWO -> intArrayOf(0x00, 0x00, 0x80, 0x00)
-            ButtonType.THREE -> intArrayOf(0x00, 0x00, 0x10, 0x00)
-            ButtonType.FOUR -> intArrayOf(0x00, 0x00, 0x02, 0x00)
-            ButtonType.FIVE -> intArrayOf(0x00, 0x00, 0x00, 0x20)
-            ButtonType.SIX -> intArrayOf(0x00, 0x00, 0x00, 0x40)
-            ButtonType.SEVEN, ButtonType.CLOSE -> intArrayOf(0x00, 0x00, 0x00, 0x08)
-            ButtonType.EIGHT, ButtonType.OPEN -> intArrayOf(0x00, 0x00, 0x00, 0x01)
-            ButtonType.NINE, ButtonType.STOP -> intArrayOf(0x00, 0x00, 0x04, 0x00)
-            ButtonType.ZERO -> intArrayOf(0x00, 0x00, 0x00, 0x02)
-            ButtonType.MINUS -> intArrayOf(0x00, 0x00, 0x08, 0x00)
-            ButtonType.POINT -> intArrayOf(0x00, 0x00, 0x20, 0x00)
-        }
-        return command
-    }
-
 
     companion object {
         private val pal16 = arrayOf(

@@ -1,5 +1,6 @@
-package com.example.bluetooth.presentation.view.home.components
+package com.example.bluetooth.presentation.view.home
 
+import ButtonType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,9 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,17 +29,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.home.HomeEvent
-import com.example.bluetooth.presentation.view.home.state.ButtonState
-import com.example.bluetooth.presentation.view.home.state.ButtonType
 
 
-//TODO: думаю можно еще отрефакторить
-// и вынести buttonStates handlePress* и toggleFState(toggleButtonState)
 @Composable
 fun ControlButtons(
-    onEvents: (HomeEvent) -> Unit,
+    handlePressStart: (ButtonType) -> Unit,
+    handlePressEnd: (ButtonType) -> Unit,
     buttons: MutableState<List<ButtonType>>,
+    buttonStates: Map<ButtonType, ButtonState>,
     modifier: Modifier = Modifier,
     buttonColors: ButtonColors = ButtonDefaults.textButtonColors(
         containerColor = Color.Gray,
@@ -49,34 +44,6 @@ fun ControlButtons(
     ),
     buttonShape: Shape = RoundedCornerShape(0.dp)
 ) {
-    val buttonStates = remember { mutableStateMapOf<ButtonType, ButtonState>() }
-    val toggleFState = remember { mutableStateOf(false) }
-    val isReset = remember { mutableStateOf(false) }
-    val handlePressStart: (ButtonType) -> Unit = { button ->
-        if (button == ButtonType.F) toggleFState.value = !toggleFState.value
-        buttonStates[button] = ButtonState.PRESSED
-
-        val activeButtons = buttonStates.filterValues { it != ButtonState.DEFAULT }
-        if (activeButtons.count() > 1) isReset.value = !isReset.value
-
-        onEvents(HomeEvent.ButtonClick(buttons = activeButtons.keys.toList()))
-    }
-
-    val handlePressEnd: (ButtonType) -> Unit = { button ->
-        buttonStates[button] = when {
-            button == ButtonType.F -> if (toggleFState.value) ButtonState.ACTIVE else ButtonState.DEFAULT
-            else -> ButtonState.DEFAULT
-        }
-
-        if (button != ButtonType.F || !toggleFState.value) onEvents(HomeEvent.Press(0, 0))
-        if (isReset.value) {
-            isReset.value = !isReset.value
-            toggleFState.value = !toggleFState.value
-            buttonStates.keys.forEach { key -> buttonStates[key] = ButtonState.DEFAULT }
-            onEvents(HomeEvent.Press(0, 0))
-        }
-    }
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(5),
         contentPadding = PaddingValues(0.dp),

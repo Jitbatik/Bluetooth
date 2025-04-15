@@ -21,13 +21,7 @@ class DataStreamRepository @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeSocketStream(): Flow<ByteArray> =
         bluetoothSocketProvider.bluetoothSocket
-            .flatMapLatest { socket ->
-                if (socket == null) {
-                    emptyFlow()
-                } else {
-                    readFromStream(socket)
-                }
-            }
+            .flatMapLatest { socket -> if (socket == null) emptyFlow() else readFromStream(socket) }
 
 
     fun sendToStream(value: ByteArray) {
