@@ -4,8 +4,11 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bluetooth.presentation.navigation.NavigationStateHolder
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.model.CharData
+import com.example.transfer.domain.usecase.ObserveParametersUseCase
+import com.example.transfer.domain.usecase.Type
+import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
 import com.example.transfer.model.Range
@@ -17,16 +20,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import navigation.NavigationItem
 import javax.inject.Inject
+
 
 @HiltViewModel
 class DataExchangeViewModel @Inject constructor(
+    private val navigationStateHolder: NavigationStateHolder,
     private val protocolDataRepository: ProtocolDataRepository,
-    private val eventHandler: EventHandler
+    private val observeControllerDataUseCase: ObserveParametersUseCase,
+    private val eventHandler: EventHandler,
 ) : ViewModel() {
     private val tag = DataExchangeViewModel::class.java.simpleName
 
-    //TODO: Убрать после тестов
     private val _test = protocolDataRepository.getAnswerTest()
         .stateIn(
             scope = viewModelScope,
@@ -35,14 +41,55 @@ class DataExchangeViewModel @Inject constructor(
         )
     val test: StateFlow<String> = _test
 
-    private val _data = protocolDataRepository.observeData()
-        .mapToCharUI()
+
+    private val typeFlow: StateFlow<Type> = navigationStateHolder.currentScreen
+        .map { screen ->
+            when (screen) {
+                NavigationItem.Home -> Type.READ
+                NavigationItem.Parameters -> Type.READ
+                else -> Type.NOTHING
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = initializeCharUIList()
+            initialValue = Type.NOTHING
         )
-    val data: StateFlow<List<CharUI>> = _data
+
+    private val _data: StateFlow<List<DataUI>> =
+        observeControllerDataUseCase.execute(typeFlow)
+            .map { byteDataList -> filterByteDataList(byteDataList) }
+            .mapToHomeDataUI()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = HomeDataDefaults.getDefault()
+            )
+    val data: StateFlow<List<DataUI>> = _data
+
+    private fun filterByteDataList(byteDataList: List<ByteData>) =
+        byteDataList.subList(128, 208)
+
+    private fun Flow<List<ByteData>>.mapToHomeDataUI(): Flow<List<DataUI>> = map { charDataList ->
+        charDataList.map { charData ->
+            DataUI(
+                data = String(byteArrayOf(charData.byte), Charsets.ISO_8859_1),
+                color = pal16[charData.colorByte],
+                background = pal16[charData.backgroundByte],
+            )
+        }
+    }
+
+
+    val isConnected: StateFlow<Boolean> = observeControllerDataUseCase.execute(typeFlow)
+        .map { charData ->
+            charData.isNotEmpty()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false
+        )
 
     private val _controllerConfig = protocolDataRepository.observeControllerConfig()
         .stateIn(
@@ -57,51 +104,8 @@ class DataExchangeViewModel @Inject constructor(
         )
     val controllerConfig: StateFlow<ControllerConfig> = _controllerConfig
 
-    private fun Flow<List<CharData>>.mapToCharUI(): Flow<List<CharUI>> = map { charDataList ->
-        charDataList.map { charData ->
-            CharUI(
-                char = String(byteArrayOf(charData.charByte), Charsets.ISO_8859_1)[0],
-                color = pal16[charData.colorByte],
-                background = pal16[charData.backgroundByte],
-            )
-        }
-    }
-
-    private fun initializeCharUIList(): List<CharUI> {
-        Log.d(tag, "Start observe data from Bluetooth")
-//        val initialData =
-//            "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
-
-        val byteArray = byteArrayOf(
-            0x80.toByte(), 0x82.toByte(), 0x84.toByte(), 0x85.toByte(), 0x86.toByte(),
-            0x87.toByte(), 0x27.toByte(), 0x32.toByte(),
-            0xCE.toByte(), 0x95.toByte(), 0xDE.toByte(), 0xA0.toByte(), 0xE0.toByte(),
-        )
-        val resultArray = ByteArray(280)
-        for (i in resultArray.indices) {
-            resultArray[i] = byteArray[i % byteArray.size]
-        }
-
-        return resultArray.map { byte ->
-            CharUI(
-                char = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0],
-                color = Color.Black,
-                background = getRandomColor(),
-            )
-        }
-    }
-
-    private fun getRandomColor(): Color {
-        val r = (0..255).random()
-        val g = (0..255).random()
-        val b = (0..255).random()
-        return Color(r, g, b)
-    }
-
     fun onEvents(event: HomeEvent) {
-        Log.d(tag, "An event has arrived: ${event::class.simpleName}")
-        val command = eventHandler.handleEvent(event)
-        sendData(command)
+        sendData(eventHandler.handleEvent(event))
     }
 
     private fun sendData(command: ByteArray) {

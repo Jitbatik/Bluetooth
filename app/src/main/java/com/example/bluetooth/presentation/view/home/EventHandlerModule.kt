@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.view.home
 
-import EventHandlerImpl
+import ui.handler.EventHandlerImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

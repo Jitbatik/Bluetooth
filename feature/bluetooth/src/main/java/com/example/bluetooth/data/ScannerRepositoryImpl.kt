@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -13,6 +14,7 @@ import androidx.core.content.PermissionChecker
 import com.example.bluetooth.data.utils.BluetoothService
 import com.example.bluetooth.data.receivers.BluetoothScanReceiver
 import com.example.bluetooth.data.receivers.BluetoothStateReceiver
+import com.example.bluetooth.data.receivers.LocationStateReceiver
 import com.example.bluetooth.data.receivers.ScanDiscoveryReceiver
 import com.example.bluetooth.data.utils.SettingsManager
 import com.example.bluetooth.domain.ScannerRepository
@@ -62,6 +64,34 @@ class ScannerRepositoryImpl @Inject constructor(
 
             awaitClose {
                 context.unregisterReceiver(btModeReceiver)
+            }
+        }
+
+    private val _isLocationActive: Boolean
+        get() {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                    locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        }
+
+    override val isLocationActive: Flow<Boolean>
+        get() = callbackFlow {
+            trySend(_isLocationActive)
+
+            val locationReceiver  = LocationStateReceiver { isActive ->
+                Log.d(TAG, "Location Active: $isActive")
+                trySend(isActive)
+            }
+
+            ContextCompat.registerReceiver(
+                context,
+                locationReceiver ,
+                IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION),
+                ContextCompat.RECEIVER_EXPORTED
+            )
+
+            awaitClose {
+                context.unregisterReceiver(locationReceiver )
             }
         }
 

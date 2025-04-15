@@ -1,5 +1,7 @@
-package com.example.bluetooth.presentation.screen
+package com.example.bluetooth.presentation.navigation
 
+import navigation.NavigationItem
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -11,7 +13,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,24 +24,24 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.CustomDrawerState
-import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.model.isOpened
 import com.example.bluetooth.presentation.Content
-import com.example.bluetooth.presentation.screen.components.Drawer
 import kotlin.math.roundToInt
 
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    navigationStateHolder: NavigationStateHolder
+) {
     var drawerState by remember { mutableStateOf(CustomDrawerState.Closed) }
-    var selectedNavigationItem by remember { mutableStateOf(NavigationItem.Home) }
-
+    val selectedNavigationItem by navigationStateHolder.currentScreen.collectAsState()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current.density
 
-    val screenWidth = remember {
-        derivedStateOf { (configuration.screenWidthDp * density).roundToInt() }
+    val screenWidth = remember(configuration.screenWidthDp, density) {
+        (configuration.screenWidthDp * density).roundToInt()
     }
-    val offsetValue by remember { derivedStateOf { (screenWidth.value / 4.5).dp } }
+    val offsetValue = remember(screenWidth) { (screenWidth / 4.5).dp }
 
     val animatedOffset by animateDpAsState(
         targetValue = if (drawerState.isOpened()) offsetValue else 0.dp,
@@ -63,9 +65,10 @@ fun MainScreen() {
             .fillMaxSize()
     ) {
         Drawer(
-            selectedNavigationItem = selectedNavigationItem,
-            onNavigationItemClick = {
-                selectedNavigationItem = it
+            selectedRoute = selectedNavigationItem.route,
+            onNavigationItemClick = { newRoute ->
+                val newScreen = NavigationItem.fromRoute(newRoute) ?: NavigationItem.Home
+                navigationStateHolder.setCurrentScreen(newScreen)
                 drawerState = CustomDrawerState.Closed
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed }
@@ -76,7 +79,7 @@ fun MainScreen() {
                 .scale(scale = animatedScale),
             drawerState = drawerState,
             onDrawerClick = { drawerState = it },
-            screen = selectedNavigationItem.screen,
+            currentRoute = selectedNavigationItem.route,
         )
     }
 }

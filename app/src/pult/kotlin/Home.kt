@@ -22,7 +22,6 @@ import com.example.bluetooth.presentation.view.home.HomeState
 import com.example.transfer.model.KeyMode
 import components.TerminalDataBox
 
-//TODO: рекомпозиции Home
 @NonRestartableComposable
 @Composable
 fun Home(state: HomeState) {

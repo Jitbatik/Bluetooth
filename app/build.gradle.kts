@@ -89,12 +89,12 @@ composeCompiler {
 }
 
 dependencies {
-
     implementation(project(":di"))
     implementation(project(":feature:bluetooth"))
     implementation(project(":feature:transfer"))
 
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation (libs.ycharts)
 
     //hilt
     implementation(libs.dagger.hilt)

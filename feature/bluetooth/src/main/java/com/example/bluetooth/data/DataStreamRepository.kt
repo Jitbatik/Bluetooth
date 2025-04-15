@@ -6,7 +6,6 @@ import com.example.bluetooth.data.utils.BluetoothSocketProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,18 +18,10 @@ import javax.inject.Inject
 class DataStreamRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
 ) {
-    val bluetoothSocketFlow: StateFlow<BluetoothSocket?> = bluetoothSocketProvider.bluetoothSocket
-
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeSocketStream(): Flow<ByteArray> =
         bluetoothSocketProvider.bluetoothSocket
-            .flatMapLatest { socket ->
-                if (socket == null) {
-                    emptyFlow()
-                } else {
-                    readFromStream(socket)
-                }
-            }
+            .flatMapLatest { socket -> if (socket == null) emptyFlow() else readFromStream(socket) }
 
     fun sendToStream(value: ByteArray) {
         val socket = bluetoothSocketProvider.bluetoothSocket.value

@@ -3,16 +3,17 @@ package com.example.transfer.data
 import android.util.Log
 import com.example.bluetooth.data.DataStreamRepository
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.model.CharData
+import com.example.transfer.domain.utils.ByteUtils.toIntUnsigned
+import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.LiftPacket
 import com.example.transfer.model.Range
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
@@ -22,45 +23,39 @@ import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 
-// todo доп по запросам
-// todo Чтение данных с мезанина начиная по адресу и столько-то регистров
-// todo 01 03 00 00 00 20 44 12 [Адресс устройства] [код функции] 3х[Адресс начала чтения] [кол-во регистров] [контрСумма]
-// todo Чтение даты/времени с мезанина для синхронизации
-// todo 01 10 00 24 00 03 06 72 D7 67 69 00 8A 96 30
-// todo Чтение Идентификатора Процессора
-// todo 01 03 01 00 00 06 C4 34
+// todo есть проблема с постоянным перезапросом и чтением потока нужно решить это в бизнес логике
 class ProtocolLiftDataRepository @Inject constructor(
     private val dataStreamRepository: DataStreamRepository,
 ) : ProtocolDataRepository {
-
-
-    //TODO: Убрать после тестов
+    private val requestMutex = Mutex()
     private val _answerFlowTest = MutableStateFlow("Command send")
     override fun getAnswerTest(): Flow<String> = _answerFlowTest
-    //
 
-    override fun observeData(): Flow<List<CharData>> = channelFlow {
+    override fun observeData(command: ByteArray): Flow<List<ByteData>> = channelFlow {
         Log.d(Tag, "Initializing Bluetooth data flow")
         val bufferMutex = Mutex()
 
-        launch {
+        // read input
+        val readJob = launch(Dispatchers.IO) {
             dataStreamRepository.observeSocketStream()
                 .collect { byteArray ->
                     val dataPacket = byteArray.toLiftPacket()
-                    Log.d(Tag, "DataFull: ${byteArray.joinToString(" ") { "%02X".format(it) }}")
-                    dataPacket?.let {
-                        bufferMutex.withLock { send(it.mapToListCharData()) }
-                    }
+                    Log.d(Tag, "RESPOND: ${byteArray.joinToString(" ") { "%02X".format(it) }}")
+                    dataPacket?.let { bufferMutex.withLock { send(it.mapToListCharData()) } }
                 }
         }
 
-        launch {
-            dataStreamRepository.bluetoothSocketFlow
-                .collectLatest { socket ->
-                    if (socket != null) {
-                        while (isActive) requestMissingBluetoothPackets()
-                    }
-                }
+        // request
+        val requestJob = launch(Dispatchers.IO) {
+            while (isActive) {
+                requestMutex.withLock { requestMissingBluetoothPackets(command) }
+            }
+        }
+
+        awaitClose {
+            Log.d(Tag, "Closing Bluetooth data flow")
+            requestJob.cancel()
+            readJob.cancel()
         }
     }.flowOn(Dispatchers.IO)
 
@@ -75,11 +70,10 @@ class ProtocolLiftDataRepository @Inject constructor(
         dataStreamRepository.sendToStream(value = test)
     }
 
-    private suspend fun requestMissingBluetoothPackets() {
-        val command =
-            byteArrayOf(0x01, 0x03, 0x00.toByte(), 0x40.toByte(), 0x00.toByte(), 0x28.toByte())
+    private suspend fun requestMissingBluetoothPackets(command: ByteArray) {
+        if (command.isEmpty()) return
         val test = command + calculateCRC16(command).toByteArray()
-        Log.d(Tag, "Send2: ${test.joinToString(" ") { "%02X".format(it) }}")
+        Log.d(Tag, "REQUEST: ${test.joinToString(" ") { "%02X".format(it) }}")
         dataStreamRepository.sendToStream(value = test)
         delay(RETRY_DELAY_MS)
     }
@@ -120,15 +114,13 @@ class ProtocolLiftDataRepository @Inject constructor(
         return ((crc and 0xFF) shl 8) or (crc shr 8)
     }
 
-    private fun LiftPacket.mapToListCharData(): List<CharData> {
+    private fun LiftPacket.mapToListCharData(): List<ByteData> {
         return dataList.chunked(2).flatMap { pair ->
-            if (pair.size == 2) listOf(CharData(charByte = pair[1]), CharData(charByte = pair[0]))
-            else listOf(CharData(charByte = pair[0]))
+            if (pair.size == 2) listOf(ByteData(byte = pair[1]), ByteData(byte = pair[0]))
+            else listOf(ByteData(byte = pair[0]))
         }
     }
 
-
-    private fun Byte.toIntUnsigned(): Int = toUByte().toInt()
     private fun ByteArray.toWord(offset: Int): Int =
         ((this[offset].toIntUnsigned() shl 8) or this[offset + 1].toIntUnsigned())
 

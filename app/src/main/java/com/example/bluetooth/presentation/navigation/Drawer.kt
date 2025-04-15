@@ -1,4 +1,4 @@
-package com.example.bluetooth.presentation.screen.components
+package com.example.bluetooth.presentation.navigation
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -17,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,15 +26,17 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
-import com.example.bluetooth.model.NavigationItem
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import navigation.NavigationItem
 
 @Composable
 fun Drawer(
-    selectedNavigationItem: NavigationItem,
-    onNavigationItemClick: (NavigationItem) -> Unit,
+    selectedRoute: String,
+    onNavigationItemClick: (String) -> Unit,
     onCloseClick: () -> Unit,
 ) {
+    val items = remember { NavigationItem.entries.toList() }
+
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -61,48 +64,44 @@ fun Drawer(
             contentDescription = "Zodiac Image"
         )
         Spacer(modifier = Modifier.height(40.dp))
-        NavigationItem.entries.toTypedArray().take(2).forEach { navigationItem ->
+
+        items.dropLast(1).forEach { navigationItem ->
             NavigationItemView(
                 navigationItem = navigationItem,
-                selected = navigationItem == selectedNavigationItem,
-                onClick = { onNavigationItemClick(navigationItem) }
+                selected = navigationItem.route == selectedRoute,
+                onClick = { onNavigationItemClick(navigationItem.route) }
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
         Spacer(modifier = Modifier.weight(1f))
-        NavigationItem.entries.toTypedArray().takeLast(1).forEach { navigationItem ->
+        items.lastOrNull()?.let { lastItem ->
             NavigationItemView(
-                navigationItem = navigationItem,
-                selected = navigationItem == selectedNavigationItem,
-                onClick = { onNavigationItemClick(navigationItem) }
+                navigationItem = lastItem,
+                selected = lastItem.route == selectedRoute,
+                onClick = { onNavigationItemClick(lastItem.route) }
             )
         }
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 
-private class DrawerPreviewParameterProvider : PreviewParameterProvider<NavigationItem> {
-    override val values = sequenceOf(
-        NavigationItem.Home,
-        NavigationItem.Connect,
-        NavigationItem.Settings
-    )
+
+private class DrawerPreviewParameterProvider : PreviewParameterProvider<String> {
+    override val values = sequenceOf("home", "connect", "settings")
 }
 
 @PreviewLightDark
 @Composable
 fun DrawerPreview(
-    @PreviewParameter(DrawerPreviewParameterProvider::class) item: NavigationItem
+    @PreviewParameter(DrawerPreviewParameterProvider::class) item: String
 ) = BluetoothTheme {
     Surface {
         Box(modifier = Modifier.fillMaxSize()) {
             Drawer(
-                selectedNavigationItem = item,
+                selectedRoute = item,
                 onNavigationItemClick = { },
                 onCloseClick = { }
             )
         }
-
     }
 }
