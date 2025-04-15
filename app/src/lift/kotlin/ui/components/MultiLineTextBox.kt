@@ -1,4 +1,4 @@
-package components
+package ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +21,10 @@ fun MultiLineTextBox(
     modifier: Modifier = Modifier,
 ) {
     val charList = charUIList()
-    val chunkSize = if (charList.isEmpty()) 20 else maxOf(1, charList.size / lines) // Устанавливаем минимум 1
+    val chunkSize =
+        if (charList.isEmpty()) 20 else maxOf(1, charList.size / lines) // Устанавливаем минимум 1
     val rows = charList.chunked(chunkSize)
-    val rowTexts = rows.map { row -> row.joinToString("") { it.char.toString() } }
+    val rowTexts = rows.map { row -> row.joinToString("") { it.char } }
 
     Box(
         modifier = modifier

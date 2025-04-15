@@ -27,22 +27,24 @@ android {
     }
 
     flavorDimensions += "version"
-    val productFlavorsConfig: Map<*, *>? = rootProject.extra["productFlavorsConfig"] as? Map<*, *>
     productFlavors {
         create("pult") {
             dimension = "version"
             applicationIdSuffix = ".pult"
             versionNameSuffix = "-pult"
+            buildConfigField("String", "CURRENT_FLAVOR", "\"pult\"")
         }
         create("lift") {
             dimension = "version"
             applicationIdSuffix = ".lift"
             versionNameSuffix = "-lift"
+            buildConfigField("String", "CURRENT_FLAVOR", "\"lift\"")
         }
         create("uart") {
             dimension = "version"
             applicationIdSuffix = ".uart"
             versionNameSuffix = "-uart"
+            buildConfigField("String", "CURRENT_FLAVOR", "\"uart\"")
         }
     }
 
@@ -67,6 +69,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
 
     }
