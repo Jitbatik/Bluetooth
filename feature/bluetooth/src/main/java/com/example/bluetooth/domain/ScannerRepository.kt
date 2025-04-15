@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface ScannerRepository {
     val deviceList: StateFlow<List<BluetoothDevice>>
     val isBluetoothActive: Flow<Boolean>
+    val isLocationActive: Flow<Boolean>
 
     fun observeScanningState(): Flow<Boolean>
     fun startScan(): Result<Boolean>

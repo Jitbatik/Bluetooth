@@ -1,4 +1,4 @@
-package components
+package ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,20 +10,21 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.home.CharUI
+import com.example.bluetooth.presentation.view.home.DataUI
 import com.example.bluetooth.ui.theme.psisFontFamily
+
 
 @NonRestartableComposable
 @Composable
 fun MultiLineTextBox(
-    charUIList: () -> List<CharUI>,
+    dataUIList: () -> List<DataUI>,
     lines: Int,
     modifier: Modifier = Modifier,
 ) {
-    val charList = charUIList()
-    val chunkSize = if (charList.isEmpty()) 20 else maxOf(1, charList.size / lines) // Устанавливаем минимум 1
+    val charList = dataUIList()
+    val chunkSize = if (charList.isEmpty()) 20 else maxOf(1, charList.size / lines)
     val rows = charList.chunked(chunkSize)
-    val rowTexts = rows.map { row -> row.joinToString("") { it.char.toString() } }
+    val rowTexts = rows.map { row -> row.joinToString("") { it.data } }
 
     Box(
         modifier = modifier

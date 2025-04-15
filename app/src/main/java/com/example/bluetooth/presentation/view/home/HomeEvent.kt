@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.view.home
 
-import ButtonType
+import ui.model.ButtonType
 
 
 sealed interface HomeEvent {

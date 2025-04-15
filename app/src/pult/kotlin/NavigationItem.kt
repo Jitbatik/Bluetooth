@@ -1,29 +1,34 @@
-package com.example.bluetooth.model
-
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.example.bluetooth.R
-import com.example.bluetooth.presentation.screen.Screen
+
 
 enum class NavigationItem(
-    val screen: Screen,
+    val route: String,
     @StringRes val title: Int,
-    @DrawableRes val icon: Int,
+    @DrawableRes val icon: Int
 ) {
     Home(
-        screen = Screen.Home,
+        route = "home",
         icon = R.drawable.icon_home,
         title = R.string.navigation_item_home
     ),
     Connect(
-        screen = Screen.Connect,
+        route = "connect",
         icon = R.drawable.icon_bluetooth,
         title = R.string.navigation_item_connect
     ),
     Settings(
-        screen = Screen.Settings,
+        route = "settings",
         icon = R.drawable.icon_settings,
         title = R.string.navigation_item_settings
-    )
+    );
+
+    companion object {
+        fun fromRoute(route: String?): NavigationItem? {
+            return entries.find { it.route == route }
+        }
+    }
 }
+
 
