@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 
 object HomeDataDefaults {
-    fun getDefault(): List<DataUI> {
+    fun getDefault(): List<CharUI> {
         val byteArray = byteArrayOf(
             0x80.toByte(),
             0x82.toByte(),
@@ -26,8 +26,8 @@ object HomeDataDefaults {
         }
 
         return resultArray.map { byte ->
-            DataUI(
-                data = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0].toString(),
+            CharUI(
+                char = String(byteArrayOf(byte), Charsets.ISO_8859_1)[0].toString(),
                 color = Color.Black,
                 background = getRandomColor(),
             )

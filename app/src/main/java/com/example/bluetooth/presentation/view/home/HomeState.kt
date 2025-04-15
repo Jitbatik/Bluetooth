@@ -9,4 +9,5 @@ data class HomeState(
     val controllerConfig: ControllerConfig,
     val test: String,
     val onEvents: (HomeEvent) -> Unit,
+    val isConnected: Boolean,
 )

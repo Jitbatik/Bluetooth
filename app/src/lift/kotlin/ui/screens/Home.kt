@@ -19,7 +19,8 @@ import com.example.bluetooth.presentation.view.home.ButtonState
 import com.example.bluetooth.presentation.view.home.ControlButtons
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import com.example.bluetooth.presentation.view.home.HomeState
-import components.MultiLineTextBox
+import ui.components.MultiLineTextBox
+import ui.model.ButtonType
 
 @NonRestartableComposable
 @Composable
@@ -72,8 +73,8 @@ fun Home(state: HomeState) {
 
 object ButtonLists {
     val basic = listOf(
-        ButtonType.ARROW_DOWN,
-        ButtonType.ARROW_UP,
+        ButtonType.PLUS,
+        ButtonType.MINUS,
         ButtonType.CANCEL,
         ButtonType.ENTER,
     )
