@@ -2,6 +2,7 @@ package com.example.bluetooth.presentation.view.connect
 
 import android.Manifest
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,12 +17,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bluetooth.R
 import com.example.bluetooth.model.BluetoothScreenType
-import com.example.bluetooth.presentation.view.connect.components.enable.BTNotEnabledBox
+import com.example.bluetooth.presentation.contracts.EnableBluetoothContract
+import com.example.bluetooth.presentation.contracts.EnableLocationContract
+import com.example.bluetooth.presentation.view.connect.components.enable.NotEnabledBox
 import com.example.bluetooth.presentation.view.connect.components.permission.BtPermissionNotProvidedBox
 import com.example.bluetooth.presentation.view.connect.components.scanner.ScannerBox
 
@@ -75,15 +80,30 @@ private fun Connect(
         )
     }
 
-    val screenType by remember(hasBluetoothPermission, screenUiState.isBluetoothEnabled) {
+    val screenType by remember(
+        hasBluetoothPermission,
+        screenUiState.isBluetoothEnabled,
+        screenUiState.isLocationEnable
+    ) {
         derivedStateOf {
             when {
-                hasBluetoothPermission && screenUiState.isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED
-                hasBluetoothPermission && !screenUiState.isBluetoothEnabled -> BluetoothScreenType.BLUETOOTH_NOT_ENABLED
+                hasBluetoothPermission && screenUiState.isBluetoothEnabled && screenUiState.isLocationEnable -> BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED
+                hasBluetoothPermission && !screenUiState.isBluetoothEnabled && screenUiState.isLocationEnable -> BluetoothScreenType.BLUETOOTH_NOT_ENABLED
+                hasBluetoothPermission && !screenUiState.isBluetoothEnabled && !screenUiState.isLocationEnable -> BluetoothScreenType.BLUETOOTH_NOT_ENABLED
+                hasBluetoothPermission && screenUiState.isBluetoothEnabled && !screenUiState.isLocationEnable -> BluetoothScreenType.LOCATION_NOT_ENABLED
                 else -> BluetoothScreenType.BLUETOOTH_PERMISSION_DENIED
             }
         }
     }
+
+    val bluetoothLauncher = rememberLauncherForActivityResult(
+        contract = EnableBluetoothContract(),
+        onResult = { _ -> }
+    )
+    val locationLauncher = rememberLauncherForActivityResult(
+        contract = EnableLocationContract(context),
+        onResult = { _ -> }
+    )
 
     Box(
         modifier = Modifier
@@ -91,6 +111,7 @@ private fun Connect(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
+
         Crossfade(
             targetState = screenType,
             label = "Screen Type Transition"
@@ -106,7 +127,11 @@ private fun Connect(
                 }
 
                 BluetoothScreenType.BLUETOOTH_NOT_ENABLED -> {
-                    BTNotEnabledBox(
+                    NotEnabledBox(
+                        title = stringResource(id = R.string.bluetooth_not_enable_title),
+                        description = stringResource(id = R.string.bluetooth_not_enable_desc),
+                        actionButtonText = stringResource(id = R.string.enable_bluetooth_button_text),
+                        launcher = { bluetoothLauncher.launch(Unit) },
                         modifier = Modifier.padding(12.dp)
                     )
                 }
@@ -115,6 +140,16 @@ private fun Connect(
                     BtPermissionNotProvidedBox(
                         requiredPermissions = requiredPermissions,
                         onPermissionChanged = { hasBluetoothPermission = it },
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+
+                BluetoothScreenType.LOCATION_NOT_ENABLED -> {
+                    NotEnabledBox(
+                        title = stringResource(id = R.string.location_not_enable_title),
+                        description = stringResource(id = R.string.location_not_enable_desc),
+                        actionButtonText = stringResource(id = R.string.location_bluetooth_button_text),
+                        launcher = { locationLauncher.launch(Unit) },
                         modifier = Modifier.padding(12.dp)
                     )
                 }

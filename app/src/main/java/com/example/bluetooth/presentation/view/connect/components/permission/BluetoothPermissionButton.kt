@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
+
 @Composable
 fun BluetoothPermissionButton(
     modifier: Modifier = Modifier,

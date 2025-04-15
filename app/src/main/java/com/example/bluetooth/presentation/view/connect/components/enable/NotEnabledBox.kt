@@ -10,37 +10,38 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.R
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
-fun BTNotEnabledBox(
+fun NotEnabledBox(
+    title: String,
+    description: String,
+    actionButtonText: String,
+    launcher: () -> Unit,
     modifier: Modifier = Modifier,
-    onResults: (Boolean) -> Unit = {},
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Text(
-            text = stringResource(id = R.string.bluetooth_not_enable_title),
+            text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = stringResource(id = R.string.bluetooth_not_enable_desc),
+            text = description,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        EnableBluetoothButton(
-            onResults = onResults,
+        ActionButtonWithLauncher(
+            text = actionButtonText,
+            launcher = launcher,
             modifier = Modifier.fillMaxWidth(.75f)
         )
     }
@@ -48,8 +49,14 @@ fun BTNotEnabledBox(
 
 @PreviewLightDark
 @Composable
-private fun BTNotEnabledBoxPreview() = BluetoothTheme {
+private fun NotEnabledBoxPreview() = BluetoothTheme {
     Surface {
-        BTNotEnabledBox(modifier = Modifier.padding(16.dp))
+        NotEnabledBox(
+            title = "not_enable_title",
+            description = "not_enable_desc",
+            actionButtonText = "button_text",
+            launcher = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
