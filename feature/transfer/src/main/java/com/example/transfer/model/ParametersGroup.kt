@@ -8,6 +8,14 @@ data class ParametersGroup(
     val data: List<Parameter>,
 )
 
+data class LiftParameters(
+    val timeStamp: Long,
+    val timeMilliseconds: Int,
+    val frameId: Int,
+    val data: List<Int>,
+)
+
+
 data class DateTime(
     val year: Int,
     val month: Int,
@@ -24,11 +32,14 @@ data class Parameter(
     val points: List<ParameterPoint>,
 )
 
+
+
 data class ParameterPoint(
     val timeStamp: Int,
     val value: Int,
 )
 data class ChartParameters(
+    val stepCount: Int = 20,
     val scale: Float = 1f,
     val minScale: Float = 1f,
     val maxScale: Float = 2f,

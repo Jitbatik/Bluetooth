@@ -8,7 +8,7 @@ import com.example.transfer.domain.usecase.ProcessParametersFeatureCase
 import com.example.transfer.domain.usecase.Type
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ChartParameters
-import com.example.transfer.model.ParametersGroup
+import com.example.transfer.model.LiftParameters
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,7 +46,7 @@ class ElevatorParametersViewModel @Inject constructor(
     private fun filterByteData(byteDataList: List<ByteData>) =
         byteDataList.take(128) + byteDataList.drop(208)
 
-    private val _data: StateFlow<ParametersGroup> =
+    private val _data: StateFlow<List<LiftParameters>> =
         processParametersFeatureCase.mapToParametersDataUI(dataFlow)
             .stateIn(
                 scope = viewModelScope,
@@ -68,20 +68,19 @@ class ElevatorParametersViewModel @Inject constructor(
         started = SharingStarted.Eagerly,
         initialValue = ParametersState(
             parametersGroup = ParametersDataDefaults.getDefault(),
-            chartParameters = emptyMap(),
+            chartParameters = ChartParameters(),
             onEvents = ::onEvents
         )
     )
 
     val state: StateFlow<ParametersState> = _state
 
-    private fun onEvents(chartId: Int, event: ParametersIntent) {
-        val current =
-            processParametersFeatureCase.chartParameters.value[chartId] ?: ChartParameters()
+    private fun onEvents(event: ParametersIntent) {
+        val current = processParametersFeatureCase.chartParameters.value
         val newParams = when (event) {
             is ParametersIntent.ChangeScale -> current.copy(scale = event.scale)
             is ParametersIntent.ChangeOffset -> current.copy(offset = event.offset)
         }
-        processParametersFeatureCase.updateChartParameter(chartId, newParams)
+        processParametersFeatureCase.updateChartParameter(newParams)
     }
 }
