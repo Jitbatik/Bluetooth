@@ -1,8 +1,12 @@
 package com.example.transfer.domain.usecase
 
+import com.example.transfer.domain.utils.ByteUtils.toIntFromByteData
+import com.example.transfer.domain.utils.ByteUtils.toIntListFromByteData
+import com.example.transfer.domain.utils.ByteUtils.toLongFromByteData
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ChartParameters
 import com.example.transfer.model.DateTime
+import com.example.transfer.model.LiftParameters
 import com.example.transfer.model.Parameter
 import com.example.transfer.model.ParametersGroup
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +22,31 @@ import javax.inject.Inject
 
 
 class ProcessParametersFeatureCase @Inject constructor(
+) {
+    private val _currentChartParameters = MutableStateFlow(ChartParameters())
+    val chartParameters: StateFlow<ChartParameters> = _currentChartParameters.asStateFlow()
+    private val autoScrollEnabled = MutableStateFlow(true)
+
+    fun updateChartParameter(newParams: ChartParameters) {
+        _currentChartParameters.value = newParams
+    }
+
+    fun mapToParametersDataUI(dataFlow: Flow<List<ByteData>>): Flow<List<LiftParameters>> {
+        return dataFlow.scan(emptyList(), ::mergeLiftParametersData)
+    }
+
+    private fun mergeLiftParametersData(
+        existingParameters: List<LiftParameters>,
+        byteDataList: List<ByteData>
+    ) = existingParameters + LiftParameters(
+        timeStamp = byteDataList.subList(0, 4).toLongFromByteData(),
+        timeMilliseconds = byteDataList.subList(4, 6).toIntFromByteData(),
+        frameId = byteDataList.subList(6, 8).toIntFromByteData(),
+        data = byteDataList.subList(8, 12).toIntListFromByteData()
+    )
+}
+
+class ProcessParametersFeatureCase1 @Inject constructor(
     private val parametersDataMapper: ParametersDataMapper,
 ) {
     private val _chartParameters = MutableStateFlow<Map<Int, ChartParameters>>(emptyMap())

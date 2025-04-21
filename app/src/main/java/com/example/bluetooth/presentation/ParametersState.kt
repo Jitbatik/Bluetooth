@@ -1,10 +1,10 @@
 package com.example.bluetooth.presentation
 
 import com.example.transfer.model.ChartParameters
-import com.example.transfer.model.ParametersGroup
+import com.example.transfer.model.LiftParameters
 
 data class ParametersState(
-    val parametersGroup: ParametersGroup,
-    val chartParameters: Map<Int, ChartParameters>,
-    val onEvents: (Int, ParametersIntent) -> Unit,
+    val parametersGroup: List<LiftParameters>,
+    val chartParameters: ChartParameters,
+    val onEvents: (ParametersIntent) -> Unit,
 )

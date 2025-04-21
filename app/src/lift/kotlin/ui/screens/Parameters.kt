@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,9 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.presentation.ElevatorParametersViewModel
 import com.example.bluetooth.presentation.ParametersState
-import com.example.transfer.model.ChartParameters
-import com.example.transfer.model.DateTime
-import ui.components.ParameterItem
+import ui.components.LineCharts
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ParametersRoot(
@@ -33,6 +32,7 @@ fun ParametersRoot(
     )
 }
 
+// todo сделать Нужно добавить что-то вроде настройки какие графики отображать а какие игнорировать
 @Composable
 fun Parameters(
     state: ParametersState,
@@ -43,7 +43,10 @@ fun Parameters(
             .padding(8.dp)
     ) {
         Text(
-            text = formatDateTime(state.parametersGroup.time),
+            text = formatDateTime(
+                timeSeconds = state.parametersGroup.lastOrNull()?.timeStamp ?: 0,
+                timeMilliseconds = state.parametersGroup.lastOrNull()?.timeMilliseconds ?: 0,
+            ),
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -51,20 +54,23 @@ fun Parameters(
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider()
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(state.parametersGroup.data) { parameter ->
-                ParameterItem(
-                    parameter = parameter,
-                    chartParameters = state.chartParameters[parameter.id] ?: ChartParameters(),
-                    onEvents = state.onEvents
-                )
-            }
-        }
+        LineCharts(
+            parameters = state.parametersGroup,
+            chartParameters = state.chartParameters,
+            onEvents = state.onEvents
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider()
     }
 }
 
 
-private fun formatDateTime(time: DateTime): String {
-    return "${time.year}-${time.month}-${time.day} ${time.hour}:${time.minute}:${time.second}"
+private fun formatDateTime(timeSeconds: Long, timeMilliseconds: Int): String {
+    val instant = Instant.ofEpochMilli(timeSeconds * 1000 + timeMilliseconds)
+    return DateTimeFormatter
+        .ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        .withZone(ZoneId.systemDefault())
+        .format(instant)
 }
 //todo сделать Preview и отрефакторить
