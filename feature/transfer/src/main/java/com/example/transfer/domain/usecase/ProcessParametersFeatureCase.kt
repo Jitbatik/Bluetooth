@@ -8,7 +8,10 @@ import com.example.transfer.model.ChartParameters
 import com.example.transfer.model.DateTime
 import com.example.transfer.model.LiftParameters
 import com.example.transfer.model.Parameter
+import com.example.transfer.model.ParameterLabel
 import com.example.transfer.model.ParametersGroup
+import com.example.transfer.model.ParametersLabel
+import com.example.transfer.model.Test
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +45,8 @@ class ProcessParametersFeatureCase @Inject constructor(
         timeStamp = byteDataList.subList(0, 4).toLongFromByteData(),
         timeMilliseconds = byteDataList.subList(4, 6).toIntFromByteData(),
         frameId = byteDataList.subList(6, 8).toIntFromByteData(),
-        data = byteDataList.subList(8, 12).toIntListFromByteData()
+        data = listOf( Test(ParametersLabel.ENCODER_READINGS, 0),)
+//        byteDataList.subList(8, 12).toIntListFromByteData()
     )
 }
 

@@ -80,6 +80,7 @@ class ElevatorParametersViewModel @Inject constructor(
         val newParams = when (event) {
             is ParametersIntent.ChangeScale -> current.copy(scale = event.scale)
             is ParametersIntent.ChangeOffset -> current.copy(offset = event.offset)
+            is ParametersIntent.DataPointSelected -> current
         }
         processParametersFeatureCase.updateChartParameter(newParams)
     }
