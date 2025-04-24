@@ -27,9 +27,7 @@ fun ParametersRoot(
     viewModel: ElevatorParametersViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    Parameters(
-        state = state
-    )
+    Parameters(state = state)
 }
 
 // todo сделать Нужно добавить что-то вроде настройки какие графики отображать а какие игнорировать
@@ -57,7 +55,7 @@ fun Parameters(
         LineCharts(
             parameters = state.parametersGroup,
             chartParameters = state.chartParameters,
-            onEvents = state.onEvents
+            onEvents = state.onEvents,
         )
 
         Spacer(modifier = Modifier.height(8.dp))

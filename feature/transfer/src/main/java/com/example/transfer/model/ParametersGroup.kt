@@ -7,12 +7,17 @@ data class ParametersGroup(
     val time: DateTime,
     val data: List<Parameter>,
 )
-
+//todo в data записхать Test
 data class LiftParameters(
     val timeStamp: Long,
     val timeMilliseconds: Int,
     val frameId: Int,
-    val data: List<Int>,
+    val data: List<Test>,
+)
+
+data class Test(
+    val label: ParameterLabel,
+    val value: Int
 )
 
 
