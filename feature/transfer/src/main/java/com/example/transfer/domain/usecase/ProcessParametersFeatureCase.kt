@@ -1,100 +1,136 @@
 package com.example.transfer.domain.usecase
 
 import com.example.transfer.domain.utils.ByteUtils.toIntFromByteData
-import com.example.transfer.domain.utils.ByteUtils.toIntListFromByteData
 import com.example.transfer.domain.utils.ByteUtils.toLongFromByteData
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ChartParameters
-import com.example.transfer.model.DateTime
 import com.example.transfer.model.LiftParameters
-import com.example.transfer.model.Parameter
-import com.example.transfer.model.ParameterLabel
-import com.example.transfer.model.ParametersGroup
 import com.example.transfer.model.ParametersLabel
 import com.example.transfer.model.Test
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
-import java.util.Calendar
 import javax.inject.Inject
 
 
 class ProcessParametersFeatureCase @Inject constructor(
 ) {
-    private val _currentChartParameters = MutableStateFlow(ChartParameters())
-    val chartParameters: StateFlow<ChartParameters> = _currentChartParameters.asStateFlow()
-    private val autoScrollEnabled = MutableStateFlow(true)
+    private val _chartParameters = MutableStateFlow(ChartParameters())
+    val chartParameters: StateFlow<ChartParameters> = _chartParameters.asStateFlow()
+
+    private val _autoScrollEnabled = MutableStateFlow(true)
+
+    private var accumulatedParameters: List<LiftParameters> = emptyList()
 
     fun updateChartParameter(newParams: ChartParameters) {
-        _currentChartParameters.value = newParams
+        val updatedParams = if (newParams.scale != _chartParameters.value.scale)
+            newParams.copy(stepCount = calculateStepCount(newParams))
+        else newParams
+
+        _chartParameters.update { _ ->
+            val updated = updatedParams.withUpdatedMaxOffset(accumulatedParameters)
+            _autoScrollEnabled.value = updated.offset >= updated.maxOffsetX - 1f
+            updated
+        }
     }
 
-    fun mapToParametersDataUI(dataFlow: Flow<List<ByteData>>): Flow<List<LiftParameters>> {
-        return dataFlow.scan(emptyList(), ::mergeLiftParametersData)
+    private fun calculateStepCount(
+        param: ChartParameters,
+    ): Int =
+        (param.minScalePoint + ((param.scale - param.minScale) *
+                (param.maxScalePoint - param.minScalePoint) / (param.maxScale - param.minScale))).toInt()
+
+    private fun ChartParameters.withUpdatedMaxOffset(
+        parameters: List<LiftParameters>
+    ): ChartParameters {
+        if (parameters.isEmpty()) return this.copy(maxOffsetX = 0f)
+
+        val minTime = parameters.minOf { it.timeStamp }
+        val maxTime = parameters.maxOf { it.timeStamp }
+        val calculatedMaxOffset = (maxTime - minTime - stepCount).toFloat().coerceAtLeast(0f)
+
+        val newOffset = when {
+            _autoScrollEnabled.value -> calculatedMaxOffset
+            else -> offset.coerceIn(0f, calculatedMaxOffset)
+        }
+
+        return this.copy(
+            maxOffsetX = maxOffsetX,
+            offset = newOffset
+        )
     }
+
+    fun mapToParametersDataUI(dataFlow: Flow<List<ByteData>>) = dataFlow
+        .scan(emptyList(), ::mergeLiftParametersData)
+        .onEach { accumulatedParameters = it }
+        .applyDynamicFilter(_chartParameters)
+
 
     private fun mergeLiftParametersData(
         existingParameters: List<LiftParameters>,
         byteDataList: List<ByteData>
-    ) = existingParameters + LiftParameters(
+    ): List<LiftParameters> {
+        return if (existingParameters is ArrayList)
+            existingParameters.also { it += createLiftParameters(byteDataList) }
+        else
+            existingParameters + createLiftParameters(byteDataList)
+
+    }
+
+    private fun createLiftParameters(byteDataList: List<ByteData>) = LiftParameters(
         timeStamp = byteDataList.subList(0, 4).toLongFromByteData(),
         timeMilliseconds = byteDataList.subList(4, 6).toIntFromByteData(),
         frameId = byteDataList.subList(6, 8).toIntFromByteData(),
-        data = listOf( Test(ParametersLabel.ENCODER_READINGS, 0),)
-//        byteDataList.subList(8, 12).toIntListFromByteData()
+        // todo нужно сделать потом
+        data = listOf(
+            Test(
+                ParametersLabel.ENCODER_FREQUENCY,
+                byteDataList.subList(16, 18).toIntFromByteData()
+            )
+        )
     )
-}
 
-class ProcessParametersFeatureCase1 @Inject constructor(
-    private val parametersDataMapper: ParametersDataMapper,
-) {
-    private val _chartParameters = MutableStateFlow<Map<Int, ChartParameters>>(emptyMap())
-    val chartParameters: StateFlow<Map<Int, ChartParameters>> = _chartParameters.asStateFlow()
-    private val autoScrollEnabled = MutableStateFlow(true)
-
-    fun updateChartParameter(chartId: Int, newParams: ChartParameters) {
-        _chartParameters.update { currentMap ->
-            currentMap + (chartId to newParams)
-        }
-    }
-
-    fun mapToParametersDataUI(dataFlow: Flow<List<ByteData>>): Flow<ParametersGroup> {
-        return dataFlow
-            .scan(emptyList<Parameter>()) { existingParameters, byteDataList ->
-                parametersDataMapper.mergeParameters(
-                    existingParameters,
-                    byteDataList,
-                    _chartParameters,
-                    autoScrollEnabled
-                )
-            }
-            .filterNot { it.isEmpty() }
-            .map(::updatedParametersGroup)
-    }
-
-    private fun updatedParametersGroup(listParameter: List<Parameter>): ParametersGroup {
-        val time = listParameter.lastOrNull()?.points?.lastOrNull()?.timeStamp?.toLong() ?: 0
-        return ParametersGroup(
-            time = time.toDateTime(),
-            data = listParameter
+    private fun Flow<List<LiftParameters>>.applyDynamicFilter(
+        paramsFlow: StateFlow<ChartParameters>
+    ): Flow<List<LiftParameters>> = combine(paramsFlow) { data, config ->
+        filterByTimestampRange(
+            parameters = data,
+            offset = config.offset,
+            count = config.stepCount
         )
     }
-}
 
+    private fun filterByTimestampRange(
+        parameters: List<LiftParameters>,
+        offset: Float,
+        count: Int
+    ): List<LiftParameters> {
+        if (parameters.isEmpty()) return emptyList()
+        val timeResolver = { param: LiftParameters ->
+            param.timeStamp + param.timeMilliseconds / 1000f
+        }
 
-private fun Long.toDateTime(): DateTime {
-    val calendar = Calendar.getInstance().apply { timeInMillis = this@toDateTime * 1000 }
-    return DateTime(
-        year = calendar.get(Calendar.YEAR),
-        month = calendar.get(Calendar.MONTH) + 1,
-        day = calendar.get(Calendar.DAY_OF_MONTH),
-        hour = calendar.get(Calendar.HOUR_OF_DAY),
-        minute = calendar.get(Calendar.MINUTE),
-        second = calendar.get(Calendar.SECOND)
-    )
+        val rangeStart = parameters.minOf { it.timeStamp } + offset
+        val rangeEnd =
+            (rangeStart + count).coerceAtMost(parameters.maxOf { it.timeStamp }.toFloat())
+
+        return parameters
+            .asSequence()
+            .filter {
+                val time = timeResolver(it)
+                time in rangeStart..rangeEnd
+            }
+            .sortedWith(
+                compareBy(
+                    LiftParameters::timeStamp,
+                    LiftParameters::timeMilliseconds
+                )
+            )
+            .toList()
+    }
 }
