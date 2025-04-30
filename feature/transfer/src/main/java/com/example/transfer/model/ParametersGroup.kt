@@ -37,8 +37,6 @@ data class Parameter(
     val points: List<ParameterPoint>,
 )
 
-
-
 data class ParameterPoint(
     val timeStamp: Int,
     val value: Int,
@@ -51,6 +49,8 @@ data class ChartParameters(
     val offset: Float = 0f,
     val minOffsetX: Float = 0f,
     val maxOffsetX: Float = 0f,
+    val minScalePoint: Int = 300,
+    val maxScalePoint: Int = 3,
 )
 
 

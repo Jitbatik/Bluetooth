@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.transfer.model.LiftParameters
 
-typealias CanvasPoint = Pair<Int, Int>
+typealias CanvasPoint = Pair<Float, Int>
 
 @Composable
 fun DrawGraph(
@@ -58,28 +58,24 @@ fun DrawGraph(
     }
 }
 
-fun List<LiftParameters>.calculateBaseTime(): Long {
-    return if (isEmpty()) 0L
-    else minOf { it.timeStamp * 1000 + it.timeMilliseconds }
-}
 
 fun List<LiftParameters>.toCanvasPoints(index: Int): List<CanvasPoint> {
     if (isEmpty()) return emptyList()
     val baseTimeMs = calculateBaseTime()
 
-    return mapNotNull { param ->
-        if (index >= param.data.size) null
-        else param.toCanvasPoint(baseTimeMs, index)
-    }
+    return map { param -> param.toCanvasPoint(baseTimeMs, index) }
 }
 
-private fun LiftParameters.toCanvasPoint(baseTimeMs: Long, index: Int): CanvasPoint {
-    val fullTimeMs = timeStamp * 1000 + timeMilliseconds
-    val relativeTimeMs = (fullTimeMs - baseTimeMs).toInt()
-    return CanvasPoint(relativeTimeMs, data[index].value)
-}
+fun List<LiftParameters>.calculateBaseTime(): Long =
+    minOfOrNull { it.timeStamp * 1000L + it.timeMilliseconds } ?: 0L
 
-//todo без учета мс толко мало но пока такой вариант
+
+private fun LiftParameters.toCanvasPoint(baseTimeMs: Long, index: Int): CanvasPoint =
+    CanvasPoint(
+        ((timeStamp * 1000 + timeMilliseconds) - baseTimeMs) / 1000f,
+        data[index].value
+    )
+
 @Composable
 private fun GraphCanvas(
     dataPoints: List<CanvasPoint>,
@@ -100,40 +96,36 @@ private fun GraphCanvas(
             if (dataPoints.isEmpty()) return@Canvas
 
             val yValues = dataPoints.map { it.second }
-            val rawMinY = yValues.minOrNull()?.toFloat() ?: 0f
-            val rawMaxY = yValues.maxOrNull()?.toFloat() ?: 1f
+            val rawMinY = yValues.min().toFloat()
+            val rawMaxY = yValues.max().toFloat()
             val rangeY = (rawMaxY - rawMinY).takeIf { it != 0f } ?: 1f
 
             val minY = rawMinY - rangeY * 0.1f
             val maxY = rawMaxY + rangeY * 0.1f
-            val fullRangeY = maxY - minY
-
-            val stepX = size.width / (stepCounterXAxis - 1).coerceAtLeast(1)
-            val stepY = size.height / fullRangeY
+            val stepX = size.width / stepCounterXAxis
+            val stepY = size.height / (maxY - minY)
 
             onStepSizeXAxisChange(stepX)
             onStepSizeYAxisChange(stepY)
 
-            fun pointOffset(index: Int, y: Int): Offset {
-                val x = index * stepX
+            fun pointOffset(x: Float, y: Int): Offset {
+                val xPos = x * stepX
                 val yMapped = size.height - (y - minY) * stepY
-                return Offset(x, yMapped)
+                return Offset(xPos, yMapped)
             }
 
             val pointPath = Path().apply {
-                dataPoints.forEachIndexed { index, (_, y) ->
-                    val point = pointOffset(index, y)
-                    if (index == 0) moveTo(point.x, point.y)
-                    else lineTo(point.x, point.y)
+                dataPoints.forEach { (x, y) ->
+                    val point = pointOffset(x, y)
+                    if (isEmpty) moveTo(point.x, point.y) else lineTo(point.x, point.y)
                 }
             }
 
             val shadowPath = Path().apply {
                 var lastX = 0f
-                dataPoints.forEachIndexed { index, (_, y) ->
-                    val point = pointOffset(index, y)
-                    if (index == 0) moveTo(point.x, point.y)
-                    else lineTo(point.x, point.y)
+                dataPoints.forEach { (x, y) ->
+                    val point = pointOffset(x, y)
+                    if (isEmpty) moveTo(point.x, point.y) else lineTo(point.x, point.y)
                     lastX = point.x
                 }
                 lineTo(lastX, size.height)
@@ -156,12 +148,12 @@ private fun GraphCanvas(
                 style = Stroke(width = lineWeight, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
 
-            selectedIndex?.takeIf { it in dataPoints.indices }?.let {
-                val (x, y) = pointOffset(it, dataPoints[it].second)
+            selectedIndex?.takeIf { it in dataPoints.indices }?.let { index ->
+                val (xValue, yValue) = dataPoints[index]
                 drawCircle(
                     color = color,
                     radius = lineWeight * 2.5f,
-                    center = Offset(x, y)
+                    center = pointOffset(xValue, yValue)
                 )
             }
         }
@@ -176,7 +168,6 @@ private fun GraphCanvas(
         )
     }
 }
-
 
 
 //todo сделать Preview и отрефакторить
