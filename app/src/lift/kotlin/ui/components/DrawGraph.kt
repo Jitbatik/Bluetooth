@@ -1,15 +1,18 @@
 package ui.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -18,154 +21,210 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.transfer.model.LiftParameters
+import com.example.transfer.model.ParameterLabel
 
-typealias CanvasPoint = Pair<Float, Int>
+typealias ParameterPaths = Pair<Path, Path>
+
 
 @Composable
 fun DrawGraph(
     parameters: List<LiftParameters>,
-    stepCounterXAxis: Int,
+    stepCountXAxis: Int,
     selectedIndex: Int?,
     onStepSizeXAxisChange: (Float) -> Unit,
     onStepSizeYAxisChange: (Float) -> Unit,
     modifier: Modifier,
-    lineColors: List<Color> = listOf(Color.Red, Color.Blue),
-    lineWeight: Float = 4f,
-) {
-    val numberOfGraphs = parameters.firstOrNull()?.data?.size ?: 0
-    Column(modifier = modifier) {
-        repeat(numberOfGraphs) { index ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-                    .padding(bottom = 8.dp)
-            ) {
-                GraphCanvas(
-                    dataPoints = parameters.toCanvasPoints(index),
-                    stepCounterXAxis = stepCounterXAxis,
-                    selectedIndex = selectedIndex,
-                    onStepSizeXAxisChange = onStepSizeXAxisChange,
-                    onStepSizeYAxisChange = onStepSizeYAxisChange,
-                    color = lineColors.getOrNull(index) ?: Color.Gray,
-                    lineWeight = lineWeight,
-                )
-            }
-        }
-    }
-}
-
-
-fun List<LiftParameters>.toCanvasPoints(index: Int): List<CanvasPoint> {
-    if (isEmpty()) return emptyList()
-    val baseTimeMs = calculateBaseTime()
-
-    return map { param -> param.toCanvasPoint(baseTimeMs, index) }
-}
-
-fun List<LiftParameters>.calculateBaseTime(): Long =
-    minOfOrNull { it.timeStamp * 1000L + it.timeMilliseconds } ?: 0L
-
-
-private fun LiftParameters.toCanvasPoint(baseTimeMs: Long, index: Int): CanvasPoint =
-    CanvasPoint(
-        ((timeStamp * 1000 + timeMilliseconds) - baseTimeMs) / 1000f,
-        data[index].value
+    lineColors: Map<ParameterLabel, Color>,
+    verticalOffset: Float = 10f,
+    shadowAlpha: Float = 0.3f,
+    pointRadiusFactor: Float = 10f,
+    lineStroke: Stroke = Stroke(
+        width = 4f,
+        cap = StrokeCap.Round,
+        join = StrokeJoin.Round
     )
-
-@Composable
-private fun GraphCanvas(
-    dataPoints: List<CanvasPoint>,
-    stepCounterXAxis: Int,
-    selectedIndex: Int?,
-    onStepSizeXAxisChange: (Float) -> Unit,
-    onStepSizeYAxisChange: (Float) -> Unit,
-    color: Color,
-    lineWeight: Float,
 ) {
-    Row(modifier = Modifier.fillMaxSize()) {
+    val (baseTimeMs, minY, maxY) = rememberCalculatedMetrics(parameters)
+    val yRange = remember(maxY, minY) { (maxY - minY).coerceAtLeast(1f) }
+
+    val groupedData by remember(parameters) {
+        derivedStateOf { parameters.groupedByParameterLabel() }
+    }
+
+    Row(modifier = modifier) {
         Canvas(
             modifier = Modifier
+                .fillMaxHeight()
                 .weight(1f)
-                .fillMaxSize()
                 .clipToBounds()
         ) {
-            if (dataPoints.isEmpty()) return@Canvas
+            val graphHeight = size.height
 
-            val yValues = dataPoints.map { it.second }
-            val rawMinY = yValues.min().toFloat()
-            val rawMaxY = yValues.max().toFloat()
-            val rangeY = (rawMaxY - rawMinY).takeIf { it != 0f } ?: 1f
-
-            val minY = rawMinY - rangeY * 0.1f
-            val maxY = rawMaxY + rangeY * 0.1f
-            val stepX = size.width / stepCounterXAxis
-            val stepY = size.height / (maxY - minY)
+            val stepX = size.width / stepCountXAxis.coerceAtLeast(1)
+            val stepY = graphHeight / yRange
 
             onStepSizeXAxisChange(stepX)
             onStepSizeYAxisChange(stepY)
 
-            fun pointOffset(x: Float, y: Int): Offset {
-                val xPos = x * stepX
-                val yMapped = size.height - (y - minY) * stepY
-                return Offset(xPos, yMapped)
+            val convertToPoint: (LiftParameters, Float) -> Offset = { param, value ->
+                val timeMs = param.timeStamp * 1000 + param.timeMilliseconds
+                val x = ((timeMs - baseTimeMs) / 1000f) * stepX
+                val baseY = graphHeight - (value - minY) * stepY
+                Offset(x, baseY)
             }
 
-            val pointPath = Path().apply {
-                dataPoints.forEach { (x, y) ->
-                    val point = pointOffset(x, y)
-                    if (isEmpty) moveTo(point.x, point.y) else lineTo(point.x, point.y)
-                }
-            }
+            groupedData.entries.forEachIndexed { index, (label, values) ->
+                val color = lineColors[label] ?: Color.Gray
 
-            val shadowPath = Path().apply {
-                var lastX = 0f
-                dataPoints.forEach { (x, y) ->
-                    val point = pointOffset(x, y)
-                    if (isEmpty) moveTo(point.x, point.y) else lineTo(point.x, point.y)
-                    lastX = point.x
-                }
-                lineTo(lastX, size.height)
-                lineTo(0f, size.height)
-                close()
-            }
-
-            drawPath(
-                path = shadowPath,
-                brush = Brush.verticalGradient(
-                    0f to color.copy(alpha = 0.4f),
-                    0.6f to color.copy(alpha = 0.2f),
-                    1f to Color.Transparent
+                val paths = calculatePaths(
+                    values = values,
+                    converter = convertToPoint,
+                    index = index,
+                    verticalOffset = verticalOffset,
+                    graphHeight = graphHeight
                 )
-            )
 
-            drawPath(
-                path = pointPath,
-                color = color,
-                style = Stroke(width = lineWeight, cap = StrokeCap.Round, join = StrokeJoin.Round)
-            )
-
-            selectedIndex?.takeIf { it in dataPoints.indices }?.let { index ->
-                val (xValue, yValue) = dataPoints[index]
-                drawCircle(
+                drawPath(
+                    path = paths.first,
                     color = color,
-                    radius = lineWeight * 2.5f,
-                    center = pointOffset(xValue, yValue)
+                    style = lineStroke
                 )
+                drawPath(
+                    path = paths.second,
+                    brush = Brush.verticalGradient(
+                        listOf(color.copy(alpha = shadowAlpha), Color.Transparent)
+                    )
+                )
+
+                selectedIndex?.let { idx ->
+                    drawSelectedPoint(
+                        parameters = parameters,
+                        index = idx,
+                        lineColors = lineColors,
+                        converter = convertToPoint,
+                        pointRadiusFactor = pointRadiusFactor
+                    )
+                }
             }
         }
 
-        Text(
-            text = dataPoints.lastOrNull()?.second?.toString() ?: "",
-            modifier = Modifier
-                .width(48.dp)
-                .padding(horizontal = 8.dp)
-                .align(Alignment.CenterVertically),
-            color = Color.White
-        )
+        if (parameters.isNotEmpty()) {
+            ValuesPanel(
+                parameter = parameters.last(),
+                lineColors = lineColors,
+                modifier = Modifier
+                    .width(48.dp)
+                    .fillMaxHeight()
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberCalculatedMetrics(parameters: List<LiftParameters>): Triple<Long, Float, Float> {
+    return remember(parameters) {
+        val base = parameters.minOfOrNull { it.combinedTimeMs } ?: 0L
+        val allValues = parameters.flatMap { it.data.map { data -> data.value } }
+        val minVal = allValues.minOrNull()?.toFloat() ?: 0f
+        val maxVal = allValues.maxOrNull()?.toFloat() ?: 0f
+        Triple(base, minVal, maxVal)
+    }
+}
+
+private val LiftParameters.combinedTimeMs: Long
+    get() = timeStamp * 1000L + timeMilliseconds
+
+private fun List<LiftParameters>.groupedByParameterLabel(): Map<ParameterLabel, List<Pair<LiftParameters, Float>>> {
+    return flatMap { param ->
+        param.data.map { data -> data.label to (param to data.value.toFloat()) }
+    }.groupBy({ it.first }, { it.second })
+}
+
+private fun calculatePaths(
+    values: List<Pair<LiftParameters, Float>>,
+    converter: (LiftParameters, Float) -> Offset,
+    index: Int,
+    verticalOffset: Float,
+    graphHeight: Float
+): ParameterPaths {
+    val linePath = Path()
+    val shadowBasePath = Path()
+    var firstPoint = true
+    var lastX = 0f
+
+    values.forEach { (param, value) ->
+        val basePoint = converter(param, value)
+        val offsetPoint = basePoint.copy(y = basePoint.y + (index % 3 - 1) * verticalOffset)
+
+        if (firstPoint) {
+            linePath.moveTo(offsetPoint.x, offsetPoint.y)
+            shadowBasePath.moveTo(basePoint.x, basePoint.y)
+            firstPoint = false
+        } else {
+            linePath.lineTo(offsetPoint.x, offsetPoint.y)
+            shadowBasePath.lineTo(basePoint.x, basePoint.y)
+        }
+        lastX = basePoint.x
+    }
+
+    val shadowPath = Path().apply {
+        addPath(shadowBasePath)
+        if (values.isNotEmpty()) {
+            lineTo(lastX, graphHeight)
+            lineTo(
+                x = values.first().let { converter(it.first, it.second).x },
+                y = graphHeight
+            )
+            close()
+        }
+    }
+
+    return ParameterPaths(linePath, shadowPath)
+}
+
+
+private fun DrawScope.drawSelectedPoint(
+    parameters: List<LiftParameters>,
+    index: Int,
+    lineColors: Map<ParameterLabel, Color>,
+    converter: (LiftParameters, Float) -> Offset,
+    pointRadiusFactor: Float
+) {
+    parameters.getOrNull(index)?.let { selectedParam ->
+        selectedParam.data.forEach { data ->
+            val color = lineColors[data.label] ?: Color.Gray
+            val point = converter(selectedParam, data.value.toFloat())
+            drawCircle(
+                color = color,
+                radius = pointRadiusFactor,
+                center = point
+            )
+        }
+    }
+}
+
+@Composable
+private fun ValuesPanel(
+    parameter: LiftParameters,
+    lineColors: Map<ParameterLabel, Color>,
+    modifier: Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.SpaceAround
+    ) {
+        parameter.data.forEach { test ->
+            Text(
+                text = "${test.value}",
+                color = lineColors[test.label] ?: Color.Gray,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+        }
     }
 }
 

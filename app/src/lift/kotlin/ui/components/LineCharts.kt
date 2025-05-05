@@ -53,8 +53,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 
-//todo графики занимают много место нужно наложить их
-
 @Composable
 fun LineCharts(
     parameters: List<LiftParameters>,
@@ -134,7 +132,7 @@ private fun ChartCanvas(
     ) {
         DrawGraph(
             parameters = parameters,
-            stepCounterXAxis = stepCounterXAxis,
+            stepCountXAxis = stepCounterXAxis,
             selectedIndex = selectedIndex,
             onStepSizeXAxisChange = onStepSizeXChanged,
             onStepSizeYAxisChange = onStepSizeYChanged,
@@ -146,7 +144,10 @@ private fun ChartCanvas(
                     onTap = onTap,
                     onTransform = onTransform
                 ),
-            lineColors = listOf(Color.Red, Color.Blue)
+            lineColors = mapOf(
+                ParametersLabel.ENCODER_FREQUENCY to Color.Red,
+                ParametersLabel.ENCODER_READINGS to Color.Blue
+            ),
         )
         if (touchPosition != null && selectedIndex != null) {
             Tooltip(
@@ -284,6 +285,9 @@ private fun Header(chartParameters: ChartParameters, onEvents: (ParametersIntent
     }
 }
 
+fun List<LiftParameters>.calculateBaseTime(): Long =
+    minOfOrNull { it.timeStamp * 1000L + it.timeMilliseconds } ?: 0L
+
 
 @Preview
 @Composable
@@ -350,7 +354,7 @@ fun LineChartPreview() {
     }
 
     val minScalePoint = 300
-    val maxScalePoint = 3
+    val maxScalePoint = 5
 
     fun interpolateSteps(minScale: Float, maxScale: Float, currentScale: Float): Int =
         (minScalePoint + ((currentScale - minScale) * (maxScalePoint - minScalePoint) / (maxScale - minScale))).toInt()
