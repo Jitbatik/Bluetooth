@@ -50,7 +50,7 @@ data class ChartParameters(
     val minOffsetX: Float = 0f,
     val maxOffsetX: Float = 0f,
     val minScalePoint: Int = 300,
-    val maxScalePoint: Int = 3,
+    val maxScalePoint: Int = 5,
 )
 
 
