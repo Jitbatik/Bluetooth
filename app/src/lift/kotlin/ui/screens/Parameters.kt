@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bluetooth.R
 import com.example.bluetooth.presentation.ElevatorParametersViewModel
 import com.example.bluetooth.presentation.ParametersState
+import com.example.bluetooth.presentation.view.connect.components.enable.DataConfigurationPrompt
 import ui.components.LineCharts
 import java.time.Instant
 import java.time.ZoneId
@@ -24,13 +27,22 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ParametersRoot(
-    viewModel: ElevatorParametersViewModel = viewModel(),
+    viewModel: ElevatorParametersViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    Parameters(state = state)
+    val hasParameters = state.parametersGroup.isNotEmpty()
+    when {
+        hasParameters -> Parameters(state = state)
+        else -> DataConfigurationPrompt(
+            title = stringResource(R.string.parameters_no_data_title),
+            description = stringResource(R.string.parameters_no_data_description),
+            actionButtonText = stringResource(R.string.parameters_no_data_button_text),
+            launcher = { },
+            modifier = Modifier.padding(8.dp)
+        )
+    }
 }
 
-// todo сделать Нужно добавить что-то вроде настройки какие графики отображать а какие игнорировать
 @Composable
 fun Parameters(
     state: ParametersState,
@@ -42,7 +54,7 @@ fun Parameters(
     ) {
         Text(
             text = formatDateTime(
-                timeSeconds = state.parametersGroup.lastOrNull()?.timeStamp ?: 0,
+                timeSeconds = state.parametersGroup.lastOrNull()?.timestamp ?: 0,
                 timeMilliseconds = state.parametersGroup.lastOrNull()?.timeMilliseconds ?: 0,
             ),
             fontWeight = FontWeight.SemiBold,
@@ -54,7 +66,7 @@ fun Parameters(
 
         LineCharts(
             parameters = state.parametersGroup,
-            chartParameters = state.chartParameters,
+            chartConfig = state.chartConfig,
             onEvents = state.onEvents,
         )
 

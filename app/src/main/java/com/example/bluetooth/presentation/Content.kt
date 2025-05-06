@@ -1,7 +1,7 @@
 package com.example.bluetooth.presentation
 
-import navigation.Extracted
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -20,26 +20,28 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import navigation.Extracted
 import navigation.NavigationItem
+import ui.components.AppTopBarActions
 
 @Composable
 fun Content(
     modifier: Modifier = Modifier,
     drawerState: CustomDrawerState,
     onDrawerClick: (CustomDrawerState) -> Unit,
-    currentRoute: String
+    currentRoute: String,
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
             AppTopBar(
-                title = NavigationItem.fromRoute(currentRoute)?.title?.let { stringResource(it) }
-                    ?: "",
-                onDrawerClick = { onDrawerClick(drawerState.opposite()) }
+                title = NavigationItem.fromRoute(currentRoute)?.title?.let { stringResource(it) } ?: "",
+                onDrawerClick = { onDrawerClick(drawerState.opposite()) },
+                actions = { AppTopBarActions(currentRoute = currentRoute) }
             )
         },
         content = { paddingValues ->
-            Box(modifier = modifier.padding(paddingValues)) {
+            Box(modifier = Modifier.padding(paddingValues)) {
                 Extracted(currentRoute)
             }
         }
@@ -52,8 +54,11 @@ fun Content(
 fun AppTopBar(
     title: String,
     onDrawerClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
+        modifier = modifier,
         title = { Text(text = title) },
         navigationIcon = {
             IconButton(onClick = onDrawerClick) {
@@ -62,7 +67,8 @@ fun AppTopBar(
                     contentDescription = "Menu Icon"
                 )
             }
-        }
+        },
+        actions = actions
     )
 }
 

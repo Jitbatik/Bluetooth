@@ -26,9 +26,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DataExchangeViewModel @Inject constructor(
-    private val navigationStateHolder: NavigationStateHolder,
+    navigationStateHolder: NavigationStateHolder,
     private val protocolDataRepository: ProtocolDataRepository,
-    private val observeControllerDataUseCase: ObserveParametersUseCase,
+    observeControllerDataUseCase: ObserveParametersUseCase,
     private val eventHandler: EventHandler,
 ) : ViewModel() {
     private val tag = DataExchangeViewModel::class.java.simpleName

@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.transfer.model.LiftParameters
-import com.example.transfer.model.ParameterLabel
+import com.example.transfer.model.ParameterType
 
 typealias ParameterPaths = Pair<Path, Path>
 
@@ -38,7 +38,7 @@ fun DrawGraph(
     onStepSizeXAxisChange: (Float) -> Unit,
     onStepSizeYAxisChange: (Float) -> Unit,
     modifier: Modifier,
-    lineColors: Map<ParameterLabel, Color>,
+    lineColors: Map<ParameterType, Color>,
     verticalOffset: Float = 10f,
     shadowAlpha: Float = 0.3f,
     pointRadiusFactor: Float = 10f,
@@ -71,7 +71,7 @@ fun DrawGraph(
             onStepSizeYAxisChange(stepY)
 
             val convertToPoint: (LiftParameters, Float) -> Offset = { param, value ->
-                val timeMs = param.timeStamp * 1000 + param.timeMilliseconds
+                val timeMs = param.timestamp * 1000 + param.timeMilliseconds
                 val x = ((timeMs - baseTimeMs) / 1000f) * stepX
                 val baseY = graphHeight - (value - minY) * stepY
                 Offset(x, baseY)
@@ -128,7 +128,7 @@ fun DrawGraph(
 private fun rememberCalculatedMetrics(parameters: List<LiftParameters>): Triple<Long, Float, Float> {
     return remember(parameters) {
         val base = parameters.minOfOrNull { it.combinedTimeMs } ?: 0L
-        val allValues = parameters.flatMap { it.data.map { data -> data.value } }
+        val allValues = parameters.flatMap { it.parameters.map { data -> data.value } }
         val minVal = allValues.minOrNull()?.toFloat() ?: 0f
         val maxVal = allValues.maxOrNull()?.toFloat() ?: 0f
         Triple(base, minVal, maxVal)
@@ -136,11 +136,11 @@ private fun rememberCalculatedMetrics(parameters: List<LiftParameters>): Triple<
 }
 
 private val LiftParameters.combinedTimeMs: Long
-    get() = timeStamp * 1000L + timeMilliseconds
+    get() = timestamp * 1000L + timeMilliseconds
 
-private fun List<LiftParameters>.groupedByParameterLabel(): Map<ParameterLabel, List<Pair<LiftParameters, Float>>> {
+private fun List<LiftParameters>.groupedByParameterLabel(): Map<ParameterType, List<Pair<LiftParameters, Float>>> {
     return flatMap { param ->
-        param.data.map { data -> data.label to (param to data.value.toFloat()) }
+        param.parameters.map { data -> data.label to (param to data.value.toFloat()) }
     }.groupBy({ it.first }, { it.second })
 }
 
@@ -190,12 +190,12 @@ private fun calculatePaths(
 private fun DrawScope.drawSelectedPoint(
     parameters: List<LiftParameters>,
     index: Int,
-    lineColors: Map<ParameterLabel, Color>,
+    lineColors: Map<ParameterType, Color>,
     converter: (LiftParameters, Float) -> Offset,
     pointRadiusFactor: Float
 ) {
     parameters.getOrNull(index)?.let { selectedParam ->
-        selectedParam.data.forEach { data ->
+        selectedParam.parameters.forEach { data ->
             val color = lineColors[data.label] ?: Color.Gray
             val point = converter(selectedParam, data.value.toFloat())
             drawCircle(
@@ -210,14 +210,14 @@ private fun DrawScope.drawSelectedPoint(
 @Composable
 private fun ValuesPanel(
     parameter: LiftParameters,
-    lineColors: Map<ParameterLabel, Color>,
+    lineColors: Map<ParameterType, Color>,
     modifier: Modifier
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceAround
     ) {
-        parameter.data.forEach { test ->
+        parameter.parameters.forEach { test ->
             Text(
                 text = "${test.value}",
                 color = lineColors[test.label] ?: Color.Gray,
