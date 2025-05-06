@@ -7,7 +7,7 @@ import com.example.transfer.domain.usecase.ObserveParametersUseCase
 import com.example.transfer.domain.usecase.ProcessParametersFeatureCase
 import com.example.transfer.domain.usecase.Type
 import com.example.transfer.model.ByteData
-import com.example.transfer.model.ChartParameters
+import com.example.transfer.model.ChartConfig
 import com.example.transfer.model.LiftParameters
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -56,11 +56,11 @@ class ElevatorParametersViewModel @Inject constructor(
 
     private val _state = combine(
         _data,
-        processParametersFeatureCase.chartParameters
+        processParametersFeatureCase.chartConfig
     ) { parametersGroup, chartParameters ->
         ParametersState(
             parametersGroup = parametersGroup,
-            chartParameters = chartParameters,
+            chartConfig = chartParameters,
             onEvents = ::onEvents
         )
     }.stateIn(
@@ -68,7 +68,7 @@ class ElevatorParametersViewModel @Inject constructor(
         started = SharingStarted.Eagerly,
         initialValue = ParametersState(
             parametersGroup = ParametersDataDefaults.getDefault(),
-            chartParameters = ChartParameters(),
+            chartConfig = ChartConfig(),
             onEvents = ::onEvents
         )
     )
@@ -76,7 +76,7 @@ class ElevatorParametersViewModel @Inject constructor(
     val state: StateFlow<ParametersState> = _state
 
     private fun onEvents(event: ParametersIntent) {
-        val current = processParametersFeatureCase.chartParameters.value
+        val current = processParametersFeatureCase.chartConfig.value
         val newParams = when (event) {
             is ParametersIntent.ChangeScale -> current.copy(scale = event.scale)
             is ParametersIntent.ChangeOffset -> current.copy(offset = event.offset)

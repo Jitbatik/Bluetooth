@@ -3,7 +3,6 @@ package com.example.transfer.data
 import android.util.Log
 import com.example.bluetooth.data.DataStreamRepository
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.domain.usecase.Command
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
@@ -21,7 +20,7 @@ import javax.inject.Inject
 
 class ProtocolPultDataRepository @Inject constructor(
     private val dataStreamRepository: DataStreamRepository,
-): ProtocolDataRepository {
+) : ProtocolDataRepository {
     private val tag = ProtocolPultDataRepository::class.java.simpleName
     private var response = ORIGINAL_RESPONSE.copyOf()
     private val _bluetoothModbusPacketsConfigFlow = MutableStateFlow(ControllerConfig())
@@ -172,8 +171,10 @@ class ProtocolPultDataRepository @Inject constructor(
     private fun Byte.toIntUnsigned(): Int = toUByte().toInt()
     private fun ByteArray.toWord(offset: Int): Int =
         ((this[offset].toIntUnsigned() shl 8) or this[offset + 1].toIntUnsigned())
+
     private fun Int.toByteArray(): ByteArray =
         byteArrayOf((this and 0xFF).toByte(), (this shr 8).toByte())
+
     private fun PultPacket.isFinalPacket() = startRegisterWrite == FINAL_PACKET_REGISTER
 
     companion object {

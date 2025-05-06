@@ -47,4 +47,7 @@
     <string name="button_help_box_button_label_minus">-</string>
     <string name="button_help_box_button_label_point">.</string>
     <string name="button_help_box_button_label_delete">-*</string>
+    <string name="parameters_no_data_title">Нет данных</string>
+    <string name="parameters_no_data_description">В данный момент времени нет данных для отображения графиков, но вы можете настроить какие из графиков как должны отображаться</string>
+    <string name="parameters_no_data_button_text">Настройка графиков</string>
 </resources>

@@ -42,11 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.yml.charts.common.extensions.isNotNull
 import com.example.bluetooth.presentation.ParametersIntent
-import com.example.transfer.model.ChartParameters
+import com.example.transfer.model.ChartConfig
 import com.example.transfer.model.LiftParameters
-import com.example.transfer.model.ParameterLabel
-import com.example.transfer.model.ParametersLabel
-import com.example.transfer.model.Test
+import com.example.transfer.model.ParameterType
+import com.example.transfer.model.LiftParameterType
+import com.example.transfer.model.ParameterData
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,10 +56,9 @@ import kotlin.math.abs
 @Composable
 fun LineCharts(
     parameters: List<LiftParameters>,
-    chartParameters: ChartParameters,
+    chartConfig: ChartConfig,
     onEvents: (ParametersIntent) -> Unit,
 ) {
-    if (parameters.isEmpty()) return
     var touchPosition by remember { mutableStateOf<Offset?>(null) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     var chartBoxSize by remember { mutableStateOf(IntSize.Zero) }
@@ -67,15 +66,15 @@ fun LineCharts(
     var stepSizeX by remember { mutableFloatStateOf(0f) }
     var stepSizeY by remember { mutableFloatStateOf(0f) }
 
-    val currentScale by rememberUpdatedState(chartParameters.scale)
-    val currentOffset by rememberUpdatedState(chartParameters.offset)
-    val currentMinOffsetX by rememberUpdatedState(chartParameters.minOffsetX)
-    val currentMaxOffsetX by rememberUpdatedState(chartParameters.maxOffsetX)
+    val currentScale by rememberUpdatedState(chartConfig.scale)
+    val currentOffset by rememberUpdatedState(chartConfig.offset)
+    val currentMinOffsetX by rememberUpdatedState(chartConfig.minOffsetX)
+    val currentMaxOffsetX by rememberUpdatedState(chartConfig.maxOffsetX)
 
     val handleTransform: (Offset, Float) -> Unit = { pan, zoom ->
         val newScale = (currentScale * zoom)
-            .coerceIn(chartParameters.minScale, chartParameters.maxScale)
-        val newOffsetX = (currentOffset - pan.x / 10)
+            .coerceIn(chartConfig.minScale, chartConfig.maxScale)
+        val newOffsetX = (currentOffset - pan.x)
             .coerceIn(currentMinOffsetX, currentMaxOffsetX)
 
         onEvents(ParametersIntent.ChangeOffset(newOffsetX))
@@ -92,10 +91,10 @@ fun LineCharts(
             .fillMaxSize()
             .background(Color.DarkGray)
     ) {
-        Header(chartParameters, onEvents)
+        Header(chartConfig, onEvents)
         ChartCanvas(
             parameters = parameters,
-            stepCounterXAxis = chartParameters.stepCount,
+            stepCounterXAxis = chartConfig.stepCount,
             chartBoxSize = chartBoxSize,
             selectedIndex = selectedIndex,
             touchPosition = touchPosition,
@@ -145,8 +144,8 @@ private fun ChartCanvas(
                     onTransform = onTransform
                 ),
             lineColors = mapOf(
-                ParametersLabel.ENCODER_FREQUENCY to Color.Red,
-                ParametersLabel.ENCODER_READINGS to Color.Blue
+                LiftParameterType.ENCODER_FREQUENCY to Color.Red,
+                LiftParameterType.ENCODER_READINGS to Color.Blue
             ),
         )
         if (touchPosition != null && selectedIndex != null) {
@@ -176,7 +175,7 @@ fun Modifier.detectChartGestures(
 
                     val nearestIndex = parameters
                         .mapIndexed { index, param ->
-                            index to ((param.timeStamp * 1000 + param.timeMilliseconds) - baseTimeMs)
+                            index to ((param.timestamp * 1000 + param.timeMilliseconds) - baseTimeMs)
                         }
                         .minByOrNull { (_, timeMs) -> abs(timeMs - tapTime) }
                         ?.first ?: 0
@@ -216,8 +215,8 @@ fun Tooltip(
     val xOffsetDp = with(density) { clampedX.toDp() }
     val yOffsetDp = with(density) { clampedY.toDp() }
 
-    val formattedTime = remember(values.timeStamp, values.timeMilliseconds) {
-        val millis = values.timeStamp * 1000 + values.timeMilliseconds
+    val formattedTime = remember(values.timestamp, values.timeMilliseconds) {
+        val millis = values.timestamp * 1000 + values.timeMilliseconds
         val date = Date(millis)
         SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(date)
     }
@@ -234,7 +233,7 @@ fun Tooltip(
         Column {
             Text(text = formattedTime, fontSize = 12.sp, color = Color.White)
             Spacer(Modifier.height(4.dp))
-            values.data.forEachIndexed { index, (label, value) ->
+            values.parameters.forEachIndexed { index, (label, value) ->
                 TooltipRow(
                     label = label,
                     value = value,
@@ -247,7 +246,7 @@ fun Tooltip(
 
 @Composable
 private fun TooltipRow(
-    label: ParameterLabel,
+    label: ParameterType,
     value: Int,
     indicatorColor: Color
 ) {
@@ -261,22 +260,22 @@ private fun TooltipRow(
                 .background(indicatorColor, shape = CircleShape)
         )
         Spacer(Modifier.width(4.dp))
-        Text("${label.value}: $value", fontSize = 12.sp, color = Color.White)
+        Text("${label.displayName}: $value", fontSize = 12.sp, color = Color.White)
     }
 }
 
 @Composable
-private fun Header(chartParameters: ChartParameters, onEvents: (ParametersIntent) -> Unit) {
+private fun Header(chartConfig: ChartConfig, onEvents: (ParametersIntent) -> Unit) {
     Column {
         Text(
-            text = "Масштаб: ${chartParameters.scale} | Смещение: ${chartParameters.offset}",
+            text = "Масштаб: ${chartConfig.scale} | Смещение: ${chartConfig.offset}",
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(8.dp)
         )
         Button(
             onClick = {
                 onEvents(ParametersIntent.ChangeScale(1f))
-                onEvents(ParametersIntent.ChangeOffset(chartParameters.maxOffsetX))
+                onEvents(ParametersIntent.ChangeOffset(chartConfig.maxOffsetX))
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -286,7 +285,7 @@ private fun Header(chartParameters: ChartParameters, onEvents: (ParametersIntent
 }
 
 fun List<LiftParameters>.calculateBaseTime(): Long =
-    minOfOrNull { it.timeStamp * 1000L + it.timeMilliseconds } ?: 0L
+    minOfOrNull { it.timestamp * 1000L + it.timeMilliseconds } ?: 0L
 
 
 @Preview
@@ -295,51 +294,51 @@ fun LineChartPreview() {
     val parameterLists = remember {
         mutableStateListOf(
             LiftParameters(
-                timeStamp = 123434L,
+                timestamp = 123434L,
                 timeMilliseconds = 80,
                 frameId = 20,
-                data = listOf(
-                    Test(ParametersLabel.ENCODER_READINGS, 0),
-                    Test(ParametersLabel.ENCODER_FREQUENCY, 1),
-                    Test(ParametersLabel.ELEVATOR_SPEED, 1),
-                    Test(ParametersLabel.FRAME_ID, 1)
+                parameters = listOf(
+                    ParameterData(LiftParameterType.ENCODER_READINGS, 0),
+                    ParameterData(LiftParameterType.ENCODER_FREQUENCY, 1),
+                    ParameterData(LiftParameterType.ELEVATOR_SPEED, 1),
+                    ParameterData(LiftParameterType.FRAME_ID, 1)
                 )
             ),
             LiftParameters(
-                timeStamp = 123435L,
+                timestamp = 123435L,
                 timeMilliseconds = 80,
                 frameId = 20,
-                data = listOf(
-                    Test(ParametersLabel.ENCODER_READINGS, 0),
-                    Test(ParametersLabel.ENCODER_FREQUENCY, 2),
-                    Test(ParametersLabel.ELEVATOR_SPEED, 1),
-                    Test(ParametersLabel.FRAME_ID, 1)
+                parameters = listOf(
+                    ParameterData(LiftParameterType.ENCODER_READINGS, 0),
+                    ParameterData(LiftParameterType.ENCODER_FREQUENCY, 2),
+                    ParameterData(LiftParameterType.ELEVATOR_SPEED, 1),
+                    ParameterData(LiftParameterType.FRAME_ID, 1)
                 )
             ),
             LiftParameters(
-                timeStamp = 123436L,
+                timestamp = 123436L,
                 timeMilliseconds = 80,
                 frameId = 20,
-                data = listOf(
-                    Test(ParametersLabel.ENCODER_READINGS, 0),
-                    Test(ParametersLabel.ENCODER_FREQUENCY, 1),
-                    Test(ParametersLabel.ELEVATOR_SPEED, 1),
-                    Test(ParametersLabel.FRAME_ID, 0)
+                parameters = listOf(
+                    ParameterData(LiftParameterType.ENCODER_READINGS, 0),
+                    ParameterData(LiftParameterType.ENCODER_FREQUENCY, 1),
+                    ParameterData(LiftParameterType.ELEVATOR_SPEED, 1),
+                    ParameterData(LiftParameterType.FRAME_ID, 0)
                 )
             ),
         )
     }
     fun generateNewLiftParameters(last: LiftParameters): LiftParameters {
         val deltaSeconds = (0..1).random()
-        val newTimeStamp = last.timeStamp + deltaSeconds
+        val newTimeStamp = last.timestamp + deltaSeconds
 
         val newMilliseconds = if (deltaSeconds == 0) (last.timeMilliseconds..999).random()
         else (0..999).random()
 
         return last.copy(
-            timeStamp = newTimeStamp,
+            timestamp = newTimeStamp,
             timeMilliseconds = newMilliseconds,
-            data = last.data.map {
+            parameters = last.parameters.map {
                 it.copy(value = it.value + listOf(-1, 0, 1).random())
             }
         )
@@ -359,28 +358,28 @@ fun LineChartPreview() {
     fun interpolateSteps(minScale: Float, maxScale: Float, currentScale: Float): Int =
         (minScalePoint + ((currentScale - minScale) * (maxScalePoint - minScalePoint) / (maxScale - minScale))).toInt()
 
-    var chartParameters by remember { mutableStateOf(ChartParameters()) }
+    var chartConfig by remember { mutableStateOf(ChartConfig()) }
 
     val points = parameterLists.filterByTimestampRange(
-        chartParameters.offset,
-        chartParameters.stepCount
+        chartConfig.offset,
+        chartConfig.stepCount
     )
     val onEvents: (ParametersIntent) -> Unit = { event ->
-        chartParameters = when (event) {
+        chartConfig = when (event) {
             is ParametersIntent.ChangeScale -> {
                 val newScale = event.scale.coerceIn(
-                    chartParameters.minScale,
-                    chartParameters.maxScale
+                    chartConfig.minScale,
+                    chartConfig.maxScale
                 )
-                chartParameters.copy(scale = newScale)
+                chartConfig.copy(scale = newScale)
             }
 
             is ParametersIntent.ChangeOffset -> {
                 val newOffset = event.offset.coerceIn(
-                    chartParameters.minOffsetX,
-                    chartParameters.maxOffsetX
+                    chartConfig.minOffsetX,
+                    chartConfig.maxOffsetX
                 )
-                chartParameters.copy(offset = newOffset)
+                chartConfig.copy(offset = newOffset)
             }
         }
     }
@@ -388,31 +387,31 @@ fun LineChartPreview() {
 
     var autoScrollEnabled by remember { mutableStateOf(true) }
 
-    LaunchedEffect(parameterLists.size, chartParameters.scale) {
+    LaunchedEffect(parameterLists.size, chartConfig.scale) {
         val stepCount = interpolateSteps(
-            chartParameters.minScale,
-            chartParameters.maxScale,
-            chartParameters.scale
+            chartConfig.minScale,
+            chartConfig.maxScale,
+            chartConfig.scale
         )
 
-        val minTimeTest = parameterLists.minOf { it.timeStamp }
-        val maxTimeTest = parameterLists.maxOf { it.timeStamp }
-        val maxOffsetX = (maxTimeTest- minTimeTest - chartParameters.stepCount).toFloat()
+        val minTimeTest = parameterLists.minOf { it.timestamp }
+        val maxTimeTest = parameterLists.maxOf { it.timestamp }
+        val maxOffsetX = (maxTimeTest- minTimeTest - chartConfig.stepCount).toFloat()
             .coerceAtLeast(0f)
 
-        chartParameters = chartParameters.copy(
+        chartConfig = chartConfig.copy(
             minOffsetX = 0f,
             stepCount = stepCount,
             maxOffsetX = maxOffsetX,
-            offset = if (autoScrollEnabled) maxOffsetX else chartParameters.offset.coerceIn(
+            offset = if (autoScrollEnabled) maxOffsetX else chartConfig.offset.coerceIn(
                 0f,
                 maxOffsetX
             )
         )
     }
 
-    LaunchedEffect(chartParameters) {
-        autoScrollEnabled = chartParameters.offset >= chartParameters.maxOffsetX - 1f
+    LaunchedEffect(chartConfig) {
+        autoScrollEnabled = chartConfig.offset >= chartConfig.maxOffsetX - 1f
     }
 
 
@@ -423,7 +422,7 @@ fun LineChartPreview() {
     ) {
         LineCharts(
             parameters = points,
-            chartParameters = chartParameters,
+            chartConfig = chartConfig,
             onEvents = onEvents,
         )
     }
@@ -432,11 +431,11 @@ fun LineChartPreview() {
 fun List<LiftParameters>.filterByTimestampRange(offset: Float, count: Int): List<LiftParameters> {
     if (isEmpty()) return emptyList()
     val timeResolver = { param: LiftParameters ->
-        param.timeStamp + param.timeMilliseconds / 1000f
+        param.timestamp + param.timeMilliseconds / 1000f
     }
 
-    val rangeStart = minOf { it.timeStamp } + offset
-    val rangeEnd = (rangeStart + count).coerceAtMost(maxOf { it.timeStamp }.toFloat())
+    val rangeStart = minOf { it.timestamp } + offset
+    val rangeEnd = (rangeStart + count).coerceAtMost(maxOf { it.timestamp }.toFloat())
 
     return this
         .asSequence()
@@ -446,7 +445,7 @@ fun List<LiftParameters>.filterByTimestampRange(offset: Float, count: Int): List
         }
         .sortedWith(
             compareBy(
-                LiftParameters::timeStamp,
+                LiftParameters::timestamp,
                 LiftParameters::timeMilliseconds
             )
         )

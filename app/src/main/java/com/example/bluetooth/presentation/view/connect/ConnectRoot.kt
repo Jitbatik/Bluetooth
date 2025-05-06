@@ -26,7 +26,7 @@ import com.example.bluetooth.R
 import com.example.bluetooth.model.BluetoothScreenType
 import com.example.bluetooth.presentation.contracts.EnableBluetoothContract
 import com.example.bluetooth.presentation.contracts.EnableLocationContract
-import com.example.bluetooth.presentation.view.connect.components.enable.NotEnabledBox
+import com.example.bluetooth.presentation.view.connect.components.enable.DataConfigurationPrompt
 import com.example.bluetooth.presentation.view.connect.components.permission.BtPermissionNotProvidedBox
 import com.example.bluetooth.presentation.view.connect.components.scanner.ScannerBox
 
@@ -127,7 +127,7 @@ private fun Connect(
                 }
 
                 BluetoothScreenType.BLUETOOTH_NOT_ENABLED -> {
-                    NotEnabledBox(
+                    DataConfigurationPrompt(
                         title = stringResource(id = R.string.bluetooth_not_enable_title),
                         description = stringResource(id = R.string.bluetooth_not_enable_desc),
                         actionButtonText = stringResource(id = R.string.enable_bluetooth_button_text),
@@ -145,7 +145,7 @@ private fun Connect(
                 }
 
                 BluetoothScreenType.LOCATION_NOT_ENABLED -> {
-                    NotEnabledBox(
+                    DataConfigurationPrompt(
                         title = stringResource(id = R.string.location_not_enable_title),
                         description = stringResource(id = R.string.location_not_enable_desc),
                         actionButtonText = stringResource(id = R.string.location_bluetooth_button_text),

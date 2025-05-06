@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onCompletion
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Singleton
 
 class DataStreamRepository @Inject constructor(
     private val bluetoothSocketProvider: BluetoothSocketProvider,
