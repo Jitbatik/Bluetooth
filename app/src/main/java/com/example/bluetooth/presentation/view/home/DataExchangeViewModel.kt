@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.domain.usecase.ObserveParametersUseCase
-import com.example.transfer.domain.usecase.Type
+import com.example.transfer.domain.parameters.Type
+import com.example.transfer.domain.parameters.usecase.ObserveParametersUseCase
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
@@ -26,9 +26,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DataExchangeViewModel @Inject constructor(
-    private val navigationStateHolder: NavigationStateHolder,
+    navigationStateHolder: NavigationStateHolder,
     private val protocolDataRepository: ProtocolDataRepository,
-    private val observeControllerDataUseCase: ObserveParametersUseCase,
+    observeControllerDataUseCase: ObserveParametersUseCase,
     private val eventHandler: EventHandler,
 ) : ViewModel() {
     private val tag = DataExchangeViewModel::class.java.simpleName

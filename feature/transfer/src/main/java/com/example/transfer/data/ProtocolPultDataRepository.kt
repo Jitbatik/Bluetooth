@@ -3,7 +3,6 @@ package com.example.transfer.data
 import android.util.Log
 import com.example.bluetooth.data.DataStreamRepository
 import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.domain.usecase.Command
 import com.example.transfer.model.ByteData
 import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode

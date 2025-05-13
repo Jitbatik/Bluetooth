@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 @Composable
-fun NotEnabledBox(
+fun DataConfigurationPrompt(
     title: String,
     description: String,
     actionButtonText: String,
@@ -49,9 +49,9 @@ fun NotEnabledBox(
 
 @PreviewLightDark
 @Composable
-private fun NotEnabledBoxPreview() = BluetoothTheme {
+private fun DataConfigurationPromptPreview() = BluetoothTheme {
     Surface {
-        NotEnabledBox(
+        DataConfigurationPrompt(
             title = "not_enable_title",
             description = "not_enable_desc",
             actionButtonText = "button_text",
