@@ -3,14 +3,11 @@ package com.example.bluetooth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
-import com.example.transfer.domain.usecase.ObserveParametersUseCase
-import com.example.transfer.domain.usecase.ProcessParametersFeatureCase
-import com.example.transfer.domain.usecase.Type
-import com.example.transfer.model.ByteData
-import com.example.transfer.model.ChartParameters
-import com.example.transfer.model.ParametersGroup
+import com.example.transfer.domain.chart.usecase.ChartParametersUseCase
+import com.example.transfer.domain.parameters.Type
+import com.example.transfer.model.ChartConfig
+import com.example.transfer.model.LiftParameters
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -19,14 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 import navigation.NavigationItem
 import javax.inject.Inject
 
-
 @HiltViewModel
 class ElevatorParametersViewModel @Inject constructor(
     navigationStateHolder: NavigationStateHolder,
-    observeTypeUseCase: ObserveParametersUseCase,
-    private val processParametersFeatureCase: ProcessParametersFeatureCase
+    private val chartParametersUseCase: ChartParametersUseCase
 ) : ViewModel() {
-    private val typeFlow: StateFlow<Type> = navigationStateHolder.currentScreen
+    private val observationType: StateFlow<Type> = navigationStateHolder.currentScreen
         .map { screen ->
             when (screen) {
                 NavigationItem.Home -> Type.READ
@@ -40,14 +35,8 @@ class ElevatorParametersViewModel @Inject constructor(
             initialValue = Type.NOTHING
         )
 
-    private val dataFlow: Flow<List<ByteData>> =
-        observeTypeUseCase.execute(typeFlow).map { byteDataList -> filterByteData(byteDataList) }
-
-    private fun filterByteData(byteDataList: List<ByteData>) =
-        byteDataList.take(128) + byteDataList.drop(208)
-
-    private val _data: StateFlow<ParametersGroup> =
-        processParametersFeatureCase.mapToParametersDataUI(dataFlow)
+    private val chartData: StateFlow<List<LiftParameters>> =
+        chartParametersUseCase.observeChartData(observationType)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.Eagerly,
@@ -55,33 +44,32 @@ class ElevatorParametersViewModel @Inject constructor(
             )
 
     private val _state = combine(
-        _data,
-        processParametersFeatureCase.chartParameters
-    ) { parametersGroup, chartParameters ->
+        chartData,
+        chartParametersUseCase.chartConfig
+    ) { parameters, config ->
         ParametersState(
-            parametersGroup = parametersGroup,
-            chartParameters = chartParameters,
-            onEvents = ::onEvents
+            parametersGroup = parameters,
+            chartConfig = config,
+            onEvents = ::handleChartEvent
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = ParametersState(
             parametersGroup = ParametersDataDefaults.getDefault(),
-            chartParameters = emptyMap(),
-            onEvents = ::onEvents
+            chartConfig = ChartConfig(),
+            onEvents = ::handleChartEvent
         )
     )
 
     val state: StateFlow<ParametersState> = _state
 
-    private fun onEvents(chartId: Int, event: ParametersIntent) {
-        val current =
-            processParametersFeatureCase.chartParameters.value[chartId] ?: ChartParameters()
-        val newParams = when (event) {
-            is ParametersIntent.ChangeScale -> current.copy(scale = event.scale)
-            is ParametersIntent.ChangeOffset -> current.copy(offset = event.offset)
+    private fun handleChartEvent(event: ParametersIntent) {
+        val currentConfig = chartParametersUseCase.chartConfig.value
+        val newConfig = when (event) {
+            is ParametersIntent.ChangeScale -> currentConfig.copy(scale = event.scale)
+            is ParametersIntent.ChangeOffset -> currentConfig.copy(offset = event.offset)
         }
-        processParametersFeatureCase.updateChartParameter(chartId, newParams)
+        chartParametersUseCase.updateConfig(newConfig)
     }
 }
