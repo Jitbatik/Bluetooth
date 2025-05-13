@@ -5,18 +5,11 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,23 +27,17 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import co.yml.charts.common.extensions.isNotNull
 import com.example.bluetooth.presentation.ParametersIntent
 import com.example.transfer.model.ChartConfig
-import com.example.transfer.model.LiftParameters
-import com.example.transfer.model.ParameterType
 import com.example.transfer.model.LiftParameterType
+import com.example.transfer.model.LiftParameters
 import com.example.transfer.model.ParameterData
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.math.abs
 
 @Composable
@@ -59,6 +46,19 @@ fun LineCharts(
     chartConfig: ChartConfig,
     onEvents: (ParametersIntent) -> Unit,
 ) {
+    if (parameters.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No data available",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+        }
+        return
+    }
     var touchPosition by remember { mutableStateOf<Offset?>(null) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     var chartBoxSize by remember { mutableStateOf(IntSize.Zero) }
@@ -74,7 +74,7 @@ fun LineCharts(
     val handleTransform: (Offset, Float) -> Unit = { pan, zoom ->
         val newScale = (currentScale * zoom)
             .coerceIn(chartConfig.minScale, chartConfig.maxScale)
-        val newOffsetX = (currentOffset - pan.x)
+        val newOffsetX = (currentOffset - pan.x / 10)
             .coerceIn(currentMinOffsetX, currentMaxOffsetX)
 
         onEvents(ParametersIntent.ChangeOffset(newOffsetX))
@@ -92,7 +92,7 @@ fun LineCharts(
             .background(Color.DarkGray)
     ) {
         Header(chartConfig, onEvents)
-        ChartCanvas(
+        ChartDrawingSurface(
             parameters = parameters,
             stepCounterXAxis = chartConfig.stepCount,
             chartBoxSize = chartBoxSize,
@@ -112,7 +112,7 @@ fun LineCharts(
 }
 
 @Composable
-private fun ChartCanvas(
+private fun ChartDrawingSurface(
     parameters: List<LiftParameters>,
     stepCounterXAxis: Int,
     chartBoxSize: IntSize,
@@ -149,7 +149,7 @@ private fun ChartCanvas(
             ),
         )
         if (touchPosition != null && selectedIndex != null) {
-            Tooltip(
+            PointDetails(
                 position = touchPosition,
                 values = parameters[selectedIndex.coerceIn(0, parameters.size - 1)],
                 parentSize = chartBoxSize,
@@ -166,6 +166,8 @@ fun Modifier.detectChartGestures(
     onTap: (Offset, Int) -> Unit,
     onTransform: (Offset, Float) -> Unit
 ): Modifier = composed {
+    if (parameters.isEmpty()) return@composed this
+
     this
         .pointerInput(stepSizeX, parameters) {
             detectTapGestures { tapPosition ->
@@ -190,78 +192,6 @@ fun Modifier.detectChartGestures(
                 onTransform(pan, zoom)
             }
         }
-}
-
-@Composable
-fun Tooltip(
-    position: Offset,
-    values: LiftParameters,
-    parentSize: IntSize,
-    lineColors: List<Color>,
-    backgroundColor: Color = Color(0xCC333333)
-) {
-    val density = LocalDensity.current
-    var tooltipSize by remember { mutableStateOf(IntSize.Zero) }
-
-    val marginPx = with(density) { 12.dp.toPx() }
-    val pointerOffsetPx = with(density) { 16.dp.toPx() }
-
-    val rawX = position.x + pointerOffsetPx
-    val rawY = position.y - tooltipSize.height - pointerOffsetPx
-
-    val clampedX = rawX.coerceIn(marginPx, parentSize.width - tooltipSize.width - marginPx)
-    val clampedY = rawY.coerceIn(marginPx, parentSize.height - tooltipSize.height - marginPx)
-
-    val xOffsetDp = with(density) { clampedX.toDp() }
-    val yOffsetDp = with(density) { clampedY.toDp() }
-
-    val formattedTime = remember(values.timestamp, values.timeMilliseconds) {
-        val millis = values.timestamp * 1000 + values.timeMilliseconds
-        val date = Date(millis)
-        SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(date)
-    }
-
-    Box(
-        modifier = Modifier
-            .offset(x = xOffsetDp, y = yOffsetDp)
-            .onGloballyPositioned {
-                tooltipSize = it.size
-            }
-            .background(backgroundColor, shape = RoundedCornerShape(4.dp))
-            .padding(8.dp)
-    ) {
-        Column {
-            Text(text = formattedTime, fontSize = 12.sp, color = Color.White)
-            Spacer(Modifier.height(4.dp))
-            values.parameters.forEachIndexed { index, (label, value) ->
-                TooltipRow(
-                    label = label,
-                    value = value,
-                    indicatorColor = lineColors.getOrNull(index) ?: Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TooltipRow(
-    label: ParameterType,
-    value: Int,
-    indicatorColor: Color
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(indicatorColor, shape = CircleShape)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text("${label.displayName}: $value", fontSize = 12.sp, color = Color.White)
-    }
 }
 
 @Composable
@@ -328,24 +258,27 @@ fun LineChartPreview() {
             ),
         )
     }
+
     fun generateNewLiftParameters(last: LiftParameters): LiftParameters {
         val deltaSeconds = (0..1).random()
         val newTimeStamp = last.timestamp + deltaSeconds
 
-        val newMilliseconds = if (deltaSeconds == 0) (last.timeMilliseconds..999).random()
-        else (0..999).random()
+        val newMilliseconds = when {
+            deltaSeconds == 0 -> (last.timeMilliseconds..999).random()
+            else -> (0..999).random()
+        }.coerceIn(0, 999)
 
         return last.copy(
             timestamp = newTimeStamp,
             timeMilliseconds = newMilliseconds,
             parameters = last.parameters.map {
-                it.copy(value = it.value + listOf(-1, 0, 1).random())
+                it.copy(value = (it.value + (-1..1).random()).coerceAtLeast(0))
             }
         )
     }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(1000)
+            delay(100)
             parameterLists.add(
                 generateNewLiftParameters(parameterLists.lastOrNull() ?: continue)
             )
@@ -396,7 +329,7 @@ fun LineChartPreview() {
 
         val minTimeTest = parameterLists.minOf { it.timestamp }
         val maxTimeTest = parameterLists.maxOf { it.timestamp }
-        val maxOffsetX = (maxTimeTest- minTimeTest - chartConfig.stepCount).toFloat()
+        val maxOffsetX = (maxTimeTest - minTimeTest - chartConfig.stepCount).toFloat()
             .coerceAtLeast(0f)
 
         chartConfig = chartConfig.copy(
@@ -430,24 +363,19 @@ fun LineChartPreview() {
 
 fun List<LiftParameters>.filterByTimestampRange(offset: Float, count: Int): List<LiftParameters> {
     if (isEmpty()) return emptyList()
-    val timeResolver = { param: LiftParameters ->
-        param.timestamp + param.timeMilliseconds / 1000f
-    }
 
-    val rangeStart = minOf { it.timestamp } + offset
-    val rangeEnd = (rangeStart + count).coerceAtMost(maxOf { it.timestamp }.toFloat())
+    val timeResolver = { param: LiftParameters -> param.timestamp + param.timeMilliseconds / 1000f }
+    val minTimestamp = minOf { it.timestamp }
+    val maxTimestamp = maxOf { it.timestamp }
 
-    return this
-        .asSequence()
-        .filter {
-            val time = timeResolver(it)
+    val rangeStart = minTimestamp + offset
+    val rangeEnd = (rangeStart + count).coerceAtMost(maxTimestamp.toFloat())
+
+    return asSequence()
+        .filter { param ->
+            val time = timeResolver(param)
             time in rangeStart..rangeEnd
         }
-        .sortedWith(
-            compareBy(
-                LiftParameters::timestamp,
-                LiftParameters::timeMilliseconds
-            )
-        )
+        .sortedWith(compareBy(LiftParameters::timestamp, LiftParameters::timeMilliseconds))
         .toList()
 }

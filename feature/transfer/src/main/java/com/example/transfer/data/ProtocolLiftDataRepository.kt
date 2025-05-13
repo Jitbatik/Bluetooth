@@ -154,7 +154,7 @@ class ProtocolLiftDataRepository @Inject constructor(
         private const val MIN_PACKET_SIZE = 10
         private const val CRC16_INITIAL = 0xFFFF
         private const val CRC16_POLYNOMIAL = 0xA001
-        private const val RETRY_DELAY_MS = 200L
+        private const val RETRY_DELAY_MS = 800L
         private val Tag = ProtocolLiftDataRepository::class.java.simpleName
     }
 }
