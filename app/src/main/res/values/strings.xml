@@ -25,6 +25,7 @@
     <string name="navigation_item_parameters">Parameters</string>
     <string name="navigation_item_connect">Connect</string>
     <string name="navigation_item_settings">Settings</string>
+    <string name="navigation_item_test">Test</string>
     <string name="log_history_title">Логи приложения</string>
     <string name="text_provider_title_bluetooth">Пожалуйста, предоставьте разрешения</string>
     <string name="text_provider_description_bluetooth">Приложению для сканирования и подключения требуются разрешения на эти действия. После обновите экран.</string>
@@ -47,4 +48,9 @@
     <string name="button_help_box_button_label_minus">-</string>
     <string name="button_help_box_button_label_point">.</string>
     <string name="button_help_box_button_label_delete">-*</string>
+
+    <string name="parameters_no_data_title">Нет данных</string>
+    <string name="parameters_no_data_description">В данный момент времени нет данных для отображения графиков, но вы можете настроить какие из графиков как должны отображаться</string>
+    <string name="parameters_no_data_button_text">Настройка графиков</string>
+    <string name="parameters_configure_graphs">Настроить отображение графиков</string>
 </resources>

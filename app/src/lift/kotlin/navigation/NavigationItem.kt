@@ -8,14 +8,15 @@ import com.example.bluetooth.R
 enum class NavigationItem(
     val route: String,
     @StringRes val title: Int,
-    @DrawableRes val icon: Int
+    @DrawableRes val icon: Int,
+    val showInDrawer: Boolean = true
 ) {
     Home(
         route = "home",
         icon = R.drawable.icon_home,
         title = R.string.navigation_item_home
     ),
-    Parameters(
+    ParametersDashboard(
         route = "parameters",
         icon = R.drawable.icon_settings,
         title = R.string.navigation_item_parameters
@@ -30,6 +31,12 @@ enum class NavigationItem(
         route = "settings",
         icon = R.drawable.icon_settings,
         title = R.string.navigation_item_settings
+    ),
+    ParametersConfigurations(
+        route = "test",
+        icon = R.drawable.icon_settings,
+        title = R.string.navigation_item_test,
+        showInDrawer = false
     );
 
     companion object {

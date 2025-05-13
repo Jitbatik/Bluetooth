@@ -46,7 +46,7 @@ class DataExchangeViewModel @Inject constructor(
         .map { screen ->
             when (screen) {
                 NavigationItem.Home -> Type.READ
-                NavigationItem.Parameters -> Type.READ
+                NavigationItem.ParametersDashboard -> Type.READ
                 else -> Type.NOTHING
             }
         }

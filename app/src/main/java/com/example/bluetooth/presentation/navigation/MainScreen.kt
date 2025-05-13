@@ -80,6 +80,7 @@ fun MainScreen(
             drawerState = drawerState,
             onDrawerClick = { drawerState = it },
             currentRoute = selectedNavigationItem.route,
+            navigationStateHolder = navigationStateHolder
         )
     }
 }

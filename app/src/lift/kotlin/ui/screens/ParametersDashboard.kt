@@ -19,23 +19,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.R
 import com.example.bluetooth.presentation.ElevatorParametersViewModel
 import com.example.bluetooth.presentation.ParametersState
+import com.example.bluetooth.presentation.navigation.NavigationStateHolder
 import com.example.bluetooth.presentation.view.connect.components.enable.DataConfigurationPrompt
 import com.example.transfer.domain.utils.DateTimeUtils
+import navigation.NavigationItem
 import ui.components.LineCharts
 
 @Composable
 fun ParametersDashboardRoot(
-    viewModel: ElevatorParametersViewModel = viewModel()
+    viewModel: ElevatorParametersViewModel = viewModel(),
+    navigationStateHolder: NavigationStateHolder
 ) {
     val state by viewModel.state.collectAsState()
     val hasParameters = state.parametersGroup.isNotEmpty()
+    
     when {
         hasParameters -> ParametersDashboard(state = state)
         else -> DataConfigurationPrompt(
             title = stringResource(R.string.parameters_no_data_title),
             description = stringResource(R.string.parameters_no_data_description),
             actionButtonText = stringResource(R.string.parameters_no_data_button_text),
-            launcher = { },
+            launcher = { navigationStateHolder.setCurrentScreen(NavigationItem.ParametersConfigurations) },
             modifier = Modifier.padding(8.dp)
         )
     }
