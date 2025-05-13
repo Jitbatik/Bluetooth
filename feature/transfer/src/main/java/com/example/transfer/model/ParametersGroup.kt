@@ -16,7 +16,7 @@ data class ParameterData(
 )
 
 data class ChartConfig(
-    val stepCount: Int = 20,
+    val stepCount: Int = 300,
     val scale: Float = 1f,
     val minScale: Float = 1f,
     val maxScale: Float = 2f,

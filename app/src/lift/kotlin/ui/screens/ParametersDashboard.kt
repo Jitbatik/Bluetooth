@@ -20,19 +20,17 @@ import com.example.bluetooth.R
 import com.example.bluetooth.presentation.ElevatorParametersViewModel
 import com.example.bluetooth.presentation.ParametersState
 import com.example.bluetooth.presentation.view.connect.components.enable.DataConfigurationPrompt
+import com.example.transfer.domain.utils.DateTimeUtils
 import ui.components.LineCharts
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Composable
-fun ParametersRoot(
+fun ParametersDashboardRoot(
     viewModel: ElevatorParametersViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val hasParameters = state.parametersGroup.isNotEmpty()
     when {
-        hasParameters -> Parameters(state = state)
+        hasParameters -> ParametersDashboard(state = state)
         else -> DataConfigurationPrompt(
             title = stringResource(R.string.parameters_no_data_title),
             description = stringResource(R.string.parameters_no_data_description),
@@ -44,7 +42,7 @@ fun ParametersRoot(
 }
 
 @Composable
-fun Parameters(
+fun ParametersDashboard(
     state: ParametersState,
 ) {
     Column(
@@ -53,10 +51,12 @@ fun Parameters(
             .padding(8.dp)
     ) {
         Text(
-            text = formatDateTime(
-                timeSeconds = state.parametersGroup.lastOrNull()?.timestamp ?: 0,
-                timeMilliseconds = state.parametersGroup.lastOrNull()?.timeMilliseconds ?: 0,
-            ),
+            text = state.parametersGroup.lastOrNull()?.let { lastParam ->
+                DateTimeUtils.formatFullDateTime(
+                    timeSeconds = lastParam.timestamp,
+                    timeMilliseconds = lastParam.timeMilliseconds
+                )
+            } ?: "",
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -73,14 +73,5 @@ fun Parameters(
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider()
     }
-}
-
-
-private fun formatDateTime(timeSeconds: Long, timeMilliseconds: Int): String {
-    val instant = Instant.ofEpochMilli(timeSeconds * 1000 + timeMilliseconds)
-    return DateTimeFormatter
-        .ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-        .withZone(ZoneId.systemDefault())
-        .format(instant)
 }
 //todo сделать Preview и отрефакторить
