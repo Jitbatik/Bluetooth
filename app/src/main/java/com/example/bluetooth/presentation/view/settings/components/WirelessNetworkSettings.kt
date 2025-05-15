@@ -1,104 +1,58 @@
 package com.example.bluetooth.presentation.view.settings.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
-import com.example.bluetooth.data.utils.SettingsManager
 import com.example.bluetooth.model.DescriptionSettings
+import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
+import com.example.bluetooth.presentation.view.settings.model.WirelessNetworkState
 import com.example.bluetooth.ui.theme.BluetoothTheme
-
+import ui.screens.ExpandableItem
 
 @Composable
-fun WirelessNetworkSettings(descriptionSettings: DescriptionSettings) {
-    val context = LocalContext.current
-    val settingsManager = remember { SettingsManager(context) }
-
-    var isChecked by remember { mutableStateOf(settingsManager.isEnabledChecked()) }
-    var wirelessNetworkMask by remember { mutableStateOf(settingsManager.getBluetoothMask()) }
-    var isExpanded by remember { mutableStateOf(false) }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+fun WirelessNetworkSettings(
+    state: WirelessNetworkState,
+    onEvent: (SettingsEvent) -> Unit,
+    descriptionSettings: DescriptionSettings
+) {
+    ExpandableItem(
+        title = descriptionSettings.title,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
-                .padding(vertical = 8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.icon_settings),
-                contentDescription = "Settings Icon",
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = descriptionSettings.title,
-                fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                fontWeight = FontWeight.Medium
+            Text(text = descriptionSettings.descriptionSwitch)
+            Switch(
+                checked = state.isEnabled,
+                onCheckedChange = {
+                    onEvent(SettingsEvent.UpdateEnabled(it))
+                }
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        if (isExpanded) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = descriptionSettings.descriptionSwitch)
-                Switch(
-                    checked = isChecked,
-                    onCheckedChange = {
-                        settingsManager.saveEnabledChecked(it)
-                        isChecked = it
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = wirelessNetworkMask,
-                onValueChange = { mask ->
-                    settingsManager.saveBluetoothMask(mask)
-                    wirelessNetworkMask = mask
-                },
-                label = { Text(descriptionSettings.hintTextField) },
-                enabled = isChecked,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        OutlinedTextField(
+            value = state.mask,
+            onValueChange = { onEvent(SettingsEvent.UpdateMask(it)) },
+            label = { Text(descriptionSettings.hintTextField) },
+            enabled = state.isEnabled,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -111,6 +65,10 @@ private fun SettingsContentPreview() = BluetoothTheme {
         hintTextField = stringResource(R.string.hint_text_bluetooth)
     )
     Surface {
-        WirelessNetworkSettings(descriptionSettings = bluetoothDescriptionSettings)
+        WirelessNetworkSettings(
+            state = WirelessNetworkState(),
+            onEvent = {},
+            descriptionSettings = bluetoothDescriptionSettings,
+        )
     }
 }

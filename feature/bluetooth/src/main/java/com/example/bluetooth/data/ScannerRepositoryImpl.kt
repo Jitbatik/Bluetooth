@@ -16,7 +16,6 @@ import com.example.bluetooth.data.receivers.BluetoothScanReceiver
 import com.example.bluetooth.data.receivers.BluetoothStateReceiver
 import com.example.bluetooth.data.receivers.LocationStateReceiver
 import com.example.bluetooth.data.receivers.ScanDiscoveryReceiver
-import com.example.bluetooth.data.utils.SettingsManager
 import com.example.bluetooth.domain.ScannerRepository
 import com.example.bluetooth.model.BluetoothDevice
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -219,7 +218,7 @@ class ScannerRepositoryImpl @Inject constructor(
     }
 
     private fun updateDeviceList() {
-        val settingsManager = SettingsManager(context)
+        val settingsManager = SettingsManagerImpl(context)
 
         val isFilter = settingsManager.isEnabledChecked()
         val bluetoothMask = settingsManager.getBluetoothMask()

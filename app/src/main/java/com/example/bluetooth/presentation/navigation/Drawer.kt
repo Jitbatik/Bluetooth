@@ -35,7 +35,7 @@ fun Drawer(
     onNavigationItemClick: (String) -> Unit,
     onCloseClick: () -> Unit,
 ) {
-    val items = remember { NavigationItem.entries.filter { it.showInDrawer }.toList() }
+    val items = remember { NavigationItem.entries.toList() }
 
     Column(
         modifier = Modifier

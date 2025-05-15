@@ -13,7 +13,7 @@ fun ParametersDashboardActions(
     navigationStateHolder: NavigationStateHolder
 ) {
     IconButton(
-        onClick = { navigationStateHolder.setCurrentScreen(NavigationItem.ParametersConfigurations) }
+        onClick = { navigationStateHolder.setCurrentScreen(NavigationItem.Settings) }
     ) {
         Icon(
             imageVector = Icons.Default.Settings,
