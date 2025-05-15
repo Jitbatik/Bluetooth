@@ -39,7 +39,7 @@ fun ParametersDashboardRoot(
             title = stringResource(R.string.parameters_no_data_title),
             description = stringResource(R.string.parameters_no_data_description),
             actionButtonText = stringResource(R.string.parameters_no_data_button_text),
-            launcher = { navigationStateHolder.setCurrentScreen(NavigationItem.ParametersConfigurations) },
+            launcher = { navigationStateHolder.setCurrentScreen(NavigationItem.Settings) },
             modifier = Modifier.padding(8.dp)
         )
     }

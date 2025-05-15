@@ -1,6 +1,5 @@
 package com.example.bluetooth.presentation.view.home
 
-import ui.screens.Home
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
@@ -15,6 +14,7 @@ import com.example.transfer.model.ControllerConfig
 import com.example.transfer.model.KeyMode
 import com.example.transfer.model.Range
 import com.example.transfer.model.Rotate
+import ui.screens.Home
 
 @NonRestartableComposable
 @Composable

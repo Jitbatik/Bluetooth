@@ -6,7 +6,6 @@ import com.example.bluetooth.presentation.view.connect.ConnectRoot
 import com.example.bluetooth.presentation.view.home.HomeRoot
 import com.example.bluetooth.presentation.view.settings.SettingsRoot
 import ui.screens.ParametersDashboardRoot
-import ui.screens.ParametersConfigurations
 
 @Composable
 fun Extracted(
@@ -18,6 +17,5 @@ fun Extracted(
         NavigationItem.Connect.route -> ConnectRoot()
         NavigationItem.Settings.route -> SettingsRoot()
         NavigationItem.ParametersDashboard.route -> ParametersDashboardRoot(navigationStateHolder = navigationStateHolder)
-        NavigationItem.ParametersConfigurations.route -> ParametersConfigurations()
     }
 }
