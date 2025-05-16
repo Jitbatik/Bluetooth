@@ -20,9 +20,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.R
-import com.example.bluetooth.model.ChartSettings
+import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.model.DescriptionSettings
-import com.example.bluetooth.model.SignalSettings
+import com.example.bluetooth.model.SignalColor
+import com.example.bluetooth.model.SignalSettingsUI
 import com.example.bluetooth.presentation.view.settings.components.LineChartSettings
 import com.example.bluetooth.presentation.view.settings.components.WirelessNetworkSettings
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
@@ -34,13 +35,13 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 fun SettingsRoot(
     viewModel: SettingsViewModel = viewModel()
 ) {
-    val chartSettings by viewModel.chartSettings.collectAsState()
+    val chartSettings by viewModel.chartSettingsUI.collectAsState()
     val wirelessNetworkState by viewModel.wirelessNetworkState.collectAsState()
     val onEvents: (SettingsEvent) -> Unit = remember {
         { event -> viewModel.onEvents(event) }
     }
     Settings(
-        chartSettings = chartSettings,
+        chartSettingsUI = chartSettings,
         state = wirelessNetworkState,
         onEvents = onEvents
     )
@@ -48,7 +49,7 @@ fun SettingsRoot(
 
 @Composable
 private fun Settings(
-    chartSettings: ChartSettings,
+    chartSettingsUI: ChartSettingsUI,
     state: WirelessNetworkState,
     onEvents: (SettingsEvent) -> Unit
 ) {
@@ -76,7 +77,7 @@ private fun Settings(
             Spacer(modifier = Modifier.height(16.dp))
 
             LineChartSettings(
-                chartSettings = chartSettings,
+                chartSettingsUI = chartSettingsUI,
                 onEvents = onEvents,
             )
         }
@@ -88,11 +89,11 @@ private fun Settings(
 private fun SettingsPreview() = BluetoothTheme {
     Surface {
         Settings(
-            chartSettings = ChartSettings(
+            chartSettingsUI = ChartSettingsUI(
                 title = "Тестовые параметры",
                 description = "Тестовое описание",
                 signals = listOf(
-                    SignalSettings("test", "Тест", true, Color.Red)
+                    SignalSettingsUI("test", "Тест", true, Color.Green)
                 )
             ),
             state = WirelessNetworkState(),

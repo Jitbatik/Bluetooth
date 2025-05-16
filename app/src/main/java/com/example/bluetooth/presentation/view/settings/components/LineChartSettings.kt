@@ -44,23 +44,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.model.ChartSettings
-import com.example.bluetooth.model.SignalSettings
+import com.example.bluetooth.model.ChartSettingsUI
+import com.example.bluetooth.model.SignalSettingsUI
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import ui.screens.ExpandableItem
 
 @Composable
 fun LineChartSettings(
-    chartSettings: ChartSettings,
+    chartSettingsUI: ChartSettingsUI,
     onEvents: (SettingsEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     ExpandableItem(
-        title = chartSettings.title,
+        title = chartSettingsUI.title,
     ) {
         Text(
-            text = chartSettings.description,
+            text = chartSettingsUI.description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -68,9 +68,9 @@ fun LineChartSettings(
 
         FilledTonalButton(
             onClick = {
-                val hasHiddenSignals = chartSettings.signals.any { !it.isVisible }
-                chartSettings.signals.forEach { signal ->
-                    onEvents(SettingsEvent.UpdateSignalVisibility(signal.id, hasHiddenSignals))
+                val hasHiddenSignals = chartSettingsUI.signals.any { !it.isVisible }
+                chartSettingsUI.signals.forEach { signal ->
+                    onEvents(SettingsEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
                 }
             },
             modifier = Modifier
@@ -78,7 +78,7 @@ fun LineChartSettings(
                 .padding(bottom = 8.dp)
         ) {
             Text(
-                if (chartSettings.signals.any { !it.isVisible })
+                if (chartSettingsUI.signals.any { !it.isVisible })
                     "Показать все сигналы"
                 else
                     "Скрыть все сигналы"
@@ -90,16 +90,16 @@ fun LineChartSettings(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(
-                items = chartSettings.signals,
+                items = chartSettingsUI.signals,
                 key = { it.id }
             ) { signal ->
                 SignalSettingItem(
                     signal = signal,
                     onVisibilityChanged = { isVisible ->
-                        onEvents(SettingsEvent.UpdateSignalVisibility(signal.id, isVisible))
+                        onEvents(SettingsEvent.ToggleSignalVisibility(signal.id, isVisible))
                     },
                     onColorChanged = { color ->
-                        onEvents(SettingsEvent.UpdateSignalColor(signal.id, color))
+                        onEvents(SettingsEvent.ChangeSignalColor(signal.id, color))
                     }
                 )
             }
@@ -109,7 +109,7 @@ fun LineChartSettings(
 
 @Composable
 private fun SignalSettingItem(
-    signal: SignalSettings,
+    signal: SignalSettingsUI,
     onVisibilityChanged: (Boolean) -> Unit,
     onColorChanged: (Color) -> Unit,
     modifier: Modifier = Modifier
@@ -362,18 +362,18 @@ private fun ColorItem(
 @Composable
 private fun LineChartSettingsPreview() = BluetoothTheme {
     Surface {
-        val previewSettings = ChartSettings(
+        val previewSettings = ChartSettingsUI(
             title = "График параметров",
             description = "Настройте отображение сигналов на графике",
             signals = listOf(
-                SignalSettings("1", "Скорость", true, Color.Red),
-                SignalSettings("2", "Ускорение", false, Color.Blue),
-                SignalSettings("3", "Положение", true, Color.Green)
+                SignalSettingsUI("1", "Скорость", true, Color.Red),
+                SignalSettingsUI("2", "Ускорение", false, Color.Blue),
+                SignalSettingsUI("3", "Положение", true, Color.Green)
             )
         )
 
         LineChartSettings(
-            chartSettings = previewSettings,
+            chartSettingsUI = previewSettings,
             onEvents = {},
             modifier = Modifier.padding(16.dp)
         )
