@@ -18,13 +18,13 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
 import com.example.bluetooth.model.DescriptionSettings
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
-import com.example.bluetooth.presentation.view.settings.model.WirelessNetworkState
+import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import ui.screens.ExpandableItem
 
 @Composable
 fun WirelessNetworkSettings(
-    state: WirelessNetworkState,
+    state: WirelessBluetoothMask,
     onEvent: (SettingsEvent) -> Unit,
     descriptionSettings: DescriptionSettings
 ) {
@@ -66,7 +66,7 @@ private fun SettingsContentPreview() = BluetoothTheme {
     )
     Surface {
         WirelessNetworkSettings(
-            state = WirelessNetworkState(),
+            state = WirelessBluetoothMask(),
             onEvent = {},
             descriptionSettings = bluetoothDescriptionSettings,
         )

@@ -10,13 +10,15 @@ import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.model.SignalColor
 import com.example.bluetooth.model.SignalSettingsUI
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
-import com.example.bluetooth.presentation.view.settings.model.WirelessNetworkState
+import com.example.bluetooth.presentation.view.settings.model.SettingsState
+import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -27,7 +29,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsManager: SettingsManagerImpl,
     private val chartSettingsRepository: ChartSettingsRepository
 ) : ViewModel() {
-    val chartSettingsUI: StateFlow<ChartSettingsUI> = chartSettingsRepository.chartSettings
+    private val chartSettingsUI: StateFlow<ChartSettingsUI> = chartSettingsRepository.chartSettings
         .mapChartSettingsRepositoryToUI()
         .stateIn(
             scope = viewModelScope,
@@ -53,13 +55,39 @@ class SettingsViewModel @Inject constructor(
     }
 
 
-    private val _wirelessNetworkState = MutableStateFlow(
-        WirelessNetworkState(
+    private val _wirelessBluetoothMask = MutableStateFlow(
+        WirelessBluetoothMask(
             isEnabled = settingsManager.isEnabledChecked(),
             mask = settingsManager.getBluetoothMask()
         )
     )
-    val wirelessNetworkState: StateFlow<WirelessNetworkState> = _wirelessNetworkState.asStateFlow()
+
+    private val _state = combine(
+        chartSettingsUI,
+        flowOf(settingsManager.isEnabledChecked()),
+        flowOf(settingsManager.getBluetoothMask())
+    ) { chartSettings, isEnable, mask ->
+        SettingsState(
+            chartSettings = chartSettings,
+            wirelessBluetoothMask = WirelessBluetoothMask(
+                isEnabled = isEnable,
+                mask = mask
+            ),
+            onEvents = ::onEvents
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = SettingsState(
+            chartSettings = initialChartSettings(),
+            wirelessBluetoothMask = WirelessBluetoothMask(
+                isEnabled = false,
+                mask = ""
+            ),
+            onEvents = ::onEvents
+        )
+    )
+    val state: StateFlow<SettingsState> = _state
 
     fun onEvents(event: SettingsEvent) {
         when (event) {
@@ -77,12 +105,12 @@ class SettingsViewModel @Inject constructor(
 
             is SettingsEvent.UpdateEnabled -> {
                 settingsManager.saveEnabledChecked(event.isEnabled)
-                _wirelessNetworkState.update { it.copy(isEnabled = event.isEnabled) }
+                _wirelessBluetoothMask.update { it.copy(isEnabled = event.isEnabled) }
             }
 
             is SettingsEvent.UpdateMask -> {
                 settingsManager.saveBluetoothMask(event.mask)
-                _wirelessNetworkState.update { it.copy(mask = event.mask) }
+                _wirelessBluetoothMask.update { it.copy(mask = event.mask) }
             }
         }
     }

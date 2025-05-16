@@ -22,12 +22,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.R
 import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.model.DescriptionSettings
-import com.example.bluetooth.model.SignalColor
 import com.example.bluetooth.model.SignalSettingsUI
 import com.example.bluetooth.presentation.view.settings.components.LineChartSettings
 import com.example.bluetooth.presentation.view.settings.components.WirelessNetworkSettings
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
-import com.example.bluetooth.presentation.view.settings.model.WirelessNetworkState
+import com.example.bluetooth.presentation.view.settings.model.SettingsState
+import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 
@@ -35,23 +35,13 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 fun SettingsRoot(
     viewModel: SettingsViewModel = viewModel()
 ) {
-    val chartSettings by viewModel.chartSettingsUI.collectAsState()
-    val wirelessNetworkState by viewModel.wirelessNetworkState.collectAsState()
-    val onEvents: (SettingsEvent) -> Unit = remember {
-        { event -> viewModel.onEvents(event) }
-    }
-    Settings(
-        chartSettingsUI = chartSettings,
-        state = wirelessNetworkState,
-        onEvents = onEvents
-    )
+    val state by viewModel.state.collectAsState()
+    Settings(state = state)
 }
 
 @Composable
 private fun Settings(
-    chartSettingsUI: ChartSettingsUI,
-    state: WirelessNetworkState,
-    onEvents: (SettingsEvent) -> Unit
+    state: SettingsState
 ) {
     val bluetoothDescriptionSettings = DescriptionSettings(
         title = stringResource(R.string.title_bluetooth),
@@ -69,16 +59,16 @@ private fun Settings(
             modifier = Modifier.padding(16.dp)
         ) {
             WirelessNetworkSettings(
-                state = state,
-                onEvent = onEvents,
+                state = state.wirelessBluetoothMask,
+                onEvent = state.onEvents,
                 descriptionSettings = bluetoothDescriptionSettings
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             LineChartSettings(
-                chartSettingsUI = chartSettingsUI,
-                onEvents = onEvents,
+                chartSettingsUI = state.chartSettings,
+                onEvents = state.onEvents,
             )
         }
     }
@@ -87,17 +77,23 @@ private fun Settings(
 @PreviewLightDark
 @Composable
 private fun SettingsPreview() = BluetoothTheme {
+    val state = SettingsState(
+        chartSettings = ChartSettingsUI(
+            title = "Тестовые параметры",
+            description = "Тестовое описание",
+            signals = listOf(
+                SignalSettingsUI("test", "Тест", true, Color.Green)
+            )
+        ),
+        wirelessBluetoothMask = WirelessBluetoothMask(
+            isEnabled = false,
+            mask = ""
+        ),
+        onEvents = {}
+    )
     Surface {
         Settings(
-            chartSettingsUI = ChartSettingsUI(
-                title = "Тестовые параметры",
-                description = "Тестовое описание",
-                signals = listOf(
-                    SignalSettingsUI("test", "Тест", true, Color.Green)
-                )
-            ),
-            state = WirelessNetworkState(),
-            onEvents = {}
+            state = state
         )
     }
 }
