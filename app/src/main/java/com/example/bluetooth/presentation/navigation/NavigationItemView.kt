@@ -27,7 +27,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import navigation.NavigationItem
+import override.navigation.NavigationItem
 
 @Composable
 fun NavigationItemView(

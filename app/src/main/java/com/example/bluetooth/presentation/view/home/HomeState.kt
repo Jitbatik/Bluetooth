@@ -1,7 +1,7 @@
 package com.example.bluetooth.presentation.view.home
 
 import androidx.compose.runtime.Stable
-import com.example.transfer.model.ControllerConfig
+import com.example.transfer.protocol.domain.model.ControllerConfig
 
 @Stable
 data class HomeState(

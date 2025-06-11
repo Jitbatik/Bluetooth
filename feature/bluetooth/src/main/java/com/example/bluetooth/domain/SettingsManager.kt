@@ -1,8 +1,10 @@
 package com.example.bluetooth.domain
 
+import kotlinx.coroutines.flow.StateFlow
+
 interface SettingsManager {
-    fun isEnabledChecked(): Boolean
+    fun isEnabledChecked(): StateFlow<Boolean>
     fun saveEnabledChecked(isEnabled: Boolean)
-    fun getBluetoothMask(): String
+    fun getBluetoothMask(): StateFlow<String>
     fun saveBluetoothMask(mask: String)
 }

@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.navigation
 
-import navigation.NavigationItem
+import override.navigation.NavigationItem
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState

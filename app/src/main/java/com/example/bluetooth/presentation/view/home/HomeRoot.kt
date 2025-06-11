@@ -10,11 +10,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import com.example.transfer.model.ControllerConfig
-import com.example.transfer.model.KeyMode
-import com.example.transfer.model.Range
-import com.example.transfer.model.Rotate
-import ui.screens.Home
+import com.example.transfer.protocol.domain.model.ControllerConfig
+import com.example.transfer.protocol.domain.model.KeyMode
+import com.example.transfer.protocol.domain.model.Range
+import com.example.transfer.protocol.domain.model.Rotate
+import override.ui.Home
 
 @NonRestartableComposable
 @Composable

@@ -5,10 +5,10 @@ import com.example.bluetooth.data.DataStreamRepository
 import com.example.bluetooth.data.ScannerRepositoryImpl
 import com.example.bluetooth.domain.ConnectRepository
 import com.example.bluetooth.domain.ScannerRepository
-import com.example.transfer.data.ProtocolLiftDataRepository
-import com.example.transfer.data.ProtocolPultDataRepository
-import com.example.transfer.data.ProtocolUARTDataRepository
-import com.example.transfer.domain.ProtocolDataRepository
+import com.example.transfer.protocol.data.ProtocolLiftDataRepository
+import com.example.transfer.protocol.data.ProtocolPultDataRepository
+import com.example.transfer.protocol.data.ProtocolUARTDataRepository
+import com.example.transfer.protocol.domain.ProtocolDataRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

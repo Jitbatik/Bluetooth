@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.view.home
 
-import ui.model.ButtonType
+import override.ui.ButtonType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures

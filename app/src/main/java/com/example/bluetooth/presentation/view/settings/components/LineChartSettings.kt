@@ -47,8 +47,8 @@ import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.model.SignalSettingsUI
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
+import com.example.bluetooth.presentation.view.settings.model.SignalEvent
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import ui.screens.ExpandableItem
 
 @Composable
 fun LineChartSettings(
@@ -70,7 +70,7 @@ fun LineChartSettings(
             onClick = {
                 val hasHiddenSignals = chartSettingsUI.signals.any { !it.isVisible }
                 chartSettingsUI.signals.forEach { signal ->
-                    onEvents(SettingsEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
+                    onEvents(SignalEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
                 }
             },
             modifier = Modifier
@@ -96,10 +96,10 @@ fun LineChartSettings(
                 SignalSettingItem(
                     signal = signal,
                     onVisibilityChanged = { isVisible ->
-                        onEvents(SettingsEvent.ToggleSignalVisibility(signal.id, isVisible))
+                        onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
                     },
                     onColorChanged = { color ->
-                        onEvents(SettingsEvent.ChangeSignalColor(signal.id, color))
+                        onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
                     }
                 )
             }

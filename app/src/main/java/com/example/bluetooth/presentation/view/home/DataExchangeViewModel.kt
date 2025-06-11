@@ -4,15 +4,16 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bluetooth.EventHandler
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
-import com.example.transfer.domain.ProtocolDataRepository
-import com.example.transfer.domain.parameters.Type
-import com.example.transfer.domain.parameters.usecase.ObserveParametersUseCase
-import com.example.transfer.model.ByteData
-import com.example.transfer.model.ControllerConfig
-import com.example.transfer.model.KeyMode
-import com.example.transfer.model.Range
-import com.example.transfer.model.Rotate
+import com.example.transfer.protocol.domain.ProtocolDataRepository
+import com.example.transfer.protocol.domain.usecase.ObserveParametersUseCase
+import com.example.transfer.protocol.domain.model.ByteData
+import com.example.transfer.protocol.domain.model.ControllerConfig
+import com.example.transfer.protocol.domain.model.KeyMode
+import com.example.transfer.protocol.domain.model.Range
+import com.example.transfer.protocol.domain.model.Rotate
+import com.example.transfer.protocol.domain.model.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import navigation.NavigationItem
+import override.navigation.NavigationItem
 import javax.inject.Inject
 
 
@@ -29,7 +30,7 @@ class DataExchangeViewModel @Inject constructor(
     navigationStateHolder: NavigationStateHolder,
     private val protocolDataRepository: ProtocolDataRepository,
     observeControllerDataUseCase: ObserveParametersUseCase,
-    private val eventHandler: EventHandler,
+    private val eventHandler: EventHandler<HomeEvent, ByteArray>,
 ) : ViewModel() {
     private val tag = DataExchangeViewModel::class.java.simpleName
 
@@ -105,7 +106,7 @@ class DataExchangeViewModel @Inject constructor(
     val controllerConfig: StateFlow<ControllerConfig> = _controllerConfig
 
     fun onEvents(event: HomeEvent) {
-        sendData(eventHandler.handleEvent(event))
+        sendData(eventHandler.handle(event))
     }
 
     private fun sendData(command: ByteArray) {
