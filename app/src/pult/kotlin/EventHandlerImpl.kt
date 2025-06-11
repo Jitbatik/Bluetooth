@@ -2,11 +2,11 @@ import com.example.bluetooth.presentation.view.home.EventHandler
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import javax.inject.Inject
 
-class EventHandlerImpl @Inject constructor() : EventHandler {
+class EventHandlerImpl @Inject constructor() : EventHandler<HomeEvent, ByteArray> {
     private val baseModbus = intArrayOf(0x01, 0x17, 0x04)
     private val defaultCommand = intArrayOf(0x01, 0x17, 0x04, 0x00, 0x00, 0x00, 0x00)
 
-    override fun handleEvent(event: HomeEvent): ByteArray {
+    override fun handle(event: HomeEvent): ByteArray {
         val command = when (event) {
             is HomeEvent.ButtonClick -> handleButtonCommands(event.buttons)
             is HomeEvent.Press -> handlePressCommands(colum = event.column, row = event.row)

@@ -1,12 +1,16 @@
 package com.example.bluetooth.presentation.view.settings.model
 
 import androidx.compose.ui.graphics.Color
+import com.example.bluetooth.Event
 
-sealed interface SettingsEvent {
-    data class ToggleSignalVisibility(val signalId: String, val isVisible: Boolean) : SettingsEvent
-    data class ChangeSignalColor(val signalId: String, val color: Color) : SettingsEvent
-    data object MakeAllSignalsVisible : SettingsEvent
+sealed interface SettingsEvent : Event
 
-    data class UpdateEnabled(val isEnabled: Boolean) : SettingsEvent
-    data class UpdateMask(val mask: String) : SettingsEvent
+sealed interface SignalEvent : SettingsEvent {
+    data class ToggleSignalVisibility(val signalId: String, val isVisible: Boolean) : SignalEvent
+    data class ChangeSignalColor(val signalId: String, val color: Color) : SignalEvent
+    data object MakeAllSignalsVisible : SignalEvent
+}
+sealed interface BluetoothEvent : SettingsEvent {
+    data class UpdateEnabled(val isEnabled: Boolean) : BluetoothEvent
+    data class UpdateMask(val mask: String) : BluetoothEvent
 }

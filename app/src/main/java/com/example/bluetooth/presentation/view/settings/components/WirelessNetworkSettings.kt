@@ -17,10 +17,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.R
 import com.example.bluetooth.model.DescriptionSettings
+import com.example.bluetooth.presentation.view.settings.model.BluetoothEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
 import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import ui.screens.ExpandableItem
 
 @Composable
 fun WirelessNetworkSettings(
@@ -40,7 +40,7 @@ fun WirelessNetworkSettings(
             Switch(
                 checked = state.isEnabled,
                 onCheckedChange = {
-                    onEvent(SettingsEvent.UpdateEnabled(it))
+                    onEvent(BluetoothEvent.UpdateEnabled(it))
                 }
             )
         }
@@ -48,7 +48,7 @@ fun WirelessNetworkSettings(
 
         OutlinedTextField(
             value = state.mask,
-            onValueChange = { onEvent(SettingsEvent.UpdateMask(it)) },
+            onValueChange = { onEvent(BluetoothEvent.UpdateMask(it)) },
             label = { Text(descriptionSettings.hintTextField) },
             enabled = state.isEnabled,
             modifier = Modifier.fillMaxWidth()

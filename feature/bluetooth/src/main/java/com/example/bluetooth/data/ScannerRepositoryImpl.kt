@@ -226,7 +226,7 @@ class ScannerRepositoryImpl @Inject constructor(
         val combinedDevices = (_pairedDevices.value + _discoverDevices.value)
             .distinctBy { it.address }
             .filter { device ->
-                if (isFilter) device.name.startsWith(bluetoothMask, ignoreCase = true) else true
+                if (isFilter.value) device.name.startsWith(bluetoothMask.value, ignoreCase = true) else true
             }
         _bluetoothDeviceList.value = combinedDevices
     }

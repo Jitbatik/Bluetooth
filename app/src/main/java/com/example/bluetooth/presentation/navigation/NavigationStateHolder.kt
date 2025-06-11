@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation.navigation
 
-import navigation.NavigationItem
+import override.navigation.NavigationItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject

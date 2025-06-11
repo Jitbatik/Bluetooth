@@ -1,6 +1,7 @@
 package com.example.bluetooth.presentation.view.home
 
-import ui.handler.EventHandlerImpl
+import com.example.bluetooth.EventHandler
+import override.ui.EventHandlerImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,7 +12,7 @@ import dagger.hilt.components.SingletonComponent
 object EventHandlerModule {
 
     @Provides
-    fun provideEventHandler(): EventHandler {
+    fun provideEventHandler(): EventHandler<HomeEvent, ByteArray> {
         return EventHandlerImpl()
     }
 }

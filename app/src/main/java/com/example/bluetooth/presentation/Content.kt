@@ -1,6 +1,6 @@
 package com.example.bluetooth.presentation
 
-import navigation.Extracted
+import override.navigation.Extracted
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -22,8 +22,8 @@ import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
 import com.example.bluetooth.ui.theme.BluetoothTheme
-import navigation.NavigationItem
-import ui.components.ParametersDashboardActions
+import override.navigation.NavigationItem
+import override.ui.Actions
 
 @Composable
 fun Content(
@@ -43,7 +43,7 @@ fun Content(
                 actions = {
                     when (currentRoute) {
                         NavigationItem.ParametersDashboard.route -> {
-                            ParametersDashboardActions(navigationStateHolder = navigationStateHolder)
+                            Actions(navigationStateHolder = navigationStateHolder)
                         }
                     }
                 }

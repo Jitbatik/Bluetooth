@@ -2,13 +2,13 @@ import com.example.bluetooth.presentation.view.home.EventHandler
 import com.example.bluetooth.presentation.view.home.HomeEvent
 import javax.inject.Inject
 
-class EventHandlerImpl @Inject constructor() : EventHandler {
+class EventHandlerImpl @Inject constructor() : EventHandler<HomeEvent, ByteArray> {
     private val baseUART = intArrayOf(0xFE, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00)
 
     private val defaultCommand = byteArrayOf(0x01, 0x17, 0x04, 0x00, 0x00, 0x00, 0x00)
 
     //todo заглушка на реализацию
-    override fun handleEvent(event: HomeEvent): ByteArray {
+    override fun handle(event: HomeEvent): ByteArray {
         return defaultCommand
     }
 
