@@ -13,29 +13,21 @@ class ParameterDisplayDataMapper @Inject constructor() {
     ): ParameterDisplayData {
         if (selectedIndex == null) return ParameterDisplayData()
 
-        val parameters = mutableMapOf<String, DisplayValueWithColor>()
-        var timestamp = 0L
-        var timeMillis = 0
-
-        for (series in graphData) {
-            val point = series.points.getOrNull(selectedIndex) ?: continue
-
-            if (timestamp == 0L) {
-                timestamp = point.timestamp
-                timeMillis = point.timeMilliseconds
-            }
-
-            val value = DisplayValueWithColor(
+        val dataPoints = graphData.mapNotNull { series ->
+            val point = series.points.getOrNull(selectedIndex) ?: return@mapNotNull null
+            series.name to DisplayValueWithColor(
                 value = point.yCoordinate,
                 color = series.color ?: DEFAULT_COLOR
-            )
-            parameters[series.name] = value
+            ) to point
         }
+
+        val parameters = dataPoints.associate { it.first }
+        val referencePoint = dataPoints.firstOrNull()?.second
 
         return ParameterDisplayData(
             selectedIndex = selectedIndex,
-            timestamp = timestamp,
-            timeMilliseconds = timeMillis,
+            timestamp = referencePoint?.timestamp ?: 0L,
+            timeMilliseconds = referencePoint?.timeMilliseconds ?: 0,
             parameters = parameters
         )
     }

@@ -19,14 +19,14 @@ import javax.inject.Inject
 class ByteDataToGraphSeriesMapper @Inject constructor(
     private val parameterSettings: ChartSettingsRepository
 ) {
-
     private var firstTimestamp: Long? = null
+
     private val _timeFlow = MutableStateFlow("")
     val timeFlow: StateFlow<String> get() = _timeFlow.asStateFlow()
 
     private val _selectedIndex = MutableStateFlow<Int?>(null)
     val selectedIndex = _selectedIndex.asStateFlow()
-    fun updateSelectedIndex(selectedIndex: Int?) { this.selectedIndex.value = selectedIndex }
+    fun updateSelectedIndex(selectedIndex: Int?) { this._selectedIndex.value = selectedIndex }
 
     fun processData(dataFlow: Flow<List<ByteData>>): Flow<List<GraphSeries>> {
         return combine(
@@ -47,14 +47,22 @@ class ByteDataToGraphSeriesMapper @Inject constructor(
     ): List<GraphSeries> {
         if (byteData.size < MIN_HEADER_SIZE) return existingSeries
 
-        val timestamp = byteData.subList(0, 4).toLongFromByteData()
-        val millis = byteData.subList(4, 6).toIntFromByteData()
+        val timestampSignal = signals.find { it.name == "Time" }
+        val millisSignal = signals.find { it.name == "MS" }
+
+        if (timestampSignal == null || millisSignal == null) return existingSeries
+
+        val timestamp = byteData.subList(timestampSignal.start, timestampSignal.end).toLongFromByteData()
+        val millis = byteData.subList(millisSignal.start, millisSignal.end).toIntFromByteData()
 
         updateInitialTimestampIfNeeded(timestamp)
         updateTimeFlow(timestamp, millis)
-        return mergeSignals(existingSeries, byteData, signals, timestamp, millis)
 
+        val displaySignals = signals.filter { it.isVisible && it.name != "Time" && it.name != "MS" }
+
+        return mergeSignals(existingSeries, byteData, displaySignals, timestamp, millis)
     }
+
 
     private fun updateInitialTimestampIfNeeded(timestamp: Long) {
         if (firstTimestamp == null) firstTimestamp = timestamp
