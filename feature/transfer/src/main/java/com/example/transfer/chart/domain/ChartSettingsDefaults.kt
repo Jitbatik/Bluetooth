@@ -11,10 +11,18 @@ object ChartSettingsDefaults {
         description = "Настройте отображение сигналов на графике параметров",
         signals = listOf(
             SignalSettings(
-                "ENCODER_READINGS",
-                "ENCODER_READINGS",
-                12,
-                16,
+                "Time",
+                "Time",
+                0,
+                4,
+                true,
+                SignalColor(255, 0, 0)
+            ),
+            SignalSettings(
+                "MS",
+                "Ms",
+                4,
+                6,
                 true,
                 SignalColor(255, 0, 0)
             ),       // Красный

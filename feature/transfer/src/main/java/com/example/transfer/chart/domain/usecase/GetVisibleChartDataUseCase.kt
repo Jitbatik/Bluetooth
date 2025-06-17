@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 class GetVisibleChartDataUseCase @Inject constructor(
@@ -42,26 +43,27 @@ class GetVisibleChartDataUseCase @Inject constructor(
     }
 
     fun observeChartData(typeFlow: StateFlow<Type>): Flow<List<GraphSeries>> {
-        val dataFlow = observeParametersUseCase.execute(typeFlow)
+        val rawDataFlow = observeParametersUseCase.execute(typeFlow)
             .map(::extractRelevantData)
-            .let(byteDataToGraphSeriesMapper::processData)
+
+        val processedDataFlow = byteDataToGraphSeriesMapper.processData(rawDataFlow)
+            .onEach { cachedSeries.value = it } // кэшируем данные без побочных эффектов
 
         return combine(
-            dataFlow,
+            processedDataFlow,
             chartConfig,
-            byteDataToGraphSeriesMapper.selectedIndex,
-            ::processChartData
-        )
+            byteDataToGraphSeriesMapper.selectedIndex
+        ) { data, config, index ->
+            handleChartData(data, config, index)
+        }
     }
 
-    private fun processChartData(
+    private fun handleChartData(
         data: List<GraphSeries>,
         config: ChartConfig,
         index: Int?
     ): List<GraphSeries> {
         val resolvedConfig = pendingConfig.getAndUpdate { null } ?: config
-        chartConfigManager.updateChartConfig(resolvedConfig, data)
-        cachedSeries.value = data
 
         val visibleSeries = data.filterVisibleRange(
             startX = resolvedConfig.offset,
@@ -75,7 +77,7 @@ class GetVisibleChartDataUseCase @Inject constructor(
     fun observeTime(): Flow<String> = byteDataToGraphSeriesMapper.timeFlow
 
     fun updateSelectedIndex(selectedIndex: Int?) {
-        updateSelectedIndex(selectedIndex)
+        byteDataToGraphSeriesMapper.updateSelectedIndex(selectedIndex)
     }
 
 
@@ -88,11 +90,13 @@ class GetVisibleChartDataUseCase @Inject constructor(
     ): List<GraphSeries> {
         val endX = startX + count
         return map { series ->
-            series.copy(
-                points = series.points
-                    .filter { it.xCoordinate in startX..endX }
-                    .sortedBy { it.xCoordinate }
-            )
+            val filteredPoints = series.points
+                .asSequence()
+                .filter { it.xCoordinate in startX..endX }
+                .sortedBy { it.xCoordinate }
+                .toList()
+
+            series.copy(points = filteredPoints)
         }
     }
 
