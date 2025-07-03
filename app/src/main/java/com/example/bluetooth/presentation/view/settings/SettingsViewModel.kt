@@ -27,46 +27,38 @@ class SettingsViewModel @Inject constructor(
     private val signalHandler: SignalEventHandler,
     private val bluetoothHandler: BluetoothEventHandler,
 ) : ViewModel() {
-    private val initialChartSettings =
-        chartSettingsRepository.chartSettings.value.chartSettingsMapToUI()
-
-    private val initialSettingsState = SettingsState(
-        chartSettings = initialChartSettings,
-        wirelessBluetoothMask = WirelessBluetoothMask(
-            isEnabled = false,
-            mask = ""
-        ),
-        onEvents = ::onEvents
+    val state = createStateFlow(
+        chartSettingsRepository,
+        settingsManager,
     )
 
-    private val chartSettingsUI: StateFlow<ChartSettingsUI> = chartSettingsRepository.chartSettings
-        .map { it.chartSettingsMapToUI() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = initialChartSettings
-        )
+    private fun createStateFlow(
+        chartSettingsRepository: ChartSettingsRepository,
+        settingsManager: SettingsManager,
+    ): StateFlow<SettingsState> {
+        val chartSettingsFlow = chartSettingsRepository.chartSettings
+            .map { it.chartSettingsMapToUI() }
+
+        val bluetoothFlow = combine(
+            settingsManager.isEnabledChecked(),
+            settingsManager.getBluetoothMask()
+        ) { isEnabled, mask -> WirelessBluetoothMask(isEnabled, mask) }
 
 
-    private val _state = combine(
-        chartSettingsUI,
-        settingsManager.isEnabledChecked(),
-        settingsManager.getBluetoothMask()
-    ) { chartSettings, isEnable, mask ->
-        SettingsState(
-            chartSettings = chartSettings,
-            wirelessBluetoothMask = WirelessBluetoothMask(
-                isEnabled = isEnable,
-                mask = mask
-            ),
-            onEvents = ::onEvents
+        return combine(
+            chartSettingsFlow,
+            bluetoothFlow,
+        ) { chartSettings, bluetooth ->
+            SettingsState(
+                chartSettings = chartSettings,
+                wirelessBluetoothMask = bluetooth,
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            SettingsStateDefaults.getDefault()
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initialSettingsState
-    )
-    val state: StateFlow<SettingsState> = _state
+    }
 
     fun onEvents(event: SettingsEvent) {
         viewModelScope.launch {
