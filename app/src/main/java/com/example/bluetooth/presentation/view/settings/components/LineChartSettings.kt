@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,53 +60,65 @@ fun LineChartSettings(
     ExpandableItem(
         title = chartSettingsUI.title,
     ) {
-        Text(
-            text = chartSettingsUI.description,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        FilledTonalButton(
-            onClick = {
-                val hasHiddenSignals = chartSettingsUI.signals.any { !it.isVisible }
-                chartSettingsUI.signals.forEach { signal ->
-                    onEvents(SignalEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
+        Column(
+            modifier = modifier
         ) {
             Text(
-                if (chartSettingsUI.signals.any { !it.isVisible })
-                    "Показать все сигналы"
-                else
-                    "Скрыть все сигналы"
+                text = chartSettingsUI.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
-        }
 
-        LazyColumn(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(
-                items = chartSettingsUI.signals,
-                key = { it.id }
-            ) { signal ->
-                SignalSettingItem(
-                    signal = signal,
-                    onVisibilityChanged = { isVisible ->
-                        onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
-                    },
-                    onColorChanged = { color ->
-                        onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
+            FilledTonalButton(
+                onClick = {
+                    val hasHiddenSignals = chartSettingsUI.signals.any { !it.isVisible }
+                    chartSettingsUI.signals.forEach { signal ->
+                        onEvents(SignalEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
                     }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            ) {
+                Text(
+                    if (chartSettingsUI.signals.any { !it.isVisible })
+                        "Показать все сигналы"
+                    else
+                        "Скрыть все сигналы"
                 )
+            }
+
+            // Ограничиваем по высоте и делаем вложенную прокрутку
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 300.dp) // Можно адаптировать под UI
+            ) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = chartSettingsUI.signals,
+                        key = { it.id }
+                    ) { signal ->
+                        SignalSettingItem(
+                            signal = signal,
+                            onVisibilityChanged = { isVisible ->
+                                onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
+                            },
+                            onColorChanged = { color ->
+                                onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
+                            }
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 
 @Composable
 private fun SignalSettingItem(
