@@ -3,14 +3,17 @@ package com.example.bluetooth.presentation.view.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetooth.domain.SettingsManager
-import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.presentation.view.settings.model.BluetoothEvent
+import com.example.bluetooth.presentation.view.settings.model.ChartXmlPickerEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsState
 import com.example.bluetooth.presentation.view.settings.model.SignalEvent
 import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.presentation.view.settings.utils.chartSettingsMapToUI
 import com.example.transfer.chart.data.ChartSettingsRepository
+import com.example.transfer.filePick.domain.usecase.ObserveSingleCommonXmlFileUseCase
+import com.example.transfer.filePick.domain.usecase.ObserveVersionXmlFileUseCase
+import com.example.transfer.filePick.domain.usecase.ObserveSelectedFileVersionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,56 +27,67 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     settingsManager: SettingsManager,
     chartSettingsRepository: ChartSettingsRepository,
+    observeVersionFiles: ObserveVersionXmlFileUseCase,
+    observeSingleCommonFile: ObserveSingleCommonXmlFileUseCase,
     private val signalHandler: SignalEventHandler,
     private val bluetoothHandler: BluetoothEventHandler,
+    private val xmlPickerHandler: ChartXmlEventHandler,
+    observeSelectedFileVersionUseCase: ObserveSelectedFileVersionUseCase,
 ) : ViewModel() {
-    private val initialChartSettings =
-        chartSettingsRepository.chartSettings.value.chartSettingsMapToUI()
 
-    private val initialSettingsState = SettingsState(
-        chartSettings = initialChartSettings,
-        wirelessBluetoothMask = WirelessBluetoothMask(
-            isEnabled = false,
-            mask = ""
-        ),
-        onEvents = ::onEvents
+    val state = createStateFlow(
+        chartSettingsRepository,
+        settingsManager,
+        observeVersionFiles,
+        observeSingleCommonFile,
+        observeSelectedFileVersionUseCase
     )
 
-    private val chartSettingsUI: StateFlow<ChartSettingsUI> = chartSettingsRepository.chartSettings
-        .map { it.chartSettingsMapToUI() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = initialChartSettings
+    private fun createStateFlow(
+        chartSettingsRepository: ChartSettingsRepository,
+        settingsManager: SettingsManager,
+        observeVersionFiles: ObserveVersionXmlFileUseCase,
+        observeSingleCommonFile: ObserveSingleCommonXmlFileUseCase,
+        test: ObserveSelectedFileVersionUseCase,
+    ): StateFlow<SettingsState> {
+        val chartSettingsFlow = chartSettingsRepository.chartSettings
+            .map { it.chartSettingsMapToUI() }
+
+        val bluetoothFlow = combine(
+            settingsManager.isEnabledChecked(),
+            settingsManager.getBluetoothMask()
+        ) { isEnabled, mask -> WirelessBluetoothMask(isEnabled, mask) }
+
+        val filesFlow = combine(
+            observeSingleCommonFile(),
+            observeVersionFiles(),
+        ) { common, version -> Pair(common, version) }
+
+        return combine(
+            chartSettingsFlow,
+            bluetoothFlow,
+            filesFlow,
+            test()
+        ) { chartSettings, bluetooth, (commonFiles, versionFiles), selectedFile ->
+            SettingsState(
+                chartSettings = chartSettings,
+                wirelessBluetoothMask = bluetooth,
+                commonFiles = commonFiles,
+                versionFiles = versionFiles,
+                selectedFileName = selectedFile
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            SettingsStateDefaults.getDefault()
         )
+    }
 
-
-    private val _state = combine(
-        chartSettingsUI,
-        settingsManager.isEnabledChecked(),
-        settingsManager.getBluetoothMask()
-    ) { chartSettings, isEnable, mask ->
-        SettingsState(
-            chartSettings = chartSettings,
-            wirelessBluetoothMask = WirelessBluetoothMask(
-                isEnabled = isEnable,
-                mask = mask
-            ),
-            onEvents = ::onEvents
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initialSettingsState
-    )
-    val state: StateFlow<SettingsState> = _state
-
-    fun onEvents(event: SettingsEvent) {
-        viewModelScope.launch {
-            when (event) {
-                is SignalEvent -> signalHandler.handle(event)
-                is BluetoothEvent -> bluetoothHandler.handle(event)
-            }
+    fun onEvents(event: SettingsEvent) = viewModelScope.launch {
+        when (event) {
+            is SignalEvent -> signalHandler.handle(event)
+            is BluetoothEvent -> bluetoothHandler.handle(event)
+            is ChartXmlPickerEvent -> xmlPickerHandler.handle(event)
         }
     }
 }

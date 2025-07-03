@@ -2,15 +2,14 @@ package com.example.bluetooth.presentation.view.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,11 +21,14 @@ import com.example.bluetooth.R
 import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.model.DescriptionSettings
 import com.example.bluetooth.model.SignalSettingsUI
+import com.example.bluetooth.presentation.view.settings.components.ChartXmlSettings
 import com.example.bluetooth.presentation.view.settings.components.LineChartSettings
 import com.example.bluetooth.presentation.view.settings.components.WirelessNetworkSettings
+import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsState
 import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import com.example.transfer.filePick.domain.FilesMetadata
 
 
 @Composable
@@ -34,12 +36,19 @@ fun SettingsRoot(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    Settings(state = state)
+    val onEvents: (SettingsEvent) -> Unit = remember {
+        { event -> viewModel.onEvents(event) }
+    }
+    Settings(
+        state = state,
+        onEvents = onEvents,
+    )
 }
 
 @Composable
 private fun Settings(
-    state: SettingsState
+    state: SettingsState,
+    onEvents: (SettingsEvent) -> Unit
 ) {
     val bluetoothDescriptionSettings = DescriptionSettings(
         title = stringResource(R.string.title_bluetooth),
@@ -48,29 +57,41 @@ private fun Settings(
     )
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            WirelessNetworkSettings(
-                state = state.wirelessBluetoothMask,
-                onEvent = state.onEvents,
-                descriptionSettings = bluetoothDescriptionSettings
-            )
+            item {
+                WirelessNetworkSettings(
+                    state = state.wirelessBluetoothMask,
+                    onEvent = onEvents,
+                    descriptionSettings = bluetoothDescriptionSettings
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                ChartXmlSettings(
+                    commonFile = state.commonFiles,
+                    versionFiles = state.versionFiles,
+                    selectedFileName = state.selectedFileName,
+                    onEvent = onEvents,
+                )
+            }
 
-            LineChartSettings(
-                chartSettingsUI = state.chartSettings,
-                onEvents = state.onEvents,
-            )
+            item {
+                LineChartSettings(
+                    chartSettingsUI = state.chartSettings,
+                    onEvents = onEvents,
+                )
+            }
         }
     }
 }
+
 
 @PreviewLightDark
 @Composable
@@ -87,11 +108,14 @@ private fun SettingsPreview() = BluetoothTheme {
             isEnabled = false,
             mask = ""
         ),
-        onEvents = {}
+        commonFiles = null,
+        versionFiles = emptyList(),
+        selectedFileName = null
     )
     Surface {
         Settings(
-            state = state
+            state = state,
+            onEvents = { }
         )
     }
 }

@@ -65,6 +65,9 @@ class GetVisibleChartDataUseCase @Inject constructor(
     ): List<GraphSeries> {
         val resolvedConfig = pendingConfig.getAndUpdate { null } ?: config
 
+        chartConfigManager.updateChartConfig(resolvedConfig, data)
+        cachedSeries.value = data
+
         val visibleSeries = data.filterVisibleRange(
             startX = resolvedConfig.offset,
             count = resolvedConfig.stepCount

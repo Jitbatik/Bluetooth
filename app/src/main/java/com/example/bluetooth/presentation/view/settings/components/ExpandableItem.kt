@@ -59,7 +59,6 @@ fun ExpandableItem(
                 fontWeight = FontWeight.Medium
             )
         }
+        if (isExpanded) { content() }
     }
-
-    if (isExpanded) { content() }
 }

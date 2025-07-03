@@ -40,7 +40,7 @@ class ByteDataToGraphSeriesMapper @Inject constructor(
     }
 
 
-    private fun processParameters(
+    private fun processParameters2(
         existingSeries: List<GraphSeries>,
         byteData: List<ByteData>,
         signals: List<SignalSettings>
@@ -58,9 +58,23 @@ class ByteDataToGraphSeriesMapper @Inject constructor(
         updateInitialTimestampIfNeeded(timestamp)
         updateTimeFlow(timestamp, millis)
 
-        val displaySignals = signals.filter { it.isVisible && it.name != "Time" && it.name != "MS" }
+        return mergeSignals(existingSeries, byteData, signals, timestamp, millis)
+    }
 
-        return mergeSignals(existingSeries, byteData, displaySignals, timestamp, millis)
+    private fun processParameters(
+        existingSeries: List<GraphSeries>,
+        byteData: List<ByteData>,
+        signals: List<SignalSettings>
+    ): List<GraphSeries> {
+        if (byteData.size < MIN_HEADER_SIZE) return existingSeries
+
+        val timestamp = byteData.subList(0, 4).toLongFromByteData()
+        val millis = byteData.subList(4, 6).toIntFromByteData()
+
+        updateInitialTimestampIfNeeded(timestamp)
+        updateTimeFlow(timestamp, millis)
+
+        return mergeSignals(existingSeries, byteData, signals, timestamp, millis)
     }
 
 
