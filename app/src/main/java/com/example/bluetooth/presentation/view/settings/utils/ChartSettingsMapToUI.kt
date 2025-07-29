@@ -9,10 +9,10 @@ fun ChartSettings.chartSettingsMapToUI(): ChartSettingsUI {
     return ChartSettingsUI(
         title = title,
         description = description,
-        signals = signals.map { signal ->
+        signals = config.signals.map { signal ->
             SignalSettingsUI(
-                id = signal.id,
-                name = signal.name,
+                id = signal.name,
+                name = signal.comment,
                 isVisible = signal.isVisible,
                 color = Color(
                     signal.color.red / 255f,

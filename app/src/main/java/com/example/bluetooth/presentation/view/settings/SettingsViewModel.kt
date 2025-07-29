@@ -3,7 +3,6 @@ package com.example.bluetooth.presentation.view.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetooth.domain.SettingsManager
-import com.example.bluetooth.model.ChartSettingsUI
 import com.example.bluetooth.presentation.view.settings.model.BluetoothEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsEvent
 import com.example.bluetooth.presentation.view.settings.model.SettingsState
@@ -36,7 +35,7 @@ class SettingsViewModel @Inject constructor(
         chartSettingsRepository: ChartSettingsRepository,
         settingsManager: SettingsManager,
     ): StateFlow<SettingsState> {
-        val chartSettingsFlow = chartSettingsRepository.chartSettings
+        val chartSettingsFlow = chartSettingsRepository.observe()
             .map { it.chartSettingsMapToUI() }
 
         val bluetoothFlow = combine(
