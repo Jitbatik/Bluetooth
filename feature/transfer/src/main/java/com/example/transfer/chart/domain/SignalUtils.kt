@@ -1,0 +1,33 @@
+package com.example.transfer.chart.domain
+
+import com.example.transfer.protocol.domain.model.ByteData
+import com.example.transfer.protocol.domain.utils.ByteUtils.getBitLE
+import com.example.transfer.protocol.domain.utils.ByteUtils.toIntLE
+
+object SignalUtils {
+
+    fun extractSignalValue(byteData: List<ByteData>, offset: Int, type: String): Int {
+        val size = getSignalSize(offset, type)
+        val slice = byteData.subList(offset, size)
+        return when {
+            type.matches(Regex("b[0-7]")) -> {
+                val bitIndex = type.removePrefix("b").toInt()
+                slice.getBitLE(bitIndex)
+            }
+
+            else -> slice.toIntLE()
+        }
+    }
+
+    fun getSignalSize(offset: Int, type: String): Int {
+        return when (type) {
+            "u32" -> offset + 4
+            "u16" -> offset + 2
+            "u8", "e8" -> offset + 1
+            in BITS_TYPES -> offset + 1
+            else -> offset + 1 // fallback для неизвестных типов
+        }
+    }
+
+    private val BITS_TYPES = listOf("b0", "b1", "b2", "b3", "b4", "b5", "b6", "b7")
+}
