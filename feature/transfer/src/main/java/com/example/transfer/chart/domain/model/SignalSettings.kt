@@ -1,10 +1,16 @@
 package com.example.transfer.chart.domain.model
 
 data class SignalSettings(
-    val id: String,
     val name: String,
-    val start: Int,
-    val end: Int,
-    val isVisible: Boolean,
-    val color: SignalColor
+    val comment: String,
+    val offset: Int,
+    val type: String,
+    val codes: List<SignalCode> = emptyList(), // Только для e8
+    val isVisible: Boolean = true,
+    val color: SignalColor = SignalColor(0, 255, 0)
+)
+
+data class SignalCode(
+    val value: Int,
+    val description: String
 )

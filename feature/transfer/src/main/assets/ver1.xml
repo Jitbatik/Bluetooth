@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lift_format>
+    <field name="Time" type="u32" offset="0" comment="Время, сек с 1970"/>
+    <field name="ms" type="u16" offset="4" comment="Время, мс (0-1000)"/>
+    <field name="Ver" type="u16" offset="6" comment="Версия лифта: 1-«60 эт»"/>
+    <field name="Encoder" type="u32" offset="8" comment="Показания Энкодера"/>
+<!--<field name="EncoderF" type="u16" offset="16" comment="Частота Энкодера"/>-->
+    <field name="Speed" type="u16" offset="12" comment="Скорость лифта"/>
+<!--<field name="Temperature1" type="u8" offset="22" comment="Температура (байт)"/>
+    <field name="Security1" type="u8" offset="23" comment="Охрана шахты"/>-->
+    <field name="Rt" type="u16" offset="14" comment="Сопротивление датчика t двигателя, Ом"/>
+    <field name="Rohr" type="u16" offset="16" comment="Сопротивление охраны шахты, Ом"/>
+    <field name="ErrorIdx" type="u8" offset="19" comment="Порядковый номер аварии"/>
+    <field name="Error" type="e8" offset="20" comment="Код последнего аварийного сообщения">
+        <code value="0" desc="Конец протокола"/>
+        <code value="1" desc="нет Калибровки"/>
+        <code value="2" desc="нет 869 в режиме НР"/>
+        <code value="3" desc="нет ЦБ"/>
+        <code value="4" desc="нет ДШ"/>
+        <code value="5" desc="нет ДК"/>
+        <code value="6" desc="нет ТО при Откр.Двер"/>
+        <code value="7" desc="нет ДНЭ в нижн.эт"/>
+        <code value="8" desc="нет ДВЭ в верх.эт"/>
+        <code value="9" desc="ДВЭ и ДНЭ одновремен"/>
+        <code value="10" desc="нет ДТО по импульсам"/>
+        <code value="11" desc="отключен ФР А"/>
+        <code value="12" desc="отключен ФР B"/>
+        <code value="13" desc="перегрузка 110%"/>
+        <code value="20" desc="ошибка калибровки"/>
+        <code value="21" desc="нет калибр-этаж не 1"/>
+        <code value="22" desc="ДНЭошибкаБольшДопска"/>
+        <code value="23" desc="ДВЭошибкаБольшДопска"/>
+        <code value="24" desc="въезд в ДТО >допуска"/>
+        <code value="25" desc="выезд с ДТО >допуска"/>
+        <code value="26" desc="ДЗП ошибка  >допуска"/>
+        <code value="27" desc="неКалибр-эт. не верх"/>
+        <code value="28" desc="переполн счетчика им"/>
+        <code value="29" desc="калибровка отменена"/>
+        <code value="31" desc="ключПППвкл.запрет НР"/>
+        <code value="43" desc="аварийн. режим 3*8*8"/>
+        <code value="45" desc="пропадание сети  БКФ"/>
+        <code value="46" desc="нет связи с КК-6000"/>
+        <code value="47" desc="нет связи с ПК-6000"/>
+        <code value="48" desc="нет связи с ЭК-6000"/>
+        <code value="50" desc="Включение"/>
+        <code value="51" desc="двери ? нет ВКО"/>
+        <code value="52" desc="двери ? нет ДШ"/>
+        <code value="53" desc="двери ? нет ДК"/>
+        <code value="54" desc="двери ? нет ЗДК"/>
+        <code value="55" desc="двери ? нет ВКЗ"/>
+        <code value="56" desc="переоткр нет Откр.Дв"/>
+        <code value="57" desc="переоткр нет Закр.Дв"/>
+        <code value="58" desc="нет Аварии"/>
+        <code value="59" desc="нет закр.двер."/>
+        <code value="60" desc="нет тока ПЧ"/>
+        <code value="61" desc="нет включения контр."/>
+        <code value="62" desc="нет отключ контактр."/>
+        <code value="63" desc="не снят Ток ПЧ"/>
+        <code value="64" desc="нет снятия торм."/>
+        <code value="65" desc="нет наложен. тормоза"/>
+        <code value="66" desc="нет импульсов движен"/>
+        <code value="67" desc="порядок след. Д1 Д2"/>
+        <code value="68" desc="нет тормоза ПЧ"/>
+        <code value="69" desc="нет готовности ПЧ"/>
+        <code value="70" desc="нет Аварии"/>
+        <code value="71" desc="замыкание цепи ОШ"/>
+        <code value="72" desc="обрыв цепи ОШ"/>
+        <code value="73" desc="проникновение ДШ"/>
+        <code value="74" desc="открытие ДШ без каб"/>
+        <code value="81" desc="Пожарная опасность"/>
+        <code value="82" desc="сейсмическая опасн."/>
+        <code value="83" desc="Эвакуация"/>
+        <code value="84" desc="неиспр.или нет  ИБП"/>
+        <code value="87" desc="уход на соседн. этаж"/>
+        <code value="88" desc="возврат в ДТО"/>
+        <code value="90" desc="переезд ДТО"/>
+        <code value="91" desc="перегрев двигателя"/>
+        <code value="92" desc="врем на БС без ДТО"/>
+        <code value="93" desc="врем на МС без ДТО"/>
+        <code value="97" desc="нет доп.датч. ДНЭ"/>
+        <code value="98" desc="нет доп.датч. ДВЭ"/>
+    </field>
+    <field name="Mode" type="e8" offset="22" comment="Режим работы лифта">
+        <code value="1" desc="Режим НР"/>
+        <code value="2" desc="Режим МП/БС"/>
+        <code value="3" desc="Режим МП/МС"/>
+        <code value="4" desc="Режим РЕВИЗИЯ"/>
+    </field>
+    <field name="Pos" type="e8" offset="23" comment="Текущее положение кабины"/>
+    <field name="Warning" type="e8" offset="21" comment="Код последнего предупредительного сообщения"/>
+  
+    <field name="Приказ" type="m40" offset="38" comment="Приказы"/>
+    <field name="Вниз" type="m40" offset="43" comment="Вызовы вниз"/>
+    <field name="Вверх" type="m40" offset="48" comment="Вызовы вверх"/>
+
+    <field name="ЦК_IN1_D2" type="b0" offset="24" bits="0" comment="IN1 D2(X15.2)"/>
+    <field name="ЦК_IN2_D1" type="b1" offset="24" comment="IN2 D1(X15.2)"/>
+    <field name="ЦК_IN3_КТО" type="b2" offset="24" comment="IN3 Кнопка ТО - 615(X15.5)"/>
+    <field name="ЦК_IN4_МС_БС" type="b3" offset="24" comment="IN4 МС / БС - 614(Х15.6)"/>
+    <field name="ЦК_IN5_Ревиз" type="b4" offset="24" comment="IN5 Ревизия - 869(Х16.1)"/>
+    <field name="ЦК_IN6_НР_МП" type="b5" offset="24" comment="IN6 НР / МП - 611(Х16.2)"/>
+    <field name="ЦК_IN7_КВврх" type="b6" offset="24" comment="IN7 Кнопка Вверх - 501(Х16.3)"/>
+    <field name="ЦК_IN8_КВнз" type="b7" offset="24" comment="IN8 Кнопка Вниз - 500(Х16.4)"/>
+
+    <field name="ЦК_IN9_КТорм" type="b0" offset="25" comment="IN9 Кнопка тормоза - 620(Х16.5)"/>
+    <field name="ЦК_IN10_Расторм" type="b1" offset="25" comment="IN10 Растормаживание - 621(Х16.6)"/>
+    <field name="ЦК_IN11_ДТО" type="b2" offset="25" comment="IN11 ДТО - 842.2(Х17.1)"/>
+    <field name="ЦК_IN12_ДНЭ" type="b3" offset="25" comment="IN12 ДНЭ - 817(Х17.2)"/>
+    <field name="ЦК_IN13_ДВЭ" type="b4" offset="25" comment="IN13 ДВЭ - 818(Х17.3)"/>
+    <field name="ЦК_IN14_Сост" type="b5" offset="25" comment="IN14 Состояние контакт.- 604(Х17.4)"/>
+    <field name="ЦК_IN15_ПожОп" type="b6" offset="25" comment="IN15 Пожарн. опсность - 163(Х17.5)"/>
+    <field name="ЦК_IN16_СейсОп" type="b7" offset="25" comment="IN16 Сейсм. Опасность - 806(Х17.6)"/>
+
+    <field name="ЦК_IN17_ДТО1" type="b0" offset="26" comment="IN17 ДТО1 - 842.3(Х23.1)"/>
+    <field name="ЦК_IN18_ДДВЭ" type="b1" offset="26" comment="IN18 ДДВЭ - 845(Х23.2)"/>
+    <field name="ЦК_IN19_ДДНЭ" type="b2" offset="26" comment="IN19 ДДНЭ - 844(Х23.3)"/>
+    <field name="ЦК_IN20_ДЗВ" type="b3" offset="26" comment="IN20 ДЗВ - 843.1(Х23.4)"/>
+    <field name="ЦК_IN21_ТокПЧ" type="b4" offset="26" comment="IN21 ПЧ Ток - 015.1(Х23.5)"/>
+    <field name="ЦК_IN22_ТормПЧ" type="b5" offset="26" comment="IN22 ПЧ Торм. - 012.1(Х23.6)"/>
+    <field name="ЦК_IN23_ГотовПЧ" type="b6" offset="26" comment="IN23 ПЧ Готов - 014.1(Х26.1)"/>
+    <field name="ЦК_IN24_ПО" type="b7" offset="26" comment="IN24 163_1 ПО"/>
+
+    <field name="ЦК_IN25_Сеть" type="b0" offset="27" comment="IN25 Контроль сети 220-F(X1.1)"/>
+    <field name="ЦК_IN26_ЦБ" type="b1" offset="27" comment="IN26 ЦБ 213(Х2.2)"/>
+    <field name="ЦК_IN27_ДШ" type="b2" offset="27" comment="IN27 ДШ 212(Х2.3)"/>
+    <field name="ЦК_IN28_ИБП" type="b3" offset="27" comment="IN28 Контроль ИБП 110-4(Х2.4)"/>
+    <field name="ЦК_IN29_ДК" type="b4" offset="27" comment="IN29 ДК 64-4(Х2.5)"/>
+    <field name="ЦК_IN30_110В" type="b5" offset="27" comment="IN30 110В резерв"/>
+    <field name="ЦК_IN31_110В" type="b6" offset="27" comment="IN31 110В резерв"/>
+    <field name="ЦК_IN32_Разряд" type="b7" offset="27" comment="IN32 Контроль разряда батареи"/>
+
+    <field name="ЦК_К1_Вниз" type="b0" offset="28" comment="ЦК_К1 К1_251 Вниз (X4.1)"/>
+    <field name="ЦК_К2_Вверх" type="b1" offset="28" comment="ЦК_К2_252 Вверх (X4.3)"/>
+    <field name="ЦК_К 3_Скор3" type="b2" offset="28" comment="ЦК_К3_274 Скорость (Х4.4)"/>
+    <field name="ЦК_К 4_Скор4" type="b3" offset="28" comment="ЦК_К4_275 Скорость (Х5.1))"/>
+    <field name="ЦК_К5_УпПит" type="b4" offset="28" comment="ЦК_К5_Упр. Пит. главн.привода (Х5.4)"/>
+    <field name="ЦК_К6_Эвак" type="b5" offset="28" comment="ЦК_К6_Эвакуация 319 (Х5.6)"/>
+    <field name="ЦК_К7_АврОШ" type="b6" offset="28" comment="ЦК_К7_Авария ОШ (Х6.1)"/>
+    <field name="ЦК_К8_Авр" type="b7" offset="28" comment="ЦК_К8_Авария (Х6.3)"/>
+
+    <field name="ЦК_К9_K9" type="b0" offset="29" comment="ЦК_К9(Х6.5)"/>
+    <field name="ЦК_К10_Скор10" type="b1" offset="29" comment="ЦК_К10_273 Скорость (Х24.2)"/>
+    <field name="ЦК_К11_ИндТО" type="b2" offset="29" comment="ЦК_К11 624 Индикация ТО"/>
+    <field name="ЦК_К12_Расторм" type="b3" offset="29" comment="ЦК_К12 623 Растормаживание"/>
+<!--<field name="out12" type="b4" offset="29" comment="OUT13 Резерв"/>
+    <field name="out13" type="b5" offset="29" comment="OUT14 Резерв"/>
+    <field name="out14" type="b6" offset="29" comment="OUT15 Резерв"/>-->
+    <field name="Cpu_EEPROM" type="b7" offset="29" comment="Признак записи в EEPROM"/>
+
+    <field name="КК_IN1_МРевА" type="b0" offset="30" comment="КК_IN1 Механический реверс А (311)"/>
+    <field name="КК_IN2_ВКОА" type="b1" offset="30" comment="КК_IN2 ВКО А (312)"/>
+    <field name="КК_IN3_ВКЗА" type="b2" offset="30" comment="КК_IN3 ВКЗ А (313)"/>
+    <field name="КК_IN10_ФРевА" type="b3" offset="30" comment="КК_IN10 Фотореверс А (314)"/>
+    <field name="КК_IN4_МРевВ" type="b4" offset="30" comment="КК_IN4 Механический реверс В (321)"/>
+    <field name="КК_IN5_ВКОВ" type="b5" offset="30" comment="КК_IN5 ВКО В (322)"/>
+    <field name="KK_IN6_ВКЗВ" type="b6" offset="30" comment="КК_IN6 ВКЗ В (323)"/>
+    <field name="КК_IN12_ФРевВ" type="b7" offset="30" comment="КК_IN12 Фотореверс В (324)"/>
+
+    <field name="КК_IN14_БлокЩит" type="b0" offset="31" comment="КК_IN14 Выкл. Блок. складного щита (630)"/>
+<!--<field name="КК_IN13_ЗамокВ" type="b1" offset="31" comment="КК_IN13 Замок двери кабины В (325)"/>-->
+<!--    <field name="ОШ1" type="b2" offset="31" comment="проникновение в шахту – ДШ=  «-»[B36X4]"/>
+    <field name="ОШ2" type="b3" offset="31" comment="проникновение в шахту- Открыты двери на двух этажах (2 резистора)"/>-->
+    <field name="КК_IN7_15кг" type="b4" offset="31" comment="КК_IN7 Загрузка 15 кг (802)"/>
+    <field name="КК_IN16_50%" type="b5" offset="31" comment="КК_IN16 Загрузка 50%"/>
+    <field name="КК_IN8_90%" type="b6" offset="31" comment="КК_IN8 Загрузка 90% (805)"/>
+    <field name="КК_IN9_110%" type="b7" offset="31" comment="КК_IN9 Загрузка 110% (804)"/>
+
+    <field name="КК_К2_Вент" type="b0" offset="32" comment="КК_К2 Упр. вентилятором (FA)"/>
+    <field name="КК_К1_Свет" type="b1" offset="32" comment="КК_К1 Освещение кабины (103)"/>
+    <field name="КК_К4_ОткрA" type="b2" offset="32" comment="КК_К4 Открыть дверь А (331)"/>
+    <field name="КК_К5_ЗакрA" type="b3" offset="32" comment="КК_К5 Закрыть дверь А (332)"/>
+    <field name="КК_К6_ОткрB" type="b4" offset="32" comment="КК_К6 Открыть дверь В (333)"/>
+    <field name="КК_К7_ЗакрB" type="b5" offset="32" comment="КК_К7 Закрыть дверь В (334)"/>
+    <field name="КК_К3_МедленноА" type="b6" offset="32" comment="КК_К3 Медленно A (310)"/>
+    <field name="КК_К8_МедленноВ" type="b7" offset="32" comment="КК_К3 Медленно B (330)"/>
+
+    <field name="ОШ1" type="b2" offset="31" comment="проникновение в шахту – ДШ=  «-»[B36X4]"/>
+    <field name="ОШ2" type="b3" offset="31" comment="проникновение в шахту- Открыты двери на двух этажах (2 резистора)"/>
+
+</lift_format>
