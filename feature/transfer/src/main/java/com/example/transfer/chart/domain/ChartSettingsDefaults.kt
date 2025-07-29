@@ -1,39 +1,17 @@
 package com.example.transfer.chart.domain
 
-import com.example.transfer.chart.domain.model.SignalColor
 import com.example.transfer.chart.domain.model.ChartSettings
-import com.example.transfer.chart.domain.model.SignalSettings
+import com.example.transfer.chart.domain.model.ChartSignalsConfig
 
 
 object ChartSettingsDefaults {
-    fun getDefault() = ChartSettings(
-        title = "Параметры графика",
-        description = "Настройте отображение сигналов на графике параметров",
-        signals = listOf(
-            SignalSettings(
-                "Time",
-                "Time",
-                0,
-                4,
-                true,
-                SignalColor(255, 0, 0)
-            ),
-            SignalSettings(
-                "MS",
-                "Ms",
-                4,
-                6,
-                true,
-                SignalColor(255, 0, 0)
-            ),       // Красный
-            SignalSettings(
-                "ELEVATOR_SPEED",
-                "ELEVATOR_SPEED",
-                18,
-                20,
-                true,
-                SignalColor(0, 0, 255)
-            ), // Синий
+    fun getDefault() =  ChartSettings(
+        title = "",
+        description = "",
+        config = ChartSignalsConfig(
+            timestampSignal = null,
+            millisSignal = null,
+            signals = emptyList()
         )
     )
 }
