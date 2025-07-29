@@ -7,6 +7,6 @@ fun extractLatestValues(
     graphData: List<GraphSeries>
 ): List<Pair<Color, Float>> {
     return graphData.mapNotNull { line ->
-        line.points.lastOrNull()?.let { point -> line.color to point.yCoordinate }
+        line.points.lastOrNull()?.let { point -> line.color to point.y }
     }
 }

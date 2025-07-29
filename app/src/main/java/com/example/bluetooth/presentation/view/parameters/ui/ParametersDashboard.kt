@@ -64,6 +64,7 @@ fun ParametersDashboard(
         LineCharts(
             chartData = state.chartData,
             parameterDisplayData = state.popData,
+            touchPosition = state.tapPosition,
             chartConfig = state.chartConfig,
             onEvents = onEvents,
         )

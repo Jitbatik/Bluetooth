@@ -12,7 +12,12 @@ fun calculateTooltipOffset(
 ): Offset {
     val rawX = position.x + pointerOffset
     val rawY = position.y - tooltipSize.height - pointerOffset
-    val clampedX = rawX.coerceIn(margin, parentSize.width - tooltipSize.width - margin)
-    val clampedY = rawY.coerceIn(margin, parentSize.height - tooltipSize.height - margin)
+
+    val maxX = (parentSize.width - tooltipSize.width - margin).coerceAtLeast(margin)
+    val maxY = (parentSize.height - tooltipSize.height - margin).coerceAtLeast(margin)
+
+    val clampedX = rawX.coerceIn(margin, maxX)
+    val clampedY = rawY.coerceIn(margin, maxY)
+
     return Offset(clampedX, clampedY)
 }
