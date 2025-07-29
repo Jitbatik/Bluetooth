@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -27,11 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bluetooth.presentation.view.parameters.model.DisplayValueWithColor
 import com.example.bluetooth.presentation.view.parameters.model.ParameterDisplayData
 import com.example.bluetooth.presentation.view.parameters.util.calculateTooltipOffset
 import com.example.transfer.protocol.domain.utils.DateTimeUtils
@@ -47,10 +53,15 @@ fun ChartValueTooltip(
     if (parentSize == IntSize.Zero) return
 
     val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
     var tooltipSize by remember { mutableStateOf(IntSize.Zero) }
 
-    val marginPx = remember(density) { with(density) { 12.dp.toPx() } }
-    val pointerOffsetPx = remember(density) { with(density) { 16.dp.toPx() } }
+    val marginDp = 12.dp
+    val pointerOffsetDp = 16.dp
+    val maxTooltipHeightDp = configuration.screenHeightDp.dp * 0.4f
+
+    val marginPx = with(density) { marginDp.toPx() }
+    val pointerOffsetPx = with(density) { pointerOffsetDp.toPx() }
 
     val offset = remember(touchPosition, parentSize, tooltipSize) {
         calculateTooltipOffset(touchPosition, tooltipSize, parentSize, marginPx, pointerOffsetPx)
@@ -65,7 +76,6 @@ fun ChartValueTooltip(
         )
     }
 
-
     AnimatedVisibility(
         visible = true,
         enter = fadeIn() + slideInVertically { -it / 2 },
@@ -77,14 +87,38 @@ fun ChartValueTooltip(
                 .onGloballyPositioned { if (tooltipSize != it.size) tooltipSize = it.size }
                 .background(backgroundColor, shape = RoundedCornerShape(4.dp))
                 .padding(8.dp)
+                .heightIn(max = maxTooltipHeightDp)
         ) {
-            Column {
-                Text(text = formattedTime, style = textStyle)
-                Spacer(Modifier.height(4.dp))
-                values.parameters.forEach { (label, displayValue) ->
+            TooltipContent(
+                formattedTime = formattedTime,
+                parameters = values.parameters.toList(),
+                textStyle = textStyle,
+                maxHeight = maxTooltipHeightDp
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun TooltipContent(
+    formattedTime: String,
+    parameters: List<Pair<String, DisplayValueWithColor>>,
+    textStyle: TextStyle,
+    maxHeight: Dp
+) {
+    Column {
+        Text(text = formattedTime, style = textStyle)
+        Spacer(Modifier.height(4.dp))
+
+        Box(
+            modifier = Modifier.heightIn(max = maxHeight)
+        ) {
+            LazyColumn {
+                items(parameters) { (label, displayValue) ->
                     PointDetails(
                         label = label,
-                        value = displayValue.value,
+                        value = displayValue.value.toInt(),
                         indicatorColor = displayValue.color,
                         textStyle = textStyle
                     )
@@ -95,11 +129,10 @@ fun ChartValueTooltip(
 }
 
 
-
 @Composable
 private fun PointDetails(
     label: String,
-    value: Float,
+    value: Int,
     indicatorColor: Color,
     textStyle: TextStyle
 ) {
@@ -113,7 +146,7 @@ private fun PointDetails(
                 .background(indicatorColor, shape = CircleShape)
         )
         Spacer(Modifier.width(4.dp))
-        Text("${label}: $value", style = textStyle)
+        Text("$label: $value", style = textStyle)
     }
 }
 

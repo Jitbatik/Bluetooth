@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -85,23 +86,30 @@ fun LineChartSettings(
             )
         }
 
-        LazyColumn(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 300.dp) // Можно адаптировать под UI
         ) {
-            items(
-                items = chartSettingsUI.signals,
-                key = { it.id }
-            ) { signal ->
-                SignalSettingItem(
-                    signal = signal,
-                    onVisibilityChanged = { isVisible ->
-                        onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
-                    },
-                    onColorChanged = { color ->
-                        onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
-                    }
-                )
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(
+                    items = chartSettingsUI.signals,
+                    key = { it.id }
+                ) { signal ->
+                    SignalSettingItem(
+                        signal = signal,
+                        onVisibilityChanged = { isVisible ->
+                            onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
+                        },
+                        onColorChanged = { color ->
+                            onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
+                        }
+                    )
+                }
             }
         }
     }
@@ -333,7 +341,6 @@ private fun ColorPickerDialog(
         }
     )
 }
-
 
 
 @Composable
