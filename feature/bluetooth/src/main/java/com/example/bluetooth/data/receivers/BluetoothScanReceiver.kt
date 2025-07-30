@@ -39,8 +39,9 @@ class BluetoothScanReceiver(
 
         when {
             hasPermission && intent.action == AndroidBluetoothDevice.ACTION_FOUND -> {
-                device?.toDomainModel()?.let(onDevice)
-                Log.d(TAG, "Device found: ${device?.name} (${device?.address})")
+                val rssi = intent.getShortExtra(AndroidBluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE).toInt()
+                device?.toDomainModel(rssi)?.let(onDevice)
+                Log.d(TAG, "Device found: ${device?.name} (${device?.address}) RSSI: $rssi")
             }
             !hasPermission -> Log.d(TAG, "DON'T HAVE PERMISSION")
         }
