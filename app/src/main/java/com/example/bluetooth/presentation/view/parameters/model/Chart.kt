@@ -8,3 +8,11 @@ data class GraphSeries(
     val points: List<Offset>,
     val color: Color
 )
+
+data class Chart(
+    val name: String,
+    val points: List<Offset>,
+    val color: Color,
+    val minValue: Float,
+    val maxValue: Float,
+)

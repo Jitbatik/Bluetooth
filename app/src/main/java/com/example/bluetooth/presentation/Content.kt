@@ -1,6 +1,5 @@
 package com.example.bluetooth.presentation
 
-import override.navigation.Extracted
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -13,15 +12,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
+import com.example.bluetooth.presentation.rssi.RssiViewModel
 import com.example.bluetooth.ui.theme.BluetoothTheme
+import override.navigation.Extracted
 import override.navigation.NavigationItem
 import override.ui.Actions
 
@@ -31,22 +35,36 @@ fun Content(
     drawerState: CustomDrawerState,
     onDrawerClick: (CustomDrawerState) -> Unit,
     currentRoute: String,
-    navigationStateHolder: NavigationStateHolder
+    navigationStateHolder: NavigationStateHolder,
+    viewModel: RssiViewModel = hiltViewModel()
 ) {
+    val rssi by viewModel.rssi.collectAsStateWithLifecycle()
+    val title = NavigationItem.fromRoute(currentRoute)
+        ?.title
+        ?.let { stringResource(it) }
+        .orEmpty()
+
+    val actions: @Composable RowScope.() -> Unit = {
+        if (currentRoute in listOf(
+                NavigationItem.Home.route,
+                NavigationItem.ParametersDashboard.route
+            )
+        ) {
+            Actions(
+                navigationStateHolder = navigationStateHolder,
+                rssi = rssi.rssi,
+                color = rssi.color
+            )
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
             AppTopBar(
-                title = NavigationItem.fromRoute(currentRoute)?.title?.let { stringResource(it) }
-                    ?: "",
+                title = title,
                 onDrawerClick = { onDrawerClick(drawerState.opposite()) },
-                actions = {
-                    when (currentRoute) {
-                        NavigationItem.ParametersDashboard.route -> {
-                            Actions(navigationStateHolder = navigationStateHolder)
-                        }
-                    }
-                }
+                actions = actions
             )
         },
         content = { paddingValues ->
@@ -84,7 +102,7 @@ fun AppTopBar(
 
 private class AppTopBarPreviewParameterProvider : PreviewParameterProvider<String> {
     override val values = sequenceOf(
-        "Home", "Connect", "Settings"
+        "Home", "Connect", "Settings", "Parameters"
     )
 }
 
@@ -103,7 +121,8 @@ private class ContentPreviewParameterProvider : PreviewParameterProvider<String>
     override val values = sequenceOf(
         NavigationItem.Home.route,
         NavigationItem.Connect.route,
-        NavigationItem.Settings.route
+        NavigationItem.Settings.route,
+        NavigationItem.ParametersDashboard.route
     )
 }
 
