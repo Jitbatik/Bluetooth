@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.bluetooth"
-        minSdk = 26
+        minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
@@ -94,7 +94,6 @@ dependencies {
     implementation(project(":feature:transfer"))
 
     implementation(libs.androidx.hilt.navigation.compose)
-    implementation (libs.ycharts)
 
     //hilt
     implementation(libs.dagger.hilt)

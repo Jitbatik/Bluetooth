@@ -1,13 +1,17 @@
 package com.example.bluetooth.presentation.view.parameters.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,53 +25,55 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.presentation.view.parameters.model.GraphSeries
+import com.example.bluetooth.presentation.view.parameters.model.Chart
 import com.example.bluetooth.presentation.view.parameters.model.ParameterDisplayData
-import com.example.bluetooth.presentation.view.parameters.ui.chart.LineChartContent
+import com.example.bluetooth.presentation.view.parameters.ui.chart.LineChart
 import com.example.bluetooth.presentation.view.parameters.ui.tooltip.ChartValueTooltip
 import com.example.bluetooth.presentation.view.parameters.viewmodel.ParametersEvents
 import com.example.transfer.chart.domain.model.ChartConfig
+import kotlin.math.abs
+import kotlin.random.Random
 
 
 @Composable
 fun LineCharts(
-    chartData: List<GraphSeries>,
+    chartData: List<Chart>,
     touchPosition: Offset?,
     parameterDisplayData: ParameterDisplayData,
     chartConfig: ChartConfig,
-    onEvents: (ParametersEvents) -> Unit,
+    onEvent: (ParametersEvents) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    if (chartData.isEmpty()) {
-        EmptyChart()
-        return
-    }
+    var parentSize by remember { mutableStateOf(IntSize.Zero) }
 
-    var chartBoxSize by remember { mutableStateOf(IntSize.Zero) }
     val currentScale by rememberUpdatedState(chartConfig.scale)
     val currentOffset by rememberUpdatedState(chartConfig.offset)
+
     val currentMinOffsetX by rememberUpdatedState(chartConfig.minOffsetX)
     val currentMaxOffsetX by rememberUpdatedState(chartConfig.maxOffsetX)
 
     val onReset by rememberUpdatedState {
-        onEvents(ParametersEvents.ChangeScale(1f))
-        onEvents(ParametersEvents.ChangeOffset(currentMaxOffsetX))
+        onEvent(ParametersEvents.ChangeScale(1f))
+        onEvent(ParametersEvents.ChangeOffset(currentMaxOffsetX))
     }
 
-    val handleTransform =
+    val onTransformGesture =
         remember(currentOffset, currentScale, currentMinOffsetX, currentMaxOffsetX) {
             { pan: Offset, zoom: Float ->
-                onEvents(
+                onEvent(
                     ParametersEvents.ChangeOffset(
                         offset = (currentOffset - pan.x / 10)
                             .coerceIn(currentMinOffsetX, currentMaxOffsetX)
                     )
                 )
-                onEvents(
+                onEvent(
                     ParametersEvents.ChangeScale(
                         scale = (currentScale * zoom)
                             .coerceIn(chartConfig.minScale, chartConfig.maxScale)
@@ -75,22 +81,19 @@ fun LineCharts(
                 )
             }
         }
-    val onBoxSizeChanged: (IntSize) -> Unit = { chartBoxSize = it }
-    val onCanvasSizeChange: (IntSize) -> Unit = {
-        onEvents(ParametersEvents.ChangeCanvasSize(size = it))
-    }
-
-    val handleTap = remember {
+    val onTapGesture = remember {
         { tapPosition: Offset ->
-            onEvents(ParametersEvents.Tap(touchPosition = tapPosition))
+            onEvent(ParametersEvents.Tap(touchPosition = tapPosition))
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.DarkGray)
-    ) {
+
+    val updateChartBoxSize: (IntSize) -> Unit = { parentSize = it }
+    val updateCanvasSize: (IntSize) -> Unit = {
+        onEvent(ParametersEvents.ChangeCanvasSize(size = it))
+    }
+
+    Column(modifier = modifier) {
         Header(
             scale = chartConfig.scale,
             offset = chartConfig.offset,
@@ -100,26 +103,21 @@ fun LineCharts(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .onGloballyPositioned { onBoxSizeChanged(it.size) }
+                .onGloballyPositioned { updateChartBoxSize(it.size) }
         ) {
-            LineChartContent(
+            ChartsContent(
                 chartData = chartData,
-                selectedIndex = parameterDisplayData.selectedIndex,
-                onCanvasSizeChange = onCanvasSizeChange,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = handleTap)
-                    }
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ -> handleTransform(pan, zoom) }
-                    }
+                parameterDisplayData = parameterDisplayData,
+                onTransformGesture = onTransformGesture,
+                onTapGesture = onTapGesture,
+                onCanvasSizeChange = updateCanvasSize
             )
+
             touchPosition?.let {
                 ChartValueTooltip(
                     touchPosition = it,
                     values = parameterDisplayData,
-                    parentSize = chartBoxSize
+                    parentSize = parentSize
                 )
             }
         }
@@ -127,15 +125,96 @@ fun LineCharts(
 }
 
 @Composable
-private fun EmptyChart() {
+private fun ChartsContent(
+    chartData: List<Chart>,
+    parameterDisplayData: ParameterDisplayData,
+    onTransformGesture: (Offset, Float) -> Unit,
+    onTapGesture: (Offset) -> Unit,
+    onCanvasSizeChange: (IntSize) -> Unit
+) {
+    if (chartData.isEmpty()) {
+        EmptyChart(Modifier.fillMaxSize())
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(chartData) { chart ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                ) {
+                    LineChart(
+                        chartData = chart,
+                        selectedIndex = parameterDisplayData.selectedIndex,
+                        onCanvasSizeChange = onCanvasSizeChange,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .chartGestures(
+                                onTap = onTapGesture,
+                                onTransform = onTransformGesture
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+fun Modifier.chartGestures(
+    onTap: (Offset) -> Unit,
+    onTransform: (pan: Offset, zoom: Float) -> Unit
+): Modifier = this.pointerInput(Unit) {
+    awaitEachGesture {
+        // 1) ждём касание (не требуем, чтобы оно было «не потреблено»)
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var isTap = true
+        var verticalAccum = 0f
+        val touchSlop = viewConfiguration.touchSlop
+
+        while (true) {
+            // Берём событие в Main pass (достаточно здесь)
+            val event = awaitPointerEvent(PointerEventPass.Main)
+            val pointersDown = event.changes.count { it.pressed }
+            val pan = event.calculatePan()
+            val zoom = event.calculateZoom()
+
+            val isMultiTouch = pointersDown > 1 || zoom != 1f
+            val isHorizontalPan = abs(pan.x) > abs(pan.y)
+
+            if (isMultiTouch || isHorizontalPan) {
+                // Горизонтальная прокрутка графика или пинч-зум → забираем событие себе
+                onTransform(pan, zoom)
+                event.changes.forEach { it.consume() }
+                isTap = false
+            } else {
+                // Вертикальный пан одним пальцем → отдаём LazyColumn
+                verticalAccum += abs(pan.y)
+                if (verticalAccum > touchSlop) isTap = false
+                // НИЧЕГО не consume-им!
+            }
+
+            // Выход, когда все пальцы отпущены
+            if (event.changes.none { it.pressed }) break
+        }
+
+        // Если не было существенного движения/зума — считаем это тапом
+        if (isTap) onTap(down.position)
+    }
+}
+
+
+@Composable
+private fun EmptyChart(
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "No data available",
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.White
+            color = Color.Unspecified
         )
     }
 }
@@ -166,3 +245,126 @@ private fun ScaleOffsetInfo(scale: Float, offset: Float) {
         modifier = Modifier.padding(8.dp)
     )
 }
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 300)
+@Composable
+private fun LineChartsPreviewEmpty() {
+    LineCharts(
+        chartData = emptyList(),
+        touchPosition = null,
+        parameterDisplayData = ParameterDisplayData(
+            selectedIndex = 0,
+            timestamp = 0,
+            timeMilliseconds = 0,
+            parameters = emptyMap()
+        ),
+        chartConfig = ChartConfig(scale = 1f),
+        onEvent = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LineChartsPreviewMultiChart() {
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+
+    val fakeChartData = remember(canvasSize) { ChartBuilder(canvasSize).charts() }
+    val fakeParameterDisplayData = ParameterDisplayData(
+        selectedIndex = 0,
+        timestamp = 0,
+        timeMilliseconds = 0,
+        parameters = emptyMap()
+    )
+
+    var fakeChartConfig by remember {
+        mutableStateOf(
+            ChartConfig(scale = 2f)
+        )
+    }
+    var touchPosition by remember { mutableStateOf<Offset?>(null) }
+
+
+    val onEvents: (ParametersEvents) -> Unit = { event ->
+        when (event) {
+            is ParametersEvents.ChangeCanvasSize -> canvasSize = event.size
+            is ParametersEvents.ChangeOffset -> fakeChartConfig =
+                fakeChartConfig.copy(offset = event.offset)
+
+            is ParametersEvents.ChangeScale -> fakeChartConfig =
+                fakeChartConfig.copy(scale = event.scale)
+
+            is ParametersEvents.Tap -> touchPosition = event.touchPosition
+        }
+    }
+
+    LineCharts(
+        chartData = fakeChartData,
+        touchPosition = touchPosition,
+        parameterDisplayData = fakeParameterDisplayData,
+        chartConfig = fakeChartConfig,
+        onEvent = onEvents
+    )
+}
+
+
+class ChartBuilder(private val canvasSize: IntSize) {
+    private val random = Random(12)
+
+    fun points(
+        minXChart: Float = 0f,
+        maxXChart: Float = 1f,
+        minYChart: Float = 0f,
+        maxYChart: Float = 1f,
+        generateXCoordinates: () -> List<Float> = { generateXCoordinatesSeries(random) },
+        generateYCoordinate: () -> Float = { random.nextDouble(0.0, 1.0).toFloat() }
+    ): List<Offset> {
+        if (canvasSize.width <= 0 || canvasSize.height <= 0) return listOf(Offset.Zero)
+
+        val stepX = canvasSize.width / (maxXChart - minXChart)
+        val stepY = canvasSize.height / (maxYChart - minYChart)
+        val height = canvasSize.height.toFloat()
+
+        return generateXCoordinates()
+            .map { x -> Offset(x * stepX, height - generateYCoordinate() * stepY) }
+            .sortedBy { it.x }
+    }
+
+    fun chart(
+        name: String = "Sample Chart",
+        color: Color = Color.Blue,
+        minValue: Float = Float.MIN_VALUE,
+        maxValue: Float = Float.MAX_VALUE
+    ): Chart = Chart(name, points(), color, minValue, maxValue)
+
+    fun charts(
+        size: Int = 3,
+        chartFactory: (String, List<Offset>) -> Chart = { name, pts ->
+            Chart(name, pts, Color.Blue, Float.MIN_VALUE, Float.MAX_VALUE)
+        }
+    ): List<Chart> {
+        val pts = points()
+        return List(size) { index -> chartFactory("Sample Chart $index", pts) }
+    }
+
+    private fun generateXCoordinatesSeries(
+        random: Random,
+        minX: Float = 0f,
+        maxX: Float = 1f,
+        stepMin: Float = 0f,
+        stepMax: Float = 1f,
+        maxCount: Int = 100,
+    ): List<Float> = buildList {
+        var current = minX
+        add(current)
+
+        while (current < maxX && size < maxCount) {
+            val step = random.nextDouble(stepMin.toDouble(), stepMax.toDouble()).toFloat()
+            current += step
+            if (step == 0f) add(current) else if (current <= maxX) add(current)
+        }
+    }
+}
+
+
+

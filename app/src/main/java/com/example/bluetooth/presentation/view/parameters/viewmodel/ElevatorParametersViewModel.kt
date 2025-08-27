@@ -5,12 +5,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
+import com.example.bluetooth.presentation.view.parameters.mapper.mapToUiChartList
 import com.example.bluetooth.presentation.view.parameters.mapper.maxY
 import com.example.bluetooth.presentation.view.parameters.mapper.minY
-import com.example.bluetooth.presentation.view.parameters.mapper.mapToUiSeriesList
-import com.example.bluetooth.presentation.view.parameters.mapper.toUIParameterDisplayData
-import com.example.bluetooth.presentation.view.parameters.mapper.applyJitter
-import com.example.bluetooth.presentation.view.parameters.model.GraphSeries
+import com.example.bluetooth.presentation.view.parameters.mapper.toUIParameterDisplayDataFlow
+import com.example.bluetooth.presentation.view.parameters.model.Chart
 import com.example.transfer.chart.domain.usecase.ChartRangeObserver
 import com.example.transfer.chart.domain.usecase.ObserveChartConfigUseCase
 import com.example.transfer.chart.domain.usecase.ObserveChartDataUseCase
@@ -22,13 +21,16 @@ import com.example.transfer.chart.domain.usecase.UpdateChartScaleUseCase
 import com.example.transfer.chart.domain.usecase.filterVisibleRange
 import com.example.transfer.protocol.domain.model.Type
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import override.navigation.NavigationItem
 import javax.inject.Inject
 import kotlin.math.ceil
@@ -37,15 +39,15 @@ import kotlin.math.max
 @HiltViewModel
 class ElevatorParametersViewModel @Inject constructor(
     navigationStateHolder: NavigationStateHolder,
-    private val observeChartDataUseCase: ObserveChartDataUseCase,
+    observeChartDataUseCase: ObserveChartDataUseCase,
     observePopDataUseCase: ObservePopDataUseCase,
     observeTimeUseCase: ObserveTimeUseCase,
     observeChartConfigUseCase: ObserveChartConfigUseCase,
 
     private val updateChartScaleUseCase: UpdateChartScaleUseCase,
     private val updateChartOffsetUseCase: UpdateChartOffsetUseCase,
-    private val chartRangeObserver: ChartRangeObserver,
-    private val observeChartSettings: ObserveChartSettings,
+    chartRangeObserver: ChartRangeObserver,
+    observeChartSettings: ObserveChartSettings,
 ) : ViewModel() {
     private val observationType: StateFlow<Type> = navigationStateHolder.currentScreen
         .map { screen ->
@@ -68,7 +70,7 @@ class ElevatorParametersViewModel @Inject constructor(
     private val canvasSize = MutableStateFlow(IntSize.Zero)
     private val tapPosition = MutableStateFlow<Offset?>(null)
     private val _selectedIndex = MutableStateFlow<Int?>(null)
-    private val _processedChartData = MutableStateFlow<List<GraphSeries>>(emptyList())
+    private val _processedChartData = MutableStateFlow<List<Chart>>(emptyList())
 
     // Только видимая часть графиков — используется в UI
     private val visibleChartDataFlow = combine(
@@ -155,43 +157,42 @@ class ElevatorParametersViewModel @Inject constructor(
         return nearest
     }
 
-    private val jitterPx = 15f
-
     // todo ========================================================================================
     private val _state: StateFlow<ParametersState> = combine(
         observeTimeUseCase(observationType),
         visibleChartDataFlow,
-        observePopDataUseCase(visibleChartDataFlow, _selectedIndex).toUIParameterDisplayData(),
+        observePopDataUseCase(visibleChartDataFlow, _selectedIndex).toUIParameterDisplayDataFlow(),
         chartConfigFlow,
         canvasSize,
     ) { time, domainSeries, popData, config, canvas ->
+        withContext(Dispatchers.Default) {
+            val maxY = domainSeries.maxY()
+            val minY = domainSeries.minY()
+            val yRange = max(1f, maxY - minY)
+            val stepCountYAxis = ceil(yRange).toInt()
 
-        val maxY = domainSeries.maxY()
-        val minY = domainSeries.minY()
+            val baseChartData = domainSeries.mapToUiChartList(
+                canvas = canvas,
+                stepCounterXAxis = config.stepCount,
+                stepCountYAxis = stepCountYAxis
+            )
 
-        val yRange = max(1f, maxY - minY)
-        val stepCountYAxis = ceil(yRange).toInt()
-        val baseChartData = domainSeries.mapToUiSeriesList(
-            canvas = canvas,
-            stepCounterXAxis = config.stepCount,
-            stepCountYAxis = stepCountYAxis
+            _processedChartData.value = baseChartData
+
+            ParametersState(
+                time = time,
+                chartData = baseChartData,
+                tapPosition = tapPosition.value,
+                popData = popData,
+                chartConfig = config,
+            )
+        }
+    }.flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = ParametersStateDefaults.getDefault()
         )
-
-        val uiSeriesWithJitter = baseChartData.applyJitter(jitterPx, canvas.height.toFloat())
-        _processedChartData.value = uiSeriesWithJitter
-
-        ParametersState(
-            time = time,
-            chartData = uiSeriesWithJitter,
-            tapPosition = tapPosition.value,
-            popData = popData,
-            chartConfig = config,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = ParametersStateDefaults.getDefault()
-    )
 
     val state: StateFlow<ParametersState> = _state
 
@@ -199,9 +200,9 @@ class ElevatorParametersViewModel @Inject constructor(
         viewModelScope.launch {
             when (event) {
                 is ParametersEvents.ChangeScale -> updateChartScaleUseCase(event.scale)
-                is ParametersEvents.ChangeOffset ->  updateChartOffsetUseCase(event.offset)
+                is ParametersEvents.ChangeOffset -> updateChartOffsetUseCase(event.offset)
                 is ParametersEvents.ChangeCanvasSize -> updateCanvas(event.size)
-                is ParametersEvents.Tap ->  handleTap(event.touchPosition)
+                is ParametersEvents.Tap -> handleTap(event.touchPosition)
             }
         }
     }
