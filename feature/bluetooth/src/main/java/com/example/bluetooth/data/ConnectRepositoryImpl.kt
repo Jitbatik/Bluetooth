@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.example.bluetooth.data.receivers.BluetoothConnectedDeviceReceiver
+import com.example.bluetooth.data.receivers.BondingReceiver
 import com.example.bluetooth.data.utils.BluetoothService
 import com.example.bluetooth.data.utils.BluetoothSocketProvider
 import com.example.bluetooth.domain.ConnectRepository
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
@@ -30,7 +32,7 @@ class ConnectRepositoryImpl @Inject constructor(
     private val bluetoothService: BluetoothService,
     @ApplicationContext private val context: Context,
     private val bluetoothSocketProvider: BluetoothSocketProvider,
-): ConnectRepository {
+) : ConnectRepository {
 
     private val _bluetoothAdapter: BluetoothAdapter?
         get() = bluetoothService.bluetoothAdapter
@@ -81,18 +83,23 @@ class ConnectRepositoryImpl @Inject constructor(
 
         if (secure && device.bondState == android.bluetooth.BluetoothDevice.BOND_NONE) {
             if (!device.createBond()) {
-                Log.e(TAG, "Failed to bond with device.")
-                return@withContext Result.failure(SecurityException("Failed to bond with device"))
+                Log.e(TAG, "Failed to start bonding process.")
+                return@withContext Result.failure(SecurityException("Failed to initiate bonding"))
             }
+
+            if (!waitForBonding(context, device)) {
+                Log.e(TAG, "Bonding failed or canceled.")
+                return@withContext Result.failure(SecurityException("Bonding failed or canceled by user"))
+            }
+
+            Log.d(TAG, "Bonding successful.")
         }
 
         _btClientSocket =
             if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
             else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
-        Log.d(
-            TAG,
-            "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID"
-        )
+
+        Log.d(TAG, "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID")
 
         if (_bluetoothAdapter?.isDiscovering == true)
             _bluetoothAdapter?.cancelDiscovery()
@@ -110,6 +117,31 @@ class ConnectRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun waitForBonding(
+        context: Context,
+        device: android.bluetooth.BluetoothDevice
+    ): Boolean = suspendCancellableCoroutine { cont ->
+        Log.d(TAG, "Start Bonding receiver")
+        val intentFilter = IntentFilter().apply {
+            android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
+        }
+
+        val receiverBondingReceiver = BondingReceiver(device, cont)
+
+        ContextCompat.registerReceiver(
+            context,
+            receiverBondingReceiver,
+            intentFilter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
+        cont.invokeOnCancellation {
+            try {
+                context.unregisterReceiver(receiverBondingReceiver)
+            } catch (_: Exception) {
+                // Already unregistered or context gone
+            }
+        }
+    }
 
     override fun disconnectFromDevice(): Result<Unit> {
         if (_btClientSocket == null) return Result.success(Unit)
@@ -140,3 +172,48 @@ class ConnectRepositoryImpl @Inject constructor(
         private val TAG = ConnectRepositoryImpl::class.java.simpleName
     }
 }
+
+
+//    override suspend fun connectToDevice(
+//        bluetoothDevice: BluetoothDevice,
+//        connectUUID: String,
+//        secure: Boolean,
+//    ): Result<Boolean> = withContext(Dispatchers.IO) {
+//        if (!_hasBtPermission) {
+//            Log.e(TAG, "No Bluetooth connect permission granted.")
+//            return@withContext Result.failure(SecurityException("No Bluetooth scan permission granted"))
+//        }
+//
+//        val device = _bluetoothAdapter?.getRemoteDevice(bluetoothDevice.address)
+//            ?: return@withContext Result.failure(SecurityException("No Bluetooth device"))
+//
+//        if (secure && device.bondState == android.bluetooth.BluetoothDevice.BOND_NONE) {
+//            if (!device.createBond()) {
+//                Log.e(TAG, "Failed to bond with device.")
+//                return@withContext Result.failure(SecurityException("Failed to bond with device"))
+//            }
+//        }
+//
+//        _btClientSocket =
+//            if (secure) device.createRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+//            else device.createInsecureRfcommSocketToServiceRecord(UUID.fromString(connectUUID))
+//        Log.d(
+//            TAG,
+//            "CREATED_SOCKET SECURE: $secure SPECIFIED UUID: $connectUUID"
+//        )
+//
+//        if (_bluetoothAdapter?.isDiscovering == true)
+//            _bluetoothAdapter?.cancelDiscovery()
+//
+//        return@withContext try {
+//            _btClientSocket?.let { socket ->
+//                socket.connect()
+//                Log.d(TAG, "CLIENT CONNECTED")
+//                bluetoothSocketProvider.updateSocket(socket)
+//            }
+//            Result.success(true)
+//        } catch (e: IOException) {
+//            Log.e(TAG, "Connection failed: ${e.message}")
+//            Result.failure(e)
+//        }
+//    }
