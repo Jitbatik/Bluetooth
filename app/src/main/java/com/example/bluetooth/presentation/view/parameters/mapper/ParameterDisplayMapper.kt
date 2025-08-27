@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.example.transfer.chart.domain.model.ParameterDisplayData as DomainParameterDisplayData
 
-fun DomainParameterDisplayData.toUi(): ParameterDisplayData =
+fun DomainParameterDisplayData.toUIParameterDisplayData(): ParameterDisplayData =
     ParameterDisplayData(
         selectedIndex = this.selectedIndex,
         timestamp = this.timestamp,
@@ -13,5 +13,5 @@ fun DomainParameterDisplayData.toUi(): ParameterDisplayData =
         parameters = this.parameters.mapValues { it.value.toUi() }
     )
 
-fun Flow<DomainParameterDisplayData>.toUIParameterDisplayData(): Flow<ParameterDisplayData> =
-    map { it.toUi() }
+fun Flow<DomainParameterDisplayData>.toUIParameterDisplayDataFlow(): Flow<ParameterDisplayData> =
+    map { it.toUIParameterDisplayData() }

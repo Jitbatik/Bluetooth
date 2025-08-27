@@ -56,8 +56,6 @@ class ChartRangeObserver @Inject constructor(
                             maxTs = max(maxTs, point.xCoordinate)
                         }
                     }
-                    Log.d("ChartRangeObserver", "$seriesList")
-
 
                     Pair(
                         if (minTs == Float.MAX_VALUE) 0f else minTs,

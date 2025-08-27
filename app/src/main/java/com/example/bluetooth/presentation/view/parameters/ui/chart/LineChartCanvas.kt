@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -21,14 +22,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.presentation.view.parameters.model.GraphSeries
+import com.example.bluetooth.presentation.view.parameters.ui.ChartBuilder
 
-/***
- * Отрисовка графика и выделенной точки
- * ***/
+/** Отрисовка графика и выделенной точки*/
 @Composable
 fun LineChartCanvas(
-    chartData: List<GraphSeries>,
+    points: List<Offset>,
+    color: Color,
     selectedIndex: Int?,
     onCanvasSizeChange: (IntSize) -> Unit,
     style: ChartStyle,
@@ -42,17 +42,16 @@ fun LineChartCanvas(
     }
 
     Canvas(modifier = modifier.onSizeChanged { canvasSize = it }) {
-        // draw Line
-        chartData.forEach { series ->
-            drawGraphLine(series.points, series.color, style)
-        }
+        // draw Line with Shadow
+        drawGraphLine(points, color, style)
+
+        // draw Line Shadow
+        drawGraphShadow(points, color)
 
         // draw Point
         selectedIndex?.let { index ->
-            chartData.forEach { series ->
-                series.points.getOrNull(index)?.let { point ->
-                    drawSelectedPoint(point, series.color, style)
-                }
+            points.getOrNull(index)?.let { point ->
+                drawSelectedPoint(point, color, style)
             }
         }
     }
@@ -74,6 +73,34 @@ private fun DrawScope.drawSelectedPoint(
         radius = style.pointRadiusFactor,
         center = point,
         style = style.lineStroke
+    )
+}
+
+private fun DrawScope.drawGraphShadow(
+    points: List<Offset>,
+    color: Color
+) {
+    if (points.size < 2) return
+
+    val baseline = size.height
+    val path = Path().apply {
+        moveTo(points.first().x, points.first().y)
+        points.drop(1).forEach { lineTo(it.x, it.y) }
+        lineTo(points.last().x, baseline)
+        lineTo(points.first().x, baseline)
+        close()
+    }
+
+    drawPath(
+        path = path,
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                color.copy(alpha = 0.4f), // у линии
+                color.copy(alpha = 0f)    // вниз в прозрачность
+            ),
+            startY = points.minOf { it.y },
+            endY = baseline
+        )
     )
 }
 
@@ -101,10 +128,7 @@ private fun DrawScope.drawGraphLine(
 @Composable
 private fun LineChartContentPreview() {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-
-    val chartData = remember(canvasSize) {
-        generateFakeChartData(canvasSize = canvasSize)
-    }
+    val points = remember(canvasSize) { ChartBuilder(canvasSize).points() }
 
     Row(
         modifier = Modifier
@@ -112,55 +136,12 @@ private fun LineChartContentPreview() {
             .height(500.dp)
     ) {
         LineChartCanvas(
-            chartData = chartData,
+            points = points,
+            color = Color.Red,
             selectedIndex = 2,
             onCanvasSizeChange = { canvasSize = it },
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             style = ChartStyle()
-        )
-    }
-}
-
-fun generateFakeChartData(
-    canvasSize: IntSize,
-    stepCountXAxis: Int = 20,
-    stepCountYAxis: Int = 20,
-    seriesCount: Int = 7,
-    minXStep: Int = 0,
-    maxXStep: Int = 100,
-    minY: Int = 1,
-    maxY: Int = 18,
-    totalX: Float = 19f
-): List<GraphSeries> {
-    if (canvasSize.width <= 0 || canvasSize.height <= 0) return emptyList()
-
-    val stepX = canvasSize.width.toFloat() / stepCountXAxis.coerceAtLeast(1)
-    val stepY = canvasSize.height.toFloat() / stepCountYAxis.coerceAtLeast(1)
-    val height = canvasSize.height.toFloat()
-
-    val xCoordinates = buildList {
-        var currentX = 0f
-        while (currentX < totalX) {
-            add(currentX)
-            currentX += (minXStep..maxXStep).random() / 100f
-        }
-    }
-
-    return List(seriesCount) { index ->
-        val points = xCoordinates.map { x ->
-            val y = (minY..maxY).random().toFloat()
-            Offset(x * stepX, height - y * stepY)
-        }
-
-        GraphSeries(
-            name = "Series $index",
-            points = points.sortedBy { it.x },
-            color = Color(
-                red = (0..255).random(),
-                green = (0..255).random(),
-                blue = (0..255).random()
-            )
         )
     }
 }
