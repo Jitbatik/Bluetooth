@@ -1,5 +1,6 @@
 package com.example.transfer.chart.domain.usecase
 
+
 import com.example.transfer.chart.domain.SignalUtils
 import com.example.transfer.protocol.domain.model.Type
 import com.example.transfer.protocol.domain.usecase.ObserveParametersUseCase
