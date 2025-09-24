@@ -16,5 +16,5 @@ fun Flow<Int>.toUIRssi(): Flow<RSSI> = map { value ->
         value > -45 -> WEAK_SIGNAL_COLOR
         else -> NO_SIGNAL_COLOR
     }
-    RSSI(rssi = "$value dBm", color = color)
+    RSSI(rssi = "$value", color = color)
 }

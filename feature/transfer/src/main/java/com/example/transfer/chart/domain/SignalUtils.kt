@@ -1,21 +1,20 @@
 package com.example.transfer.chart.domain
 
-import com.example.transfer.protocol.domain.model.ByteData
-import com.example.transfer.protocol.domain.utils.ByteUtils.getBitLE
-import com.example.transfer.protocol.domain.utils.ByteUtils.toIntLE
+import com.example.transfer.protocol.domain.utils.ByteUtils.getBitLEEEE
+import com.example.transfer.protocol.domain.utils.ByteUtils.toIntLEEE
 
 object SignalUtils {
+    fun extractSignalValueFromByteData(byteData: List<Byte>, offset: Int, type: String): Int {
 
-    fun extractSignalValue(byteData: List<ByteData>, offset: Int, type: String): Int {
         val size = getSignalSize(offset, type)
         val slice = byteData.subList(offset, size)
         return when {
             type.matches(Regex("b[0-7]")) -> {
                 val bitIndex = type.removePrefix("b").toInt()
-                slice.getBitLE(bitIndex)
+                slice.getBitLEEEE(bitIndex)  // если это бит извлекаем его
             }
 
-            else -> slice.toIntLE()
+            else -> slice.toIntLEEE() // если нет, то возвращаем целое
         }
     }
 

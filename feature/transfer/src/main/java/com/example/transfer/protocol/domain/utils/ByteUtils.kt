@@ -1,7 +1,5 @@
 package com.example.transfer.protocol.domain.utils
 
-import com.example.transfer.protocol.domain.model.ByteData
-
 object ByteUtils {
     private fun bytesToNumber(
         byteList: List<UByte>,
@@ -16,10 +14,6 @@ object ByteUtils {
         return bytesToNumber(byteList, isLittleEndian).toInt()
     }
 
-    private fun bytesToLong(byteList: List<UByte>, isLittleEndian: Boolean = true): Long {
-        require(byteList.size <= 8) { "Too many bytes for Long conversion: ${byteList.size}" }
-        return bytesToNumber(byteList, isLittleEndian)
-    }
 
     private fun getBitFromBytes(
         byteList: List<UByte>,
@@ -36,23 +30,9 @@ object ByteUtils {
         return (ordered[byteIndex].toInt() shr bitInByte) and 1
     }
 
-    private fun bytesToBitList(
-        byteList: List<UByte>,
-        isLittleEndian: Boolean = true,
-        mostSignificantBitFirst: Boolean = true
-    ): List<Int> {
-        val ordered = if (isLittleEndian) byteList.reversed() else byteList
-        return ordered.flatMap { byte ->
-            val bits = List(8) { (byte.toInt() shr it) and 1 }
-            if (mostSignificantBitFirst) bits.reversed() else bits
-        }
-    }
-
-    fun List<ByteData>.toIntLE() = bytesToInt(map { it.byte.toUByte() })
-    fun List<ByteData>.toLongLE() = bytesToLong(this.map { it.byte.toUByte() })
-    fun List<ByteData>.toBitListLE() = bytesToBitList(this.map { it.byte.toUByte() })
-    fun List<ByteData>.getBitLE(bitIndex: Int): Int =
-        getBitFromBytes(map { it.byte.toUByte() }, bitIndex)
-
     fun Byte.toIntUnsigned(): Int = toUByte().toInt()
+
+    fun List<Byte>.toIntFromByteList() = bytesToInt(map { it.toUByte() })
+    fun List<Byte>.getBitFromByteList(bitIndex: Int): Int =
+        getBitFromBytes(map { it.toUByte() }, bitIndex)
 }

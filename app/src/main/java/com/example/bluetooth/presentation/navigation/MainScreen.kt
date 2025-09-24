@@ -1,6 +1,5 @@
 package com.example.bluetooth.presentation.navigation
 
-import override.navigation.NavigationItem
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
@@ -25,7 +24,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.isOpened
-import com.example.bluetooth.presentation.Content
+import com.example.bluetooth.presentation.ContentRoot
+import override.navigation.NavigationItem
 import kotlin.math.roundToInt
 
 @SuppressLint("UseOfNonLambdaOffsetOverload")
@@ -73,7 +73,7 @@ fun MainScreen(
             },
             onCloseClick = { drawerState = CustomDrawerState.Closed }
         )
-        Content(
+        ContentRoot(
             modifier = Modifier
                 .offset(x = animatedOffset)
                 .scale(scale = animatedScale),
