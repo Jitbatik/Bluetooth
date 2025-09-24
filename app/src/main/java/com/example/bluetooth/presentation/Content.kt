@@ -14,6 +14,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -23,11 +24,33 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.bluetooth.model.CustomDrawerState
 import com.example.bluetooth.model.opposite
 import com.example.bluetooth.presentation.navigation.NavigationStateHolder
+import com.example.bluetooth.presentation.rssi.RSSI
 import com.example.bluetooth.presentation.rssi.RssiViewModel
 import com.example.bluetooth.ui.theme.BluetoothTheme
 import override.navigation.Extracted
 import override.navigation.NavigationItem
 import override.ui.Actions
+
+@Composable
+fun ContentRoot(
+    modifier: Modifier = Modifier,
+    drawerState: CustomDrawerState,
+    onDrawerClick: (CustomDrawerState) -> Unit,
+    currentRoute: String,
+    navigationStateHolder: NavigationStateHolder,
+    viewModel: RssiViewModel = hiltViewModel()
+){
+    val rssi by viewModel.rssi.collectAsStateWithLifecycle()
+
+    Content(
+        modifier = modifier,
+        drawerState = drawerState,
+        onDrawerClick = onDrawerClick,
+        currentRoute = currentRoute,
+        navigationStateHolder = navigationStateHolder,
+        rssi = rssi
+    )
+}
 
 @Composable
 fun Content(
@@ -36,9 +59,9 @@ fun Content(
     onDrawerClick: (CustomDrawerState) -> Unit,
     currentRoute: String,
     navigationStateHolder: NavigationStateHolder,
-    viewModel: RssiViewModel = hiltViewModel()
+    rssi: RSSI
 ) {
-    val rssi by viewModel.rssi.collectAsStateWithLifecycle()
+
     val title = NavigationItem.fromRoute(currentRoute)
         ?.title
         ?.let { stringResource(it) }
@@ -135,6 +158,7 @@ private fun ContentPreview(
         drawerState = CustomDrawerState.Opened,
         onDrawerClick = { },
         currentRoute = route,
-        navigationStateHolder = NavigationStateHolder()
+        navigationStateHolder = NavigationStateHolder(),
+        rssi = RSSI("not", Color.Gray)
     )
 }

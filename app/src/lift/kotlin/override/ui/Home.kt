@@ -42,7 +42,6 @@ fun Home(state: HomeState) {
             .fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-//            ConnectionIndicator(state.isConnected)
             MultiLineTextBox(
                 dataUIList = { state.data },
                 lines = 4,
@@ -60,7 +59,6 @@ fun Home(state: HomeState) {
                     .wrapContentSize()
                     .fillMaxWidth()
             )
-//            GraphScreen()
         }
     }
 }
