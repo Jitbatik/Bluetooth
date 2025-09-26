@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.BluetoothDevice
+import com.example.bluetooth.model.ConnectionState
 import com.example.bluetooth.presentation.view.connect.ConnectEvents
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
@@ -22,7 +23,7 @@ import com.example.bluetooth.ui.theme.BluetoothTheme
 @Composable
 fun ScannerBox(
     deviceList: List<BluetoothDevice>,
-    connectedDevice: BluetoothDevice?,
+    connectionState: ConnectionState,
     isScanning: Boolean,
     onEvents: (ConnectEvents) -> Unit,
 ) {
@@ -36,7 +37,7 @@ fun ScannerBox(
         ) {
             items(deviceList) { device ->
                 DeviceCard(bluetoothDevice = device,
-                    isConnected = device == connectedDevice,
+                    connectionState = connectionState,
                     onConnect = { selectedDevice ->
                         onEvents(ConnectEvents.ConnectToDevice(selectedDevice))
                     }
@@ -54,7 +55,7 @@ fun ScannerBox(
 
 private data class ScannerBoxData(
     val deviceList: List<BluetoothDevice>,
-    val connectedDevice: BluetoothDevice?,
+    val connectionState: ConnectionState,
     val isScanning: Boolean,
 )
 
@@ -71,13 +72,26 @@ private class ScannerBoxPreviewParameterProvider :
     override val values = sequenceOf(
         ScannerBoxData(
             deviceList = bluetoothDevices,
-            connectedDevice = bluetoothDevices[0],
+            connectionState = ConnectionState.Connecting(bluetoothDevices[0]),
+            isScanning = true,
+        ),
+        ScannerBoxData(
+            deviceList = bluetoothDevices,
+            connectionState = ConnectionState.Connected(bluetoothDevices[0]),
             isScanning = false,
         ),
         ScannerBoxData(
             deviceList = bluetoothDevices,
-            connectedDevice = null,
+            connectionState = ConnectionState.Disconnected(),
             isScanning = true,
+        ),
+        ScannerBoxData(
+            deviceList = bluetoothDevices,
+            connectionState = ConnectionState.Error(
+                device = bluetoothDevices[1],
+                message = "Connection failed"
+            ),
+            isScanning = false,
         )
     )
 }
@@ -91,7 +105,7 @@ private fun ScannerBoxPreview(
     Surface {
         ScannerBox(
             deviceList = data.deviceList,
-            connectedDevice = data.connectedDevice,
+            connectionState = data.connectionState,
             isScanning = data.isScanning,
             onEvents = {},
         )
