@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,78 +25,137 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.example.bluetooth.model.BluetoothDevice
+import com.example.bluetooth.model.ConnectionState
 import com.example.bluetooth.ui.theme.BluetoothTheme
 
 
 @Composable
 fun DeviceCard(
     bluetoothDevice: BluetoothDevice,
-    isConnected: Boolean,
+    connectionState: ConnectionState,
     onConnect: (BluetoothDevice) -> Unit,
 ) {
-    val cardColor = if (isConnected) Color.Green else MaterialTheme.colorScheme.surfaceVariant
-    val textColor = if (isConnected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant
+    val isThisDevice = when (connectionState) {
+        is ConnectionState.Connected -> connectionState.device.address == bluetoothDevice.address
+        is ConnectionState.Connecting -> connectionState.device.address == bluetoothDevice.address
+        is ConnectionState.Error -> connectionState.device?.address == bluetoothDevice.address
+        else -> false
+    }
+
+    val cardColor = when {
+        connectionState is ConnectionState.Connected && isThisDevice -> Color.Green
+        connectionState is ConnectionState.Error && isThisDevice -> Color.Red
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val showProgress = connectionState is ConnectionState.Connecting && isThisDevice
+    val textColor = if (cardColor == Color.Green || cardColor == Color.Red)
+        Color.Black
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = cardColor
-        ),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
             .clickable { onConnect(bluetoothDevice) }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(text = bluetoothDevice.name, fontWeight = FontWeight.Bold, color = textColor)
+            Column {
+                Text(
+                    text = bluetoothDevice.name,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = bluetoothDevice.address, color = textColor)
+                Text(
+                    text = bluetoothDevice.address,
+                    color = textColor
+                )
             }
-            Text(
-                text = "${bluetoothDevice.rssi}",
-                fontWeight = FontWeight.Bold,
-                color = textColor,
-                modifier = Modifier.padding(end = 16.dp)
-            )
+
+            if (showProgress) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = bluetoothDevice.rssi.toString(),
+                        fontWeight = FontWeight.Bold,
+                        color = textColor
+                    )
+                    Text(
+                        text = "dBm",
+                        fontWeight = FontWeight.Bold,
+                        color = textColor
+                    )
+                }
+            }
         }
     }
 }
 
-private data class DeviceCardData(
+
+private data class DeviceCardPreviewData(
     val device: BluetoothDevice,
-    val isConnected: Boolean,
+    val connectionState: ConnectionState
 )
 
 private class DeviceCardPreviewParameterProvider :
-    PreviewParameterProvider<DeviceCardData> {
+    PreviewParameterProvider<DeviceCardPreviewData> {
+
+    private val deviceA =
+        BluetoothDevice(name = "Device A", address = "12:34:56:78:90:AB", rssi = -40)
+    private val deviceB =
+        BluetoothDevice(name = "Device B", address = "98:76:54:32:10:FE", rssi = -60)
+    private val deviceC =
+        BluetoothDevice(name = "Device C", address = "11:22:33:44:55:66", rssi = -50)
+    private val deviceD =
+        BluetoothDevice(name = "Device D", address = "AA:BB:CC:DD:EE:FF", rssi = -70)
+
     override val values = sequenceOf(
-        DeviceCardData(
-            device = BluetoothDevice(name = "Device A", address = "12:34:56:78:90:AB"),
-            isConnected = true
+        DeviceCardPreviewData(
+            device = deviceA,
+            connectionState = ConnectionState.Connected(deviceA)
         ),
-        DeviceCardData(
-            device = BluetoothDevice(name = "Device B", address = "98:76:54:32:10:FE"),
-            isConnected = false
+        DeviceCardPreviewData(
+            device = deviceB,
+            connectionState = ConnectionState.Disconnected()
         ),
+        DeviceCardPreviewData(
+            device = deviceC,
+            connectionState = ConnectionState.Connecting(deviceC)
+        ),
+        DeviceCardPreviewData(
+            device = deviceD,
+            connectionState = ConnectionState.Error(deviceD, "Connection failed")
+        )
     )
 }
+
 
 @PreviewLightDark
 @Composable
 private fun DeviceCardPreview(
     @PreviewParameter(DeviceCardPreviewParameterProvider::class)
-    deviceState: DeviceCardData,
+    deviceState: DeviceCardPreviewData,
 ) = BluetoothTheme {
     Surface {
 
         DeviceCard(
             bluetoothDevice = deviceState.device,
-            isConnected = deviceState.isConnected,
+            connectionState = deviceState.connectionState,
             onConnect = {}
         )
     }

@@ -120,7 +120,7 @@ private fun Connect(
                 BluetoothScreenType.BLUETOOTH_PERMISSION_GRANTED -> {
                     ScannerBox(
                         deviceList = screenUiState.devices,
-                        connectedDevice = screenUiState.connectedDevice,
+                        connectionState = screenUiState.connectionState,
                         isScanning = screenUiState.isScanning,
                         onEvents = onEvents,
                     )

@@ -3,9 +3,10 @@ package com.example.bluetooth.presentation.view.connect
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluetooth.domain.ConnectRepository
 import com.example.bluetooth.domain.ScannerRepository
+import com.example.bluetooth.domain.usecase.ConnectionUseCase
 import com.example.bluetooth.model.BluetoothDevice
+import com.example.bluetooth.model.ConnectionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -17,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ConnectViewModel @Inject constructor(
     private val scannerRepository: ScannerRepository,
-    private val connectRepository: ConnectRepository,
+    private val connectUseCase: ConnectionUseCase,
 ) : ViewModel() {
     private val tag = ConnectViewModel::class.java.simpleName
 
@@ -25,35 +26,46 @@ class ConnectViewModel @Inject constructor(
         scannerRepository.isBluetoothActive.distinctUntilChanged(),
         scannerRepository.isLocationActive.distinctUntilChanged(),
         scannerRepository.deviceList,
-        connectRepository.getConnectedDevice().distinctUntilChanged(),
+        connectUseCase.observeConnection(),
         scannerRepository.observeScanningState().distinctUntilChanged(),
-    ) { isBluetoothEnabled, isLocationEnable, devices, connectedDevice, isScanning ->
+    ) { isBluetoothEnabled, isLocationEnable, devices, connectionState, isScanning ->
         ConnectUiState(
             isBluetoothEnabled = isBluetoothEnabled,
             isLocationEnable = isLocationEnable,
             devices = devices,
-            connectedDevice = connectedDevice,
+            connectionState = connectionState,
             isScanning = isScanning,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = ConnectUiState()
+        initialValue = ConnectUiState(
+            isBluetoothEnabled = false,
+            isLocationEnable = false,
+            devices = emptyList(),
+            connectionState = ConnectionState.Disconnected(),
+            isScanning = false,
+        )
     )
     val connectContainerUiState = _connectUiState
 
     private fun handlerConnectionToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d(tag, "Handling connection to device")
         viewModelScope.launch {
-            if (connectContainerUiState.value.connectedDevice != null) {
-                connectRepository.disconnectFromDevice()
-            } else {
-                connectRepository.connectToDevice(
-                    bluetoothDevice,
-                    connectUUID = "00001101-0000-1000-8000-00805f9b34fb"
-                )
-            }
+            when (_connectUiState.value.connectionState) {
+                is ConnectionState.Connected -> {
+                    connectUseCase.disconnect()
+                }
 
+                else -> {
+                    connectUseCase.connect(
+                        device = bluetoothDevice,
+                        uuid = "00001101-0000-1000-8000-00805f9b34fb",
+                        secure = true,
+                        scope = viewModelScope
+                    )
+                }
+            }
         }
     }
 
@@ -85,9 +97,8 @@ class ConnectViewModel @Inject constructor(
 
     override fun onCleared() {
         scannerRepository.releaseResources()
-        connectRepository.releaseResources()
+        connectUseCase.releaseResources()
         Log.d(tag, "CLEARED Resources")
         super.onCleared()
     }
 }
-
