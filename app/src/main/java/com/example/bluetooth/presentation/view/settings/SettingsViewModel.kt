@@ -9,7 +9,7 @@ import com.example.bluetooth.presentation.view.settings.model.SettingsState
 import com.example.bluetooth.presentation.view.settings.model.SignalEvent
 import com.example.bluetooth.presentation.view.settings.model.WirelessBluetoothMask
 import com.example.bluetooth.presentation.view.settings.utils.chartSettingsMapToUI
-import com.example.transfer.chart.data.ChartSettingsRepository
+import com.example.transfer.chart.domain.usecase.ObserveChartSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,20 +22,20 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     settingsManager: SettingsManager,
-    chartSettingsRepository: ChartSettingsRepository,
     private val signalHandler: SignalEventHandler,
     private val bluetoothHandler: BluetoothEventHandler,
+    observeChartSettings: ObserveChartSettings
 ) : ViewModel() {
     val state = createStateFlow(
-        chartSettingsRepository,
+        observeChartSettings,
         settingsManager,
     )
 
     private fun createStateFlow(
-        chartSettingsRepository: ChartSettingsRepository,
+        chartSettingsRepository: ObserveChartSettings,
         settingsManager: SettingsManager,
     ): StateFlow<SettingsState> {
-        val chartSettingsFlow = chartSettingsRepository.observe()
+        val chartSettingsFlow = chartSettingsRepository(viewModelScope)
             .map { it.chartSettingsMapToUI() }
 
         val bluetoothFlow = combine(

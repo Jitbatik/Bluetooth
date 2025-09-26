@@ -2,69 +2,28 @@ package com.example.transfer.chart.domain.usecase
 
 import com.example.transfer.chart.data.ChartSettingsRepository
 import com.example.transfer.chart.domain.SignalUtils
-import com.example.transfer.chart.domain.model.ChartSettings
 import com.example.transfer.chart.domain.model.DataPoint
 import com.example.transfer.chart.domain.model.GraphSeries
 import com.example.transfer.chart.domain.model.SignalSettings
-import com.example.transfer.protocol.domain.model.ByteData
-import com.example.transfer.protocol.domain.model.Type
-import com.example.transfer.protocol.domain.usecase.ObserveParametersUseCase
-import kotlinx.coroutines.CoroutineScope
+import com.example.transfer.protocol.data.LiftRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ObserveChartDataUseCase @Inject constructor(
-    private val observeParametersUseCase: ObserveParametersUseCase,
+    private val liftRepository: LiftRepository,
     private val settingsRepository: ChartSettingsRepository,
 ) {
-    operator fun invoke(
-        observationType: StateFlow<Type>,
-        scope: CoroutineScope
-    ): Flow<List<GraphSeries>> {
-        val byteDataFlow = observeParametersUseCase.execute(observationType)
-
-        scope.launch {
-            initializeChartSettingsFromVersion(byteDataFlow)
-        }
-
-
-        return observeChartData(byteDataFlow)
-    }
-
-    private fun observeChartData(byteDataFlow: Flow<List<ByteData>>): Flow<List<GraphSeries>> {
-        return processChartData(
-            byteDataFlow = byteDataFlow,
-            chartSettingsFlow = settingsRepository.observe()
-        )
-    }
-
-    private suspend fun initializeChartSettingsFromVersion(byteDataFlow: Flow<List<ByteData>>) {
-        val (offset, type) = settingsRepository.getVersionSignalInfo()
-
-        byteDataFlow
-            .mapNotNull { byteData ->
-                SignalUtils.extractSignalValue(byteData, offset, type)
-            }
-            .distinctUntilChanged()
-            .collect { version ->
-                settingsRepository.initIfNeeded(version)
-            }
-    }
-
     private val state = MutableStateFlow(State())
-    private fun processChartData(
-        byteDataFlow: Flow<List<ByteData>>,
-        chartSettingsFlow: StateFlow<ChartSettings>
-    ): Flow<List<GraphSeries>> {
-        return combine(byteDataFlow, chartSettingsFlow) { byteData, settings ->
+
+    operator fun invoke(): Flow<List<GraphSeries>> {
+        return combine(
+            liftRepository.observeLiftData(),
+            settingsRepository.observe()
+        ) { byteData, settings ->
             byteData to settings.config
         }.onEach { (byteData, config) ->
             val newState = processParameters(
@@ -79,10 +38,9 @@ class ObserveChartDataUseCase @Inject constructor(
         }.map { state.value.graphSeries }
     }
 
-
     private fun processParameters(
         existingSeries: List<GraphSeries>,
-        byteData: List<ByteData>,
+        byteData: List<Byte>,
         signals: List<SignalSettings>,
         timestampSignal: SignalSettings?,
         millisSignal: SignalSettings?,
@@ -93,10 +51,10 @@ class ObserveChartDataUseCase @Inject constructor(
         }
 
         val timestamp = SignalUtils
-            .extractSignalValue(byteData, timestampSignal.offset, timestampSignal.type)
+            .extractSignalValueFromByteData(byteData, timestampSignal.offset, timestampSignal.type)
             .toLong()
         val millis = SignalUtils
-            .extractSignalValue(byteData, millisSignal.offset, millisSignal.type)
+            .extractSignalValueFromByteData(byteData, millisSignal.offset, millisSignal.type)
 
 
         // Полное время текущей точки в мс
@@ -114,7 +72,8 @@ class ObserveChartDataUseCase @Inject constructor(
         visibleSignals.forEach { signal ->
             if (byteData.size > SignalUtils.getSignalSize(signal.offset, signal.type)) {
                 val y =
-                    SignalUtils.extractSignalValue(byteData, signal.offset, signal.type).toFloat()
+                    SignalUtils.extractSignalValueFromByteData(byteData, signal.offset, signal.type)
+                        .toFloat()
                 val point = DataPoint(x, y, timestamp, millis)
 
                 val series = updatedSeries.getOrPut(signal.name) {
@@ -140,45 +99,3 @@ class ObserveChartDataUseCase @Inject constructor(
     }
 
 }
-
-class ObserveChartSettings @Inject constructor(
-    private val repository: ChartSettingsRepository,
-) {
-    operator fun invoke(): Flow<ChartSettings> {
-        return repository.observe()
-    }
-}
-
-
-fun List<GraphSeries>.filterVisibleRange(
-    startX: Float,
-    count: Int,
-): List<GraphSeries> {
-    val endX = startX + count
-
-    // Шаг 1: фильтрация по диапазону
-    val filtered = map { series ->
-        val filteredPoints = series.points
-            .asSequence()
-            .filter { it.xCoordinate in startX..endX }
-            .sortedBy { it.xCoordinate }
-            .toMutableList()
-
-        series.copyWithPoints(filteredPoints)
-    }
-
-    // Шаг 2: находим минимальное значение x среди всех точек
-    val allFilteredPoints = filtered.flatMap { it.points }
-    val minX = allFilteredPoints.minByOrNull { it.xCoordinate }?.xCoordinate ?: 0f
-
-    // Шаг 3: нормализуем все x на основе minX
-    val normalized = filtered.mapIndexed { _, series ->
-        val newPoints = series.points.map { point ->
-            point.copy(xCoordinate = point.xCoordinate - minX)
-        }.toMutableList()
-        series.copyWithPoints(newPoints)
-    }
-
-    return normalized
-}
-

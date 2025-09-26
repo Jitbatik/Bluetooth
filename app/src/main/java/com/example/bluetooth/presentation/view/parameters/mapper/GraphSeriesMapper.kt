@@ -5,47 +5,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import com.example.bluetooth.presentation.view.parameters.model.Chart
 import com.example.bluetooth.presentation.view.parameters.util.toUiColor
+import kotlin.math.max
 import com.example.transfer.chart.domain.model.GraphSeries as DomainGraphSeries
 
 fun DomainGraphSeries.toUiChart(
-    stepX: Float,
-    stepY: Float,
-    height: Float
+    canvas: IntSize,
+    stepCounterXAxis: Int
 ): Chart {
     val points = this.points
-    val minValue = points.minOfOrNull { it.yCoordinate } ?: 0f
-    val maxValue = points.maxOfOrNull { it.yCoordinate } ?: 0f
+    val minY =  0f
+    val maxY = points.maxOfOrNull { it.yCoordinate } ?: 1f
+    val yRange = max(1f, maxY - minY)
+
+    val stepX = canvas.width / stepCounterXAxis.toFloat()
+    val stepY = canvas.height / yRange
 
     return Chart(
         name = this.name,
         points = this.points.map { (x, y) ->
             Offset(
                 x = x * stepX,
-                y = height - y * stepY // переворот оси Y
+                y = canvas.height - ((y - minY) * stepY) // нормализация внутри своего диапазона
             )
         },
         color = this.color?.toUiColor() ?: Color.Black,
-        minValue = minValue,
-        maxValue = maxValue
+        minValue = minY,
+        maxValue = maxY
     )
 }
 
 fun List<DomainGraphSeries>.mapToUiChartList(
     canvas: IntSize,
-    stepCounterXAxis: Int,
-    stepCountYAxis: Int
+    stepCounterXAxis: Int
 ): List<Chart> {
-    val stepX = canvas.width / stepCounterXAxis.toFloat()
-    val stepY = canvas.height / stepCountYAxis.toFloat()
-
-    return this.map { it.toUiChart(stepX, stepY, canvas.height.toFloat()) }
-}
-
-
-fun List<DomainGraphSeries>.maxY(): Float {
-    return this.flatMap { it.points.map { point -> point.yCoordinate } }.maxOrNull() ?: 0f
-}
-
-fun List<DomainGraphSeries>.minY(): Float {
-    return this.flatMap { it.points.map { point -> point.yCoordinate } }.minOrNull() ?: 0f
+    return this.map { it.toUiChart(canvas, stepCounterXAxis) }
 }

@@ -45,7 +45,7 @@ fun ControlButtons(
     buttonShape: Shape = RoundedCornerShape(0.dp)
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(5),
+        columns = GridCells.Fixed(4),
         contentPadding = PaddingValues(0.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),

@@ -22,9 +22,6 @@ fun HomeRoot(
     viewModel: DataExchangeViewModel = viewModel(),
 ) {
     val screenData by viewModel.data.collectAsState()
-    val controllerConfig by viewModel.controllerConfig.collectAsState()
-    val test by viewModel.test.collectAsState()
-    val isConnected by viewModel.isConnected.collectAsState()
     val onEvents: (HomeEvent) -> Unit = remember {
         { event -> viewModel.onEvents(event) }
     }
@@ -32,10 +29,7 @@ fun HomeRoot(
     Home(
         state = HomeState(
             data = screenData,
-            controllerConfig = controllerConfig,
             onEvents = onEvents,
-            test = test,
-            isConnected = isConnected,
         ),
     )
 }
@@ -45,8 +39,7 @@ fun HomeRoot(
 @Composable
 private fun HomePreview() = BluetoothTheme {
     val sentence =
-        "Процессор: СР6786   v105  R2  17.10.2023СКБ ПСИС www.psis.ruПроцессор остановлен"
-
+          "                    Соединение прерванноПроверьте Bluetooth                     "
     fun getRandomColor(): Color {
         val r = (0..255).random()
         val g = (0..255).random()
@@ -54,12 +47,6 @@ private fun HomePreview() = BluetoothTheme {
         return Color(r, g, b)
     }
 
-//    val hexInput = arrayOf(0x00, 0x32, 0x00, 0x48, 0x00, 0x48)
-//    val data1 = hexInput.map { byte ->
-//        CharUI(
-//            char = byte.toChar(),
-//        )
-//    }
     val data = sentence.map { char ->
         DataUI(
             data = char.toString(),
@@ -81,7 +68,6 @@ private fun HomePreview() = BluetoothTheme {
                 controllerConfig = testConfig,
                 onEvents = {},
                 test = "test",
-                isConnected = false
             ),
         )
     }

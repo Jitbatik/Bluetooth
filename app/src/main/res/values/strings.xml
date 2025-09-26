@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bluetooth</string>
+    <string name="app_name">ELIM Lift</string>
     <string name="description_switch_bluetooth">Использовать фильтрацию</string>
     <string name="hint_text_bluetooth">Введите маску имени</string>
     <string name="title_bluetooth">Bluetooth</string>
