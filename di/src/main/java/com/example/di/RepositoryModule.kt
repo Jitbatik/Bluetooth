@@ -5,7 +5,6 @@ import com.example.bluetooth.data.DataStreamRepository
 import com.example.bluetooth.data.ScannerRepositoryImpl
 import com.example.bluetooth.domain.ConnectRepository
 import com.example.bluetooth.domain.ScannerRepository
-import com.example.transfer.protocol.data.ProtocolLiftDataRepository
 import com.example.transfer.protocol.data.ProtocolPultDataRepository
 import com.example.transfer.protocol.data.ProtocolUARTDataRepository
 import com.example.transfer.protocol.domain.ProtocolDataRepository
@@ -27,7 +26,6 @@ object RepositoryModule {
     ): ProtocolDataRepository {
         return when (flavor) {
             "pult" -> ProtocolPultDataRepository(dataStreamRepository)
-            "lift" -> ProtocolLiftDataRepository(dataStreamRepository)
             "uart" -> ProtocolUARTDataRepository(dataStreamRepository)
             else -> throw IllegalArgumentException("Unknown flavor: $flavor")
         }

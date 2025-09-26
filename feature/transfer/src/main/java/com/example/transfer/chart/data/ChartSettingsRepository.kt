@@ -25,9 +25,18 @@ class ChartSettingsRepository @Inject constructor(
 
     private val lock = Mutex()
 
-    fun observe(): StateFlow<ChartSettings> {
-        return _chartSettings.asStateFlow()
-    }
+    fun observe(): StateFlow<ChartSettings> = _chartSettings.asStateFlow()
+
+    private val defaultColors = listOf(
+        SignalColor(255, 0, 0),    // Красный
+        SignalColor(0, 255, 0),    // Зелёный
+        SignalColor(0, 0, 255),    // Синий
+        SignalColor(255, 255, 0),  // Жёлтый
+        SignalColor(255, 0, 255),  // Магента
+        SignalColor(0, 255, 255),  // Циан
+        SignalColor(255, 165, 0),  // Оранжевый
+        SignalColor(128, 0, 128)   // Фиолетовый
+    )
 
     suspend fun initIfNeeded(version: Int) {
         withContext(Dispatchers.IO) {
@@ -40,11 +49,17 @@ class ChartSettingsRepository @Inject constructor(
                 val millis = allSignals.find { it.name == "ms" }
                     ?: error("Signal 'ms' not found")
 
-                val userSignals = allSignals.filter { it.name != "Time" && it.name != "ms" }
+                val userSignals = allSignals
+                    .filter { it.name != "Time" && it.name != "ms" }
+                    .mapIndexed { index, signal ->
+                        // назначаем цвет по циклу
+                        val color = defaultColors[index % defaultColors.size]
+                        signal.copy(color = color)
+                    }
 
                 _chartSettings.value = ChartSettings(
-                    title = "Параметры графика",
-                    description = "Настройте отображение сигналов на графике параметров",
+                    title = "Отображение графика",
+                    description = "Настройте отображение сигналов на графике состояний",
                     config = ChartSignalsConfig(
                         timestampSignal = timestamp,
                         millisSignal = millis,

@@ -6,8 +6,8 @@ import com.example.transfer.chart.domain.model.ChartSignalsConfig
 
 object ChartSettingsDefaults {
     fun getDefault() =  ChartSettings(
-        title = "",
-        description = "",
+        title = "Отображение графика",
+        description = "Нет данных о состояниях лифта",
         config = ChartSignalsConfig(
             timestampSignal = null,
             millisSignal = null,
