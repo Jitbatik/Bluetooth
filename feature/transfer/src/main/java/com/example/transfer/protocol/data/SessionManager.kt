@@ -57,6 +57,7 @@ class SessionManager @Inject constructor(
         if (sessionScope == null) return
 
         liftRepository.clear()
+        liftRepository.updateData(LiftDataDefaults.getDefault())
         sessionScope?.cancel()
         sessionScope = null
 

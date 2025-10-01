@@ -26,7 +26,7 @@ class ConnectViewModel @Inject constructor(
         scannerRepository.isBluetoothActive.distinctUntilChanged(),
         scannerRepository.isLocationActive.distinctUntilChanged(),
         scannerRepository.deviceList,
-        connectUseCase.observeConnection(),
+        connectUseCase.observeConnection(viewModelScope),
         scannerRepository.observeScanningState().distinctUntilChanged(),
     ) { isBluetoothEnabled, isLocationEnable, devices, connectionState, isScanning ->
         ConnectUiState(
@@ -73,6 +73,8 @@ class ConnectViewModel @Inject constructor(
         try {
             Log.d(tag, "Scanning for devices")
             scannerRepository.startScan()
+            // TODO  а надо ли стирать статусы с прошлого листа?
+//            connectUseCase.releaseResources()
         } catch (exception: Exception) {
             Log.e(tag, "Failed to Scanning devices", exception)
         }

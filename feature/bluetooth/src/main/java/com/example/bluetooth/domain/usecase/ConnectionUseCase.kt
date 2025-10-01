@@ -1,12 +1,15 @@
 package com.example.bluetooth.domain.usecase
 
+import android.bluetooth.BluetoothSocket
 import com.example.bluetooth.domain.ConnectRepository
 import com.example.bluetooth.model.BluetoothDevice
 import com.example.bluetooth.model.ConnectionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
@@ -14,47 +17,64 @@ import javax.inject.Inject
 class ConnectionUseCase @Inject constructor(
     private val repository: ConnectRepository,
 ) {
-    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
-    fun observeConnection(): Flow<ConnectionState> = _connectionState
+    private val _connectionState =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
 
-    fun connect(device: BluetoothDevice, uuid: String, secure: Boolean, scope: CoroutineScope) {
-        val current = _connectionState.value
-        if (current is ConnectionState.Connected && current.device.address == device.address) return
-
-        setState(ConnectionState.Connecting(device))
-        repository.connectToDevice(device, uuid, secure, scope)
-
-        // подписываемся на изменения сокета
+    fun observeConnection(scope: CoroutineScope): StateFlow<ConnectionState> {
         repository.observeSocket()
-            .onEach { result ->
-                val socket = result.getOrNull()
-                setState(
-                    if (socket == null) ConnectionState.Disconnected(currentDevice())
-                    else ConnectionState.Connected(device)
-                )
-            }
+            .mapToConnectionState()
+            .onEach { _connectionState.value = it }
             .launchIn(scope)
+
+        return _connectionState
     }
 
+    private var currentDevice: BluetoothDevice? = null
+
+    private fun Flow<Result<BluetoothSocket?>>.mapToConnectionState(): Flow<ConnectionState> {
+        return this.map { result ->
+            val device = currentDevice
+            when {
+                result.isFailure -> {
+                    val message = result.exceptionOrNull()?.message ?: "Unknown error"
+                    ConnectionState.Error(device, message)
+                }
+
+                result.isSuccess -> {
+                    val socket = result.getOrNull()
+                    if (socket != null && device != null) {
+                        ConnectionState.Connected(device)
+                    } else {
+                        ConnectionState.Disconnected(device)
+                    }
+                }
+
+                else -> ConnectionState.Disconnected(device)
+            }
+        }
+    }
+
+    fun connect(
+        device: BluetoothDevice,
+        uuid: String,
+        secure: Boolean,
+        scope: CoroutineScope
+    ) {
+        currentDevice = device
+        _connectionState.value = ConnectionState.Connecting(device)
+        repository.connectToDevice(device, uuid, secure, scope)
+    }
+
+
     fun disconnect() {
-        val prevDevice = currentDevice()
+        val prevDevice = currentDevice
         repository.disconnectFromDevice()
-        setState(ConnectionState.Disconnected(prevDevice))
+        _connectionState.value = ConnectionState.Disconnected(prevDevice)
+        repository.releaseResources()
     }
 
     fun releaseResources() {
         repository.releaseResources()
         _connectionState.value = ConnectionState.Disconnected()
-    }
-
-    private fun currentDevice(): BluetoothDevice? {
-        return when (val state = _connectionState.value) {
-            is ConnectionState.Connected -> state.device
-            is ConnectionState.Connecting -> state.device
-            else -> null
-        }
-    }
-    private fun setState(state: ConnectionState) {
-        _connectionState.value = state
     }
 }

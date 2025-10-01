@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.example.bluetooth.data.utils.toDomainModel
 import com.example.bluetooth.model.BluetoothDevice as DomainBluetoothDevice
 

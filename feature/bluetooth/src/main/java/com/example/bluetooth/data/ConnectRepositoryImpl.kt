@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
@@ -60,40 +60,35 @@ class ConnectRepositoryImpl @Inject constructor(
         secure: Boolean,
         scope: CoroutineScope
     ) {
-        if (!_hasBtPermission || _socket.value.getOrNull() != null) return
-
+        if (!_hasBtPermission || _socket.value.getOrNull() != null && _socket.value.isSuccess) return
 
         val disconnectReceiver = createDisconnectReceiver(bluetoothDevice)
-
         receiversManager.register(
             disconnectReceiver,
             IntentFilter(AndroidBluetoothDevice.ACTION_ACL_DISCONNECTED)
         )
 
+        receiversManager.register(
+            bluetoothStateReceiver,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
+
         scope.launch(Dispatchers.IO) {
-            try {
-                val result = withTimeoutOrNull(CONNECT_TIMEOUT_MS) {
-                    connect(bluetoothDevice, connectUUID, secure)
-                } ?: Result.failure(TimeoutException("Connection timeout"))
+            val result = withTimeoutOrNull(CONNECT_TIMEOUT_MS) {
+                connect(bluetoothDevice, connectUUID, secure)
+            } ?: Result.failure(TimeoutException("Connection timeout"))
 
-                _socket.value = result
-
-                if (result.isFailure) {
-                    disconnectFromDevice()
-                }
-            } finally {
-                receiversManager.unregister(disconnectReceiver)
-            }
+            _socket.value = result
         }
     }
 
     override fun disconnectFromDevice(): Result<Unit> = runCatching {
         _socket.value.getOrNull()?.close()
         _socket.value = Result.success(null)
+        receiversManager.clear()
     }
 
     override fun releaseResources() {
-        disconnectFromDevice()
         receiversManager.clear()
         Log.d(TAG, "RECEIVER REMOVED")
     }
@@ -107,13 +102,15 @@ class ConnectRepositoryImpl @Inject constructor(
         connectUUID: String,
         secure: Boolean,
     ): Result<BluetoothSocket> {
-        val device = _bluetoothAdapter?.getRemoteDevice(bluetoothDevice.address)
-            ?: throw IllegalStateException("Bluetooth adapter not available")
+        val adapter = _bluetoothAdapter
+            ?: return Result.failure(IllegalStateException("Bluetooth adapter not available"))
+        if (!adapter.isEnabled) return Result.failure(IllegalStateException("Bluetooth is turned off"))
+        val device = adapter.getRemoteDevice(bluetoothDevice.address)
 
-        if (secure && !bonded(device)) throw IllegalStateException("Device not bonded")
+        if (secure && !bonded(device)) return Result.failure(IllegalStateException("Device not bonded"))
 
         val socket = createSocket(device, connectUUID, secure)
-            ?: throw IOException("Failed to create socket")
+            ?: return Result.failure(IllegalStateException("Failed to create socket"))
 
         // Отменяем discovery, чтобы не мешал подключению
         _bluetoothAdapter?.takeIf { it.isDiscovering }?.cancelDiscovery()
@@ -143,31 +140,52 @@ class ConnectRepositoryImpl @Inject constructor(
     }
 
 
-
     private fun createDisconnectReceiver(
         bluetoothDevice: BluetoothDevice
     ): BroadcastReceiver = BluetoothConnectedDeviceReceiver { disconnectedDevice ->
         if (disconnectedDevice?.address == bluetoothDevice.address) {
-            _socket.value = Result.success(null)
+            _socket.value = Result.failure(IllegalStateException("Device connection is broken"))
+        }
+    }
+
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                    BluetoothAdapter.STATE_TURNING_OFF,
+                    BluetoothAdapter.STATE_OFF -> {
+                        Log.d(TAG, "Bluetooth turned off → closing socket")
+                        disconnectFromDevice()
+                    }
+                    BluetoothAdapter.STATE_ON -> {
+                        Log.d(TAG, "Bluetooth turned on → ready for reconnect")
+                        // тут можно вызвать auto-reconnect, если нужно
+                    }
+                }
+            }
         }
     }
 
     private suspend fun waitForBonding(device: AndroidBluetoothDevice): Boolean =
-        suspendCancellableCoroutine { cont ->
-            val receiver = BondingReceiver(device, cont)
+        withTimeoutOrNull(BONDING_TIMEOUT_MS) {
+            suspendCancellableCoroutine { cont ->
+                val receiver = BondingReceiver(device, cont)
 
-            receiversManager.register(
-                receiver,
-                IntentFilter(AndroidBluetoothDevice.ACTION_BOND_STATE_CHANGED)
-            )
+                receiversManager.register(
+                    receiver,
+                    IntentFilter(AndroidBluetoothDevice.ACTION_BOND_STATE_CHANGED)
+                )
 
-            cont.invokeOnCancellation {
-                receiversManager.unregister(receiver)
+                cont.invokeOnCancellation {
+                    receiversManager.unregister(receiver)
+                }
             }
-        }
+        } ?: false
+
 
     companion object {
         private val TAG = ConnectRepositoryImpl::class.java.simpleName
         private const val CONNECT_TIMEOUT_MS = 30_000L // 30 секунд
+        private const val BONDING_TIMEOUT_MS = 20_000L // 20 секунд
     }
 }
