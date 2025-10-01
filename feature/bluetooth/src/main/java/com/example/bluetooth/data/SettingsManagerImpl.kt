@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
-import javax.inject.Singleton
 
 class SettingsManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context
@@ -22,7 +21,8 @@ class SettingsManagerImpl @Inject constructor(
         _isEnabledFlow.value = isEnabled
     }
 
-    private val _bluetoothMaskFlow = MutableStateFlow(prefs.getString(KEY_MASK, "") ?: "")
+    private val _bluetoothMaskFlow =
+        MutableStateFlow(prefs.getString(KEY_MASK, DEFAULT_MASK) ?: DEFAULT_MASK)
 
     override fun getBluetoothMask(): StateFlow<String> = _bluetoothMaskFlow.asStateFlow()
 
@@ -32,6 +32,7 @@ class SettingsManagerImpl @Inject constructor(
     }
 
     companion object {
+        private const val DEFAULT_MASK = "CP"
         private const val PREFS_NAME = "bluetooth_settings"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_MASK = "mask"
