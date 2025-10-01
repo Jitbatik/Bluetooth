@@ -23,6 +23,7 @@ class LiftUseCase @Inject constructor(
                     Log.d("test", "111")
                     sessionManager.start(socket)
                 } else {
+                    Log.d("test", "222")
                     sessionManager.stop()
                 }
                 sessionManager.sessionState
