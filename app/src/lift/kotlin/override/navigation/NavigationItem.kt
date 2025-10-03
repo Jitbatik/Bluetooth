@@ -2,7 +2,7 @@ package override.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import com.example.bluetooth.R
+import com.psis.elimlift.R
 
 
 enum class NavigationItem(

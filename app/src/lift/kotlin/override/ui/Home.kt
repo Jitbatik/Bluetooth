@@ -15,10 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.bluetooth.presentation.view.home.ButtonState
-import com.example.bluetooth.presentation.view.home.ControlButtons
-import com.example.bluetooth.presentation.view.home.HomeEvent
-import com.example.bluetooth.presentation.view.home.HomeState
+import com.psis.elimlift.presentation.view.home.ButtonState
+import com.psis.elimlift.presentation.view.home.ControlButtons
+import com.psis.elimlift.presentation.view.home.HomeEvent
+import com.psis.elimlift.presentation.view.home.HomeState
 
 @NonRestartableComposable
 @Composable

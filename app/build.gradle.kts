@@ -9,16 +9,16 @@ plugins {
 }
 
 android {
-    namespace = "com.example.bluetooth"
+    namespace = "com.psis.elimlift"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.bluetooth"
+        applicationId = "com.psis.elimlift"
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
