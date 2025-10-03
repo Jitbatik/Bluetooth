@@ -10,8 +10,8 @@ import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.example.bluetooth.presentation.view.home.DataUI
-import com.example.bluetooth.ui.theme.psisFontFamily
+import com.psis.elimlift.presentation.view.home.DataUI
+import com.psis.elimlift.ui.theme.psisFontFamily
 
 
 @NonRestartableComposable

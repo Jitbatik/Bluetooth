@@ -1,7 +1,7 @@
 package override.ui
 
 import androidx.annotation.StringRes
-import com.example.bluetooth.R
+import com.psis.elimlift.R
 
 enum class ButtonType(@StringRes val labelRes: Int) {
     PLUS(R.string.button_help_box_button_label_plus),

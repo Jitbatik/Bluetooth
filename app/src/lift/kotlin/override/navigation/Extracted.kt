@@ -1,11 +1,11 @@
 package override.navigation
 
 import androidx.compose.runtime.Composable
-import com.example.bluetooth.presentation.navigation.NavigationStateHolder
-import com.example.bluetooth.presentation.view.connect.ConnectRoot
-import com.example.bluetooth.presentation.view.home.HomeRoot
-import com.example.bluetooth.presentation.view.settings.SettingsRoot
-import com.example.bluetooth.presentation.view.parameters.ui.ParametersDashboardRoot
+import com.psis.elimlift.presentation.navigation.NavigationStateHolder
+import com.psis.elimlift.presentation.view.connect.ConnectRoot
+import com.psis.elimlift.presentation.view.home.HomeRoot
+import com.psis.elimlift.presentation.view.settings.SettingsRoot
+import com.psis.elimlift.presentation.view.parameters.ui.ParametersDashboardRoot
 
 @Composable
 fun Extracted(

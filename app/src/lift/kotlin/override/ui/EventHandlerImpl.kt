@@ -1,7 +1,7 @@
 package override.ui
 
-import com.example.bluetooth.EventHandler
-import com.example.bluetooth.presentation.view.home.HomeEvent
+import com.psis.elimlift.EventHandler
+import com.psis.elimlift.presentation.view.home.HomeEvent
 import javax.inject.Inject
 
 
