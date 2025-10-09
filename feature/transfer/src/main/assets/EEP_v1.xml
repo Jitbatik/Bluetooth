@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lift_format>
+    <field name="Тип" type="u8" offset="1" comment="Тип лифта"/>
+    <field name="ГруппРабота" type="u8" offset="2" comment="Групповая работа"/>
+    <field name="НомерЛифта" type="u8" offset="3" comment="Номер лифта в сети"/>
+    <field name="Статус" type="u8" offset="4" comment="Статус в группе"/>
+    <field name="КолЭт" type="u8" offset="5" comment="Количество этажей"/>
+    <field name="ОснЭт" type="u8" offset="6" comment="Основной посадочный этаж"/>
+    <field name="ПожЭт" type="u8" offset="7" comment="Пожарный этаж"/>
+    <field name="КолЭтДВЭДНЭ" type="u8" offset="8" comment="Количество этажей в зоне ДВЭ ДНЭ"/>
+    <field name="СмещЭтН" type="u8" offset="9" comment="Смещение нижних этажей в группе"/>
+    <field name="СмещЭтВ" type="u8" offset="10" comment="Смещение верхних этажей в группе"/>
+    <field name="КонтрД1Д2" type="u8" offset="11" comment="Датчик импульсов Д1Д2 контроль движения"/>
+    <field name="ДатчикДТО" type="u8" offset="12" comment="Датчик ДТО">
+        <code value="0, 3" desc="один датчик"/>
+        <code value="1, 4" desc="два вертикально"/>
+        <code value="2, 5" desc="два горизонтально"/>
+        <code value=">2" desc="контроль: есть"/>
+        <code value="" desc="контроль: нет"/>
+    </field>
+    <field name="ПогрИмп" type="u8" offset="14" comment="Погрешность счетчика импульсов"/>
+    <field name="ДопПожЭт" type="u8" offset="15" comment="Дополнительный пожарный этаж"/>
+</lift_format>

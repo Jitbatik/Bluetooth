@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lift_format>
+    <field name="KolOst" type="u8" offset="0" comment="Количество остановок" min="" max="" def=""/>
+    <field name="KOLET" type="u8" offset="1" comment="Количество этажей" min="2" max="40" def="8"/>
+    <field name="OPE" type="u8" offset="2" comment="Основной посадочный этаж" min="1" max="K" def="1"/>
+    <field name="U_OTK_DV" type="u8" offset="3" comment="Уставка времени открытого состояния двери" min="1" max="30" def="2"/>
+    <field name="U_OZ_DV" type="u8" offset="4" comment="Максимальное время открытия закрытия двери" min="7" max="30" def="15"/>
+    <field name="M_ZAK_D" type="u8" offset="5" comment="Медленное закрытие дверей" min="0" max="2" def="0">
+        <code value="0" desc="нет"/>
+        <code value="1" desc="основным сигн."/>
+        <code value="2" desc="специальным"/>
+    </field>
+    <field name="U_POG_OF" type="u8" offset="6" comment="Время пустой кабины для выхода из режима погрузка" min="0" max="120" def="10"/>
+    <field name="U_POZ_DV" type="u8" offset="7" comment="Количество попыток откр/закр двери" min="1" max="7" def="5"/>
+    <field name="U_ET" type="u8" offset="8" comment="Уставка таймера контроля времени смены этажа" min="20" max="45" def="30"/>
+    <field name="V_KAB" type="u8" offset="9" comment="Номинальная скорость лифта" min="5" max="40" def="16"/>
+    <field name="U_MAX_VL" type="u8" offset="10" comment="Время движения на скорость выравнивания" min="5" max="90" def="45"/>
+    <field name="PE" type="u8" offset="11" comment="Пожарный этаж основной" min="1" max="K" def="1"/>
+    <field name="PRIVOD" type="u8" offset="12" comment="Тип привода" min="0" max="1" def="0"/>
+    <field name="ZAP_ARX" type="u8" offset="13" comment="Сохранение на SD карту" min="0" max="5" def="0"/>
+    <field name="TIP_OHR" type="u8" offset="15" comment="Тип охраны шахты" min="1" max="2" def="1"/>
+    <field name="f_p_err" type="u8" offset="16" comment="Приоритет сообщений" min="0" max="1" def="0"/>
+    <field name="f_ups" type="u8" offset="17" comment="Наличие ИБП" min="0" max="1" def="1"/>
+    <field name="K_N_VIZOV" type="u8" offset="18" comment="Кнопки вызова" min="0" max="6" def="0"/>
+    <field name="NLD" type="u8" offset="19" comment="Наладка" min="0" max="255" def="0"/>
+    <field name="ZV_PRB" type="u8" offset="20" comment="Отключение ночью звука прибытия" min="0" max="1" def="0"/>
+    <field name="R_NGR" type="u8" offset="21" comment="Отключение ночью работы в группе" min="0" max="1" def="0"/>
+    <field name="f_k_dto" type="u8" offset="22" comment="Контроль ДТО" min="0" max="1" def="1"/>
+    <field name="IND_K" type="u8" offset="23" comment="Индикатор в кабине" min="0" max="2" def="0"/>
+    <field name="f_pero" type="u8" offset="24" comment="Переоткрытие по вызову" min="0" max="1" def="0"/>
+    <field name="F_PV" type="u8" offset="25" comment="Доп. посты вызова" min="0" max="1" def="0"/>
+    <field name="U_PCH_I" type="u8" offset="26" comment="Контроль ПЧ_ТОК" min="0" max="6" def="4"/>
+    <field name="D_I" type="u8" offset="27" comment="Погрешность счетчиков импульсов" min="5" max="200" def="20"/>
+    <field name="R_OHR" type="u8" offset="28" comment="Сопротивление Rош" min="80" max="255" def="40"/>
+    <field name="f_rzd" type="u8" offset="29" comment="Разрешено зак.дверьей во время открывания" min="0" max="1" def="0"/>
+    <field name="F_R_FR" type="u8" offset="30" comment="ФОТОБАРЬЕР: контроль" min="0" max="4" def="1"/>
+    <field name="IND_E" type="u8" offset="31" comment="ИНДИКАТОР НА ОПЭ" min="0" max="4" def="0"/>
+    <field name="U_ZDPP" type="u8" offset="32" comment="ЗАДЕРЖКА ЗАКРЫТИЯ ПОСЛЕ 1-ГО ПРИКАЗА" min="0" max="15" def="0"/>
+    <field name="TIP_KN" type="u8" offset="33" comment="ВАРИАНТ НАБОРА= (1 3 7 8 21 23 27 28)" min="0" max="9" def="3"/>
+    <field name="K_OTKAT" type="u8" offset="34" comment="КОНТРОЛЬ ОТКАТА" min="0" max="1" def="0"/>
+    <field name="U_ZAPR_V" type="u8" offset="35" comment="ЗАДЕРЖКА ОТРАБОТКИ ВЫЗОВОВ" min="0" max="3" def="0"/>
+    <field name="f_rop" type="u8" offset="36" comment="РЕГИСТРАЦИЯ ОБРАТНЫХ ПРИКАЗОВ" min="0" max="1" def="1"/>
+    <field name="B_OKP" type="u8" offset="37" comment="ОГРАНИЧЕНИЕ ПРИКАЗОВ" min="0" max="15" def="8"/>
+    <field name="PE_1" type="u8" offset="38" comment="ПОЖАРНЫЙ ЭТАЖ вспомогательный" min="1" max="K" def="1"/>
+    <field name="st_gr" type="u8" offset="39" comment="Статус в группе" min="0" max="2" def="0"/>
+    <field name="ET_PARK" type="u8" offset="40" comment="ЭТАЖ ПАРКОВКИ" min="0" max="K" def="1"/>
+    <field name="DV_PARK" type="u8" offset="41" comment="ДВЕРИ НА ПАРКОВКЕ" min="0" max="1" def="1"/>
+    <field name="U_PARK" type="u8" offset="42" comment="ВРЕМЯ ДО ПАРКОВКИ" min="1" max="255" def="40"/>
+    <field name="U_PR_PARK" type="u8" offset="43" comment="РЕЖИМ РАБОТЫ" min="0" max="3" def="0"/>
+    <field name="DV_PRB" type="u8" offset="44" comment="ДВЕРИ В ПРИРАБОТКЕ" min="0" max="1" def="0"/>
+    <field name="U_ST_PCH" type="u8" offset="45" comment="КОНТРОЛЬ ПЧ_ГОТ" min="0" max="6" def="4"/>
+    <field name="IND_PE" type="u8" offset="46" comment="ИНДИКАТОРЫ НА ЭТАЖАХ" min="0" max="4" def="1"/>
+    <field name="ZV_PK" type="u8" offset="47" comment="ЗВУК В КАБИНЕ" min="0" max="2" def="2"/>
+    <field name="ZV_PE" type="u8" offset="48" comment="ЗВУК НА ЭТАЖЕ" min="0" max="2" def="1"/>
+    <field name="ZV_KK" type="u8" offset="49" comment="ЗВУК НАЖАТИЯ КНОПОК В КАБИНЕ" min="0" max="2" def="1"/>
+    <field name="ZV_ODV" type="u8" offset="50" comment="ЗВУК ОТКРЫТИЯ ДВЕРЕЙ" min="0" max="2" def="1"/>
+    <field name="K_Vn" type="u8" offset="51" comment="КОНТРОЛЬ Vн" min="0" max="30" def="0"/>
+    <field name="ZONA_DVE" type="u8" offset="52" comment="ОСТАНОВ ДО ТО В ДВЭ В РЕЖИМЕ РЕВИЗИЯ" min="80" max="150" def="80"/>
+    <field name="f_rda" type="u8" offset="53" comment="ДВИЖЕНИЕ АВАРИЙНОЕ" min="0" max="1" def="0"/>
+    <field name="UF_T" type="u8" offset="54" comment="t/Защита двигателя (Ом)" min="0" max="150" def="80"/>
+    <field name="D_K_OD_1" type="u8" offset="55" comment="ПОСТ В" min="0" max="2" def="0"/>
+    <field name="f_bmp" type="u8" offset="57" comment="Лифт с МП (=0) Лифт без МП (=1)" min="0" max="1" def="1"/>
+    <field name="f_dse" type="u8" offset="58" comment="ДВИЖЕНИЕ НА СОСЕДНИЙ ЭТАЖ" min="0" max="1" def="0"/>
+    <field name="GR_PARA" type="u8" offset="59" comment="Групповая работа" min="0" max="2" def="0"/>
+    <field name="U_K_KONT" type="u8" offset="60" comment="КОНТРОЛЬ КОНТАКТОРОВ" min="0" max="10" def="5"/>
+    <field name="U_OF_K5" type="u8" offset="61" comment="ЗАДЕРЖКА ВЫКЛ. КОНТАКТОРА" min="0" max="50" def="18"/>
+    <field name="U_GOT_PR" type="u8" offset="62" comment="ГОТОВНОСТЬ ПЧ" min="1" max="35" def="20"/>
+    <field name="ZV_ZDV" type="u8" offset="63" comment="ЗВУК ЗАКРЫТИЯ ДВЕРЕЙ" min="0" max="2" def="1"/>
+    <field name="U_PCH_T" type="u8" offset="64" comment="КОНТРОЛЬ ПЧ_ТОРМ" min="0" max="6" def="4"/>
+    <field name="U_POG_OF1" type="u8" offset="65" comment="ВЫХОД из ПОГРУЗКИ при ЗАГРУЗКЕ 15 кГ" min="0" max="20" def="10"/>
+    <field name="KOR_SEK" type="u8" offset="66" comment="Дата / Время коррекция часов" min="0" max="0" def="0"/>
+    <field name="F_K_DZV" type="u8" offset="67" comment="ДАТЧИК ДЗВ КОНТРОЛЬ:" min="0" max="2" def="0"/>
+    <field name="R_OTKL" type="u8" offset="68" comment="ОТКЛЮЧЕНИЕ С ОПЭ" min="0" max="2" def="0"/>
+    <field name="F_PPARK" type="u8" offset="69" comment="ПРИОРИТЕТ НИЖНЕГО Эт" min="0" max="1" def="0"/>
+    <field name="f_pdv" type="u8" offset="70" comment="ПОГРУЗКА ПО: НЕТ ЗАКРЫТИЯ ДВЕРЕЙ" min="0" max="1" def="0"/>
+    <field name="DV_DVIZ" type="u8" offset="71" comment="УДЕРЖАНИЕ ДВЕРЕЙ В ДВИЖЕНИИ" min="0" max="1" def="1"/>
+    <field name="addr" type="u8" offset="72" comment="Номер лифта" min="1" max="6" def="1"/>
+    <field name="ZV_ET" type="u8" offset="73" comment="ОЗВУЧИВАНИЕ НА ЭТАЖАХ:" min="0" max="3" def="0"/>
+    <field name="f_pr_nd" type="u8" offset="74" comment="ПРИОРИТЕТ" min="0" max="1" def="1"/>
+    <field name="TO_DKE" type="u8" offset="75" comment="Этаж в зоне ДВЭ/ ДНЭ" min="0" max="3" def="0"/>
+    <field name="V_G_ET" type="u8" offset="76" comment="ОТКР.ДВЕРЕЙ В ГРУППЕ" min="0" max="1" def="1"/>
+    <field name="f_rod" type="u8" offset="77" comment="РАЗРЕШЕНО ОТК.ДВЕРЕЙ ключём на этаже" min="0" max="1" def="0"/>
+    <field name="OTKL_GVU" type="u8" offset="78" comment="ОТКЛЮЧЕНИЕ ГВУ" min="0" max="7" def="4"/>
+    <field name="F_BK" type="u8" offset="79" comment="НАЗНАЧЕНИЕ БК" min="0" max="3" def="3"/>
+    <field name="F_KTK_U_K_TRK" type="u8" offset="80" comment="КОНТРОЛЬ ТОРМОЗНЫХ КОЛОДОК" min="0" max="10" def="5"/>
+    <field name="F_KTO" type="u8" offset="81" comment="КОРРЕКЦИЯ ТО выполнение" min="0" max="2" def="0"/>
+    <field name="F_NE" type="u8" offset="82" comment="ДВИЖЕНИЕ В ЭВАКУАЦИИ" min="0" max="3" def="1"/>
+    <field name="TIP_EK" type="u8" offset="83" comment="Тип ЭК" min="0" max="3" def="0"/>
+    <field name="F_DTO" type="u8" offset="84" comment="ДАТЧИК ТО" min="0" max="3" def="1"/>
+    <field name="f_pred_o" type="u8" offset="85" comment="ПРЕДОТКРЫТИЕ ДВЕРЕЙ В ДВИЖЕНИИ" min="0" max="1" def="0"/>
+    <field name="f_vr_k" type="u8" offset="86" comment="ВЫРАВНИВАНИЕ КАБИНЫ" min="0" max="1" def="0"/>
+    <field name="SM_L_EG" type="u8" offset="87" comment="НИЖНИХ ЭТАЖЕЙ(в группе)" min="0" max="14" def="0"/>
+    <field name="F_K_DKE" type="u8" offset="88" comment="ДОПОЛНИТЕЛЬНЫЕ ДНЭ и ДВЭ КОНТРОЛЬ:" min="0" max="2" def="0"/>
+    <field name="SM_H_EG" type="u8" offset="89" comment="ВЕРХНИХ ЭТАЖЕЙ(в группе)" min="0" max="14" def="0"/>
+    <field name="UPR_DV" type="u8" offset="90" comment="ОТКР. ДВЕРЕЙ ПО ВЫЗОВУ:" min="0" max="1" def="0"/>
+    <field name="F_K_DD" type="u8" offset="91" comment="ДАТЧИК ДВИЖЕНИЯ: КОНТРОЛЬ:" min="0" max="3" def="1"/>
+    <field name="N485" type="u8" offset="92" comment="RS485" min="0" max="2" def="1"/>
+    <field name="U_NAP_V" type="u8" offset="93" comment="ЗАДЕРЖКА ВКЛ. ДВИЖЕНИЯ" min="1" max="90" def="20"/>
+    <field name="NLD1" type="u8" offset="94" comment="НАЛАДКА1" min="0" max="255" def="0"/>
+    <field name="K1" type="u8" offset="95" comment="K1" min="0" max="40" def="20"/>
+    <field name="K2" type="u8" offset="96" comment="K2" min="0" max="40" def="20"/>
+    <field name="D_K_OD_2" type="u8" offset="97" comment="ПОСТ А" min="0" max="2" def="0"/>
+    <field name="OTK_DV" type="u8" offset="98" comment="ОТК. ДВЕРЕЙ ИЗ КАБИНЫ" min="0" max="1" def="0"/>
+</lift_format>
