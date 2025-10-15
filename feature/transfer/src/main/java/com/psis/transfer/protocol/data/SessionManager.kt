@@ -3,104 +3,166 @@ package com.psis.transfer.protocol.data
 import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.psis.transfer.protocol.domain.ExchangeProtocol
-import com.psis.transfer.protocol.domain.SessionManagerState
-import com.psis.transfer.protocol.domain.model.Command
+import com.psis.transfer.protocol.domain.SessionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.io.IOException
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.Closeable
 import javax.inject.Inject
 import javax.inject.Singleton
 
+
+/**
+ * Менеджер управления Bluetooth-сессией
+ */
 @Singleton
 class SessionManager @Inject constructor(
     private val exchangeProtocol: ExchangeProtocol,
     private val liftRepository: LiftRepository,
 ) {
-    private var sessionScope: CoroutineScope? = null
-    private var socket: BluetoothSocket? = null
+    @Volatile
+    private var session: SessionScope? = null
 
-    private val _sessionState =
-        MutableStateFlow(SessionManagerState.States(SessionManagerState.State.STOPPED))
-    val sessionState: StateFlow<SessionManagerState.States> = _sessionState
+    private val _state = MutableStateFlow(SessionState.STOPPED)
+    val state: StateFlow<SessionState> = _state
 
 
-    fun start(socket: BluetoothSocket) {
-        this.socket = socket
+    /**
+     * Инициализация и запуск новой сессии.
+     */
+    fun start(
+        socket: BluetoothSocket,
+        baseCommand: StateFlow<ByteArray>,
+    ) = synchronized(this) {
+        stop()
 
-        sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.IO).apply {
-            // read
-            launchSafely {
-                exchangeProtocol.listen(socket).collect { parsed ->
-                    liftRepository.updateData(parsed)
-                }
-            }
+        val channel = Channel<ByteArray>(Channel.BUFFERED)
+        val sessionScope = SessionScope(socket, channel, Job())
+        session = sessionScope
 
-            // request
-            launchSafely { requestLoop(socket, isActive = isActive) }
-
-            // уведомление о старте
-            _sessionState.value = SessionManagerState.States(SessionManagerState.State.STARTED)
+        // read
+        sessionScope.scope.launchSafely {
+            listen(socket)
         }
 
+        // request
+        sessionScope.scope.launchSafely {
+            sendLoop(socket, channel, baseCommand)
+        }
+
+        _state.value = SessionState.STARTED
     }
 
+    /**
+     * Безопасная остановка сессии и очистка состояния.
+     */
     fun stop() {
-        Log.d("test", "stop")
-        if (sessionScope == null) return
-
+        session?.close()
+        session = null
         liftRepository.clear()
         liftRepository.updateData(LiftDataDefaults.getDefault())
-        sessionScope?.cancel()
-        sessionScope = null
 
-        socket?.closeSafely()
-        socket = null
-
-        _sessionState.value = SessionManagerState.States(SessionManagerState.State.STOPPED)
+        _state.value = SessionState.STOPPED
     }
 
-    private suspend fun requestLoop(socket: BluetoothSocket, isActive: Boolean) {
-        while (isActive) {
-            exchangeProtocol.request(socket, Command.READ_FROM_ADDRESS_0.bytes)
-            delay(RETRY_DELAY_MS)
+
+    /**
+     * Добавление команды в очередь
+     */
+    fun sendCommand(command: ByteArray) {
+        val ctx = session ?: run {
+            Log.w(TAG, "⚠️ Нет активной сессии — команда проигнорирована")
+            return
+        }
+
+        if (ctx.channel.trySend(command).isSuccess) {
+            Log.d(TAG, "🟢 Команда добавлена в очередь: ${command.toHexString()}")
+        } else {
+            Log.w(TAG, "⚠️ Очередь переполнена — команда отброшена")
         }
     }
 
+    /**
+     * Чтение из сокета и запись в репозиторий
+     */
+    private suspend fun listen(socket: BluetoothSocket) {
+        exchangeProtocol.listen(socket).collect { parsed ->
+            Log.d(TAG, "📥 Ответ: ${parsed.toByteArray().toHexString()}")
+            liftRepository.updateData(parsed)
+        }
+    }
+
+    /**
+     * Основной цикл отправки команд
+     */
+    private suspend fun sendLoop(
+        socket: BluetoothSocket,
+        channel: Channel<ByteArray>,
+        baseCommand: StateFlow<ByteArray>
+    ) {
+        while (currentCoroutineContext().isActive) {
+            val cmd = withTimeoutOrNull(RETRY_DELAY_MS) { channel.receive() } ?: baseCommand.value
+            Log.d(TAG, "➡️ Отправка: ${cmd.toHexString()}")
+            exchangeProtocol.sendCommand(socket, cmd)
+        }
+    }
+
+
+    /**
+     * Безопасный запуск корутины
+     */
     private fun CoroutineScope.launchSafely(block: suspend CoroutineScope.() -> Unit): Job =
         launch {
             runCatching { block() }
                 .onFailure {
-                    SessionManagerState.States(
-                        SessionManagerState.State.STOPPED,
-                        SessionManagerState.State.ERROR
-                    )
+                    Log.e(TAG, "❌ Ошибка в корутине", it)
+                    SessionState.ERROR
                 }
         }
-
-    private fun BluetoothSocket.closeSafely() {
-        try {
-            close()
-        } catch (e: IOException) {
-            Log.e(TAG, "Error closing socket", e)
-        }
-    }
-
-    fun sendCommand(command: ByteArray) {
-        socket?.let { safeSocket ->
-            exchangeProtocol.sendCommand(safeSocket, command)
-        } ?: Log.w(TAG, "Attempt to send command with no active socket")
-    }
 
     companion object {
         const val RETRY_DELAY_MS = 200L
         private val TAG = SessionManager::class.java.simpleName
     }
 }
+
+/**
+ * Контейнер, инкапсулирующий состояние активной Bluetooth-сессии
+ */
+private class SessionScope(
+    private val socket: BluetoothSocket,
+    val channel: Channel<ByteArray>,
+    parentJob: Job
+) : Closeable {
+
+    val scope = CoroutineScope(SupervisorJob(parentJob) + Dispatchers.IO)
+
+    override fun close() {
+        runCatching {
+            channel.close()
+            socket.close()
+        }.onFailure {
+            Log.w(TAG, "Ошибка при закрытии сессии", it)
+        }
+        scope.cancel()
+    }
+
+    companion object {
+        private val TAG = SessionScope::class.java.simpleName
+    }
+}
+
+/**
+ * Утилита форматирования ByteArray для логов.
+ */
+private fun ByteArray.toHexString(): String =
+    joinToString(" ") { "%02X".format(it) }

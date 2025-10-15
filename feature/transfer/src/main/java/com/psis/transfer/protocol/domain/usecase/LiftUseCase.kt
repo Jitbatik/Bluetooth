@@ -1,31 +1,33 @@
 package com.psis.transfer.protocol.domain.usecase
 
-import android.util.Log
 import com.psis.elimlift.domain.ConnectRepository
 import com.psis.transfer.protocol.data.SessionManager
-import com.psis.transfer.protocol.domain.SessionManagerState
+import com.psis.transfer.protocol.domain.SessionState
+import com.psis.transfer.protocol.domain.model.Command
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import javax.inject.Inject
 
-// todo при дисконекте чтение сокета отпадает, а не отключается не критично
 class LiftUseCase @Inject constructor(
     private val connectRepository: ConnectRepository,
     private val sessionManager: SessionManager,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun observeLiftSession(): Flow<SessionManagerState.States> =
+    fun observeLiftSession(): Flow<SessionState> =
         connectRepository.observeSocket()
             .flatMapLatest { result ->
                 val socket = result.getOrNull()
                 if (socket != null) {
-                    Log.d("test", "111")
-                    sessionManager.start(socket)
+                    sessionManager.start(
+                        socket,
+                        // В будующем нужна будет возможность управлять baseCommand
+                        baseCommand = MutableStateFlow(Command.READ_FROM_ADDRESS_0.bytes),
+                    )
                 } else {
-                    Log.d("test", "222")
                     sessionManager.stop()
                 }
-                sessionManager.sessionState
+                sessionManager.state
             }
 }
