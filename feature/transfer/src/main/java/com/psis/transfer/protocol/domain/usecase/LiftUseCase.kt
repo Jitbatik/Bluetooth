@@ -1,12 +1,10 @@
 package com.psis.transfer.protocol.domain.usecase
 
 import com.psis.elimlift.domain.ConnectRepository
-import com.psis.transfer.protocol.data.SessionManager
+import com.psis.transfer.protocol.data.session.SessionManager
 import com.psis.transfer.protocol.domain.SessionState
-import com.psis.transfer.protocol.domain.model.Command
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import javax.inject.Inject
 
@@ -20,11 +18,7 @@ class LiftUseCase @Inject constructor(
             .flatMapLatest { result ->
                 val socket = result.getOrNull()
                 if (socket != null) {
-                    sessionManager.start(
-                        socket,
-                        // В будующем нужна будет возможность управлять baseCommand
-                        baseCommand = MutableStateFlow(Command.READ_FROM_ADDRESS_0.bytes),
-                    )
+                    sessionManager.start(socket)
                 } else {
                     sessionManager.stop()
                 }

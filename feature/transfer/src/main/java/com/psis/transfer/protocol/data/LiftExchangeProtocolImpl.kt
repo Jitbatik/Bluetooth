@@ -10,29 +10,18 @@ import javax.inject.Inject
 class LiftExchangeProtocolImpl @Inject constructor(
     private val dataStreamHelpers: DataStreamHelpers,
 ) : ExchangeProtocol {
-    override fun request(
-        socket: BluetoothSocket,
-        bytes: ByteArray
-    ) {
-        if (bytes.isEmpty()) return
-
-        dataStreamHelpers.sendToStream(
-            socket = socket,
-            value = bytes + calculateCRC16(bytes).toByteArray()
-        )
-    }
-
     override fun sendCommand(socket: BluetoothSocket, command: ByteArray) {
         if (command.isEmpty()) return
         val packet = command + calculateCRC16(command).toByteArray()
         dataStreamHelpers.sendToStream(socket, packet)
     }
 
-
     override fun listen(socket: BluetoothSocket): Flow<List<Byte>> =
         dataStreamHelpers.readFromStream(socket)
-            .mapNotNull { raw ->
-                if (raw.isCRCValid()) raw.payload().toLittleEndian() else null
+            .mapNotNull { packet ->
+                packet.takeIf { it.isCRCValid() }
+                    ?.toList()
+                    ?.toLittleEndian(rangesToFlip = listOf(3..packet.size - 3))
             }
 
 
@@ -47,20 +36,42 @@ class LiftExchangeProtocolImpl @Inject constructor(
         return this.toWord(size - 2) == calculateChecksum(this)
     }
 
-    private fun ByteArray.payload(): List<Byte> = slice(3 until size - 2)
 
-    private fun List<Byte>.toLittleEndian(): List<Byte> = buildList {
-        val iterator = this@toLittleEndian.iterator()
-        while (iterator.hasNext()) {
-            val first = iterator.next()
-            if (iterator.hasNext()) {
-                val second = iterator.next()
-                // little-endian → сначала старший, потом младший
-                add(second)
-                add(first)
+    private fun List<Byte>.toLittleEndian(
+        rangesToFlip: List<IntRange>
+    ): List<Byte> = buildList {
+        val total = this@toLittleEndian.size
+
+        var index = 0
+        while (index < total) {
+            val range = rangesToFlip.firstOrNull { index in it }
+
+            if (range == null) {
+                // этот байт вне диапазона — добавляем как есть
+                add(this@toLittleEndian[index])
+                index++
             } else {
-                // остался один байт
-                add(first)
+                // находим конец диапазона
+                val end = range.last.coerceAtMost(total - 1)
+                val segment = this@toLittleEndian.subList(index, end + 1)
+
+                // переворачиваем по парам
+                val flipped = buildList {
+                    val iter = segment.iterator()
+                    while (iter.hasNext()) {
+                        val first = iter.next()
+                        if (iter.hasNext()) {
+                            val second = iter.next()
+                            add(second)
+                            add(first)
+                        } else {
+                            add(first)
+                        }
+                    }
+                }
+
+                addAll(flipped)
+                index = end + 1
             }
         }
     }
@@ -88,6 +99,7 @@ class LiftExchangeProtocolImpl @Inject constructor(
     }
 
     companion object {
+        private val TAG = LiftExchangeProtocolImpl::class.java.simpleName
         private const val MIN_PACKET_SIZE = 10
         private const val CRC16_INITIAL = 0xFFFF
         private const val CRC16_POLYNOMIAL = 0xA001

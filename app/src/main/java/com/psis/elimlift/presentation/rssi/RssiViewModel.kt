@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.psis.transfer.chart.domain.usecase.ObserveRSSIUseCase
-import com.psis.transfer.protocol.domain.SessionManagerState
+import com.psis.transfer.protocol.domain.SessionState
 import com.psis.transfer.protocol.domain.usecase.LiftUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +31,7 @@ class RssiViewModel @Inject constructor(
         .observeLiftSession()
         .onEach { Log.d("RssiViewModel", it.toString()) }
         .map { sessionState ->
-            if (sessionState.hasState(SessionManagerState.State.STARTED)) {
+            if (sessionState == SessionState.STARTED) {
                 observeRssiUseCase().toUIRssi() // читаем реальные данные
             } else {
                 flowOf(RSSI("нет сигнала", Color.Gray)) // когда сессия не активна

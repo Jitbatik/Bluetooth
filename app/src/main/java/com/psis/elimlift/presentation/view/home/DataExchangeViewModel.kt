@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.psis.elimlift.EventHandler
-import com.psis.transfer.protocol.data.LiftRepository
+import com.psis.transfer.protocol.domain.usecase.EmulationLiftScreenUseCase
 import com.psis.transfer.protocol.domain.usecase.SendCommandUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -18,13 +18,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DataExchangeViewModel @Inject constructor(
-    liftRepository: LiftRepository,
+    emulationLiftScreenUseCase: EmulationLiftScreenUseCase,
     private val sendCommandUseCase: SendCommandUseCase,
     private val eventHandler: EventHandler<HomeEvent, ByteArray>,
 ) : ViewModel() {
     private val _data: StateFlow<List<DataUI>> =
-        liftRepository.observeLiftData()
-            .map { byteDataList -> filterByteDataList(byteDataList) }
+        emulationLiftScreenUseCase()
             .mapToHomeDataUI()
             .stateIn(
                 scope = viewModelScope,
@@ -32,10 +31,6 @@ class DataExchangeViewModel @Inject constructor(
                 initialValue = emptyList()
             )
     val data: StateFlow<List<DataUI>> = _data
-
-    private fun filterByteDataList(byteDataList: List<Byte>) =
-        if (byteDataList.size < 208) byteDataList
-        else byteDataList.subList(128, 208)
 
 
     private fun Flow<List<Byte>>.mapToHomeDataUI(): Flow<List<DataUI>> = map { charDataList ->
