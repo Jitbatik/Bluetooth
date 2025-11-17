@@ -35,42 +35,31 @@ class UpdateChartOffsetUseCase @Inject constructor(
     }
 }
 
+//TODO нужно чтобы офсет был от отричательного до положительного или 0
 class ChartRangeObserver @Inject constructor(
     private val chartConfigRepository: ChartConfigRepository,
 ) {
-
     fun start(
         scope: CoroutineScope,
-        chartDataFlow: Flow<List<GraphSeries>>,
+        chartDataFlow: Flow<List<ChartFrame>>,
         chartConfigFlow: StateFlow<ChartConfig>
     ) {
         scope.launch {
             chartDataFlow
-                .map { seriesList ->
-                    var minTs = Float.MAX_VALUE
-                    var maxTs = Float.MIN_VALUE
+                .map { frames ->
+                    val timestamps = frames.map { it.timestampSeconds }
 
-                    for (series in seriesList) {
-                        for (point in series.points) {
-                            minTs = min(minTs, point.xCoordinate)
-                            maxTs = max(maxTs, point.xCoordinate)
-                        }
-                    }
-
-                    Pair(
-                        if (minTs == Float.MAX_VALUE) 0f else minTs,
-                        if (maxTs == Float.MIN_VALUE) 0f else maxTs
-                    )
+                    val minTs = timestamps.minOrNull() ?: 0
+                    val maxTs = timestamps.maxOrNull() ?: 0
+                    minTs to maxTs
                 }
                 .distinctUntilChanged()
                 .collect { (minTime, maxTime) ->
                     val config = chartConfigFlow.value
-                    val stepCount = config.stepCount.toFloat()
-                    val newMaxOffset = (maxTime - minTime - stepCount).coerceAtLeast(0f)
 
                     val updatedConfig = config.copy(
-                        minOffsetX = minTime,
-                        maxOffsetX = newMaxOffset
+                        minOffsetX = (minTime - maxTime).toFloat(),
+                        maxOffsetX = 0f
                     )
 
                     if (updatedConfig != config) {

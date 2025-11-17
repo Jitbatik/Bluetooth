@@ -70,9 +70,7 @@ private fun ChartTitle(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier
-//            .fillMaxWidth()
-            .padding(bottom = 8.dp),
+        modifier = modifier.padding(bottom = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(text = name, style = style, color = Color.Gray)
@@ -100,12 +98,6 @@ private fun ChartBody(
                 .weight(1f)
                 .fillMaxHeight()
         )
-//        RangeLabel(
-//            minValue = chartData.minValue,
-//            maxValue = chartData.maxValue,
-//            color = chartData.color,
-//            modifier = Modifier.padding(4.dp)
-//        )
     }
 }
 

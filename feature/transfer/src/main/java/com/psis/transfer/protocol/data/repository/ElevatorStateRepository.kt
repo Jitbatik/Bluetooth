@@ -9,19 +9,16 @@ import javax.inject.Singleton
 @Singleton
 class ElevatorStateRepository @Inject constructor() {
     private val _dataFlow = MutableStateFlow(LiftDataDefaults.getDefault())
+
     fun observeElevatorState(): Flow<List<Byte>> = _dataFlow
+
     fun update(newData: List<Byte>) {
         _dataFlow.value = newData
     }
 
-    fun getCurrentBufferIndex(): Int {
+    fun getCurrentBufferIndex(): Int? {
         val data = _dataFlow.value
-        return if (data.size > 91) {
-            // приведение к unsigned-like (чтобы избежать отрицательных значений)
-            data[91].toInt() and 0xFF
-        } else {
-            0
-        }
+        return if (data.size > 91) data[88].toInt() and 0xFF else null
     }
 
     fun clear() {

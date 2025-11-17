@@ -25,7 +25,7 @@ class CommandFactory @Inject constructor(
     fun status(): Command<List<Byte>> = Command(
         bytes = listOf(0x01, 0x03, 0x00, 0x00, 0x00, 0x78),
         respondHeader = Headers.STATE,
-        handleResponse = { stateRepository.update(it) }
+        handleResponse = { stateRepository.update(it.slice(3..it.size - 3)) }
     )
 
     fun readBlock(
@@ -41,8 +41,15 @@ class CommandFactory @Inject constructor(
         return Command(
             bytes = listOf(0x01, 0x03, high, low, 0x00, length.toByte()),
             respondHeader = Headers.ARCHIVE,
-            handleResponse = { archiveRepository.putBlock(it.toByteArray()) }
+            handleResponse = { saveBlockIfNotZero(it) }
         )
+    }
+
+    private fun saveBlockIfNotZero(block: List<Byte>) {
+        val sliced = block.subList(3, block.size - 3)
+        if (sliced.any { it != 0.toByte() }) {
+            archiveRepository.putBlock(sliced)
+        }
     }
 
     companion object {

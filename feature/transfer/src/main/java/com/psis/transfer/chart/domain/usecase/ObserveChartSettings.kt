@@ -4,20 +4,23 @@ import android.util.Log
 import com.psis.transfer.chart.data.ChartSettingsRepository
 import com.psis.transfer.chart.domain.SignalUtils
 import com.psis.transfer.chart.domain.model.ChartSettings
-import com.psis.transfer.protocol.data.LiftRepository
+import com.psis.transfer.protocol.data.repository.ElevatorStateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ObserveChartSettings @Inject constructor(
     private val repository: ChartSettingsRepository,
-    private val liftRepository: LiftRepository,
-) {
+    private val stateRepository: ElevatorStateRepository,
+
+    ) {
     operator fun invoke(scope: CoroutineScope): Flow<ChartSettings> {
-        val byteDataFlow = liftRepository.observeLiftData()
+        val byteDataFlow = stateRepository.observeElevatorState()
+            .map { flow -> flow.slice(3..flow.size - 2) }
 
         scope.launch {
             initializeChartSettingsFromVersion(byteDataFlow)

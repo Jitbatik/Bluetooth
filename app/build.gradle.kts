@@ -10,15 +10,15 @@ plugins {
 
 android {
     namespace = "com.psis.elimlift"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.psis.elimlift"
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.4"
+        versionCode = 2
+        versionName = "0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -94,6 +94,8 @@ dependencies {
     implementation(project(":feature:transfer"))
 
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.material3)
+    implementation(libs.material.icons.extended)
 
     //hilt
     implementation(libs.dagger.hilt)

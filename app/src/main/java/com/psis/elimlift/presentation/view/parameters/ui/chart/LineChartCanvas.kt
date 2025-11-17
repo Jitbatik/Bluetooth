@@ -42,6 +42,12 @@ fun LineChartCanvas(
     }
 
     Canvas(modifier = modifier.onSizeChanged { canvasSize = it }) {
+
+        if (points.size == 1) {
+            val p = points.first()
+            drawCross(p, color, style)
+            return@Canvas
+        }
         // draw Line with Shadow
         drawGraphLine(points, color, style)
 
@@ -56,6 +62,26 @@ fun LineChartCanvas(
         }
     }
 }
+
+fun DrawScope.drawCross(center: Offset, color: Color, style: ChartStyle) {
+    val half = style.pointRadiusFactor * 1.2f    // коэффициент увеличения
+    val cx = if (center.x <= 0f) style.pointRadiusFactor * 3f else center.x
+
+    drawLine(
+        color = color,
+        start = Offset(cx - half, center.y - half),
+        end = Offset(cx + half, center.y + half),
+        strokeWidth = style.lineStroke.width
+    )
+    drawLine(
+        color = color,
+        start = Offset(cx - half, center.y + half),
+        end = Offset(cx + half, center.y - half),
+        strokeWidth = style.lineStroke.width
+    )
+}
+
+
 
 
 private fun DrawScope.drawSelectedPoint(
@@ -126,7 +152,7 @@ private fun DrawScope.drawGraphLine(
 
 @Preview(showBackground = true)
 @Composable
-private fun LineChartContentPreview() {
+private fun LineChartContentPreviewPoints() {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     val points = remember(canvasSize) { ChartBuilder(canvasSize).points() }
 
@@ -137,6 +163,27 @@ private fun LineChartContentPreview() {
     ) {
         LineChartCanvas(
             points = points,
+            color = Color.Red,
+            selectedIndex = 2,
+            onCanvasSizeChange = { canvasSize = it },
+            modifier = Modifier.fillMaxSize(),
+            style = ChartStyle()
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LineChartContentPreviewPoint() {
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+   val point = remember(canvasSize) { listOf(Offset(0F,300F)) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)
+    ) {
+        LineChartCanvas(
+            points = point,
             color = Color.Red,
             selectedIndex = 2,
             onCanvasSizeChange = { canvasSize = it },

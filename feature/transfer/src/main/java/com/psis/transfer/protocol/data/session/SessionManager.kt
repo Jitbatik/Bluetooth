@@ -67,6 +67,7 @@ class SessionManager @Inject constructor(
         activeSession?.close()
         activeSession = null
         stateRepository.clear()
+        archiveRepository.clear()
         responseAwaiter.cancel()
         _state.value = SessionState.STOPPED
         Log.i(TAG, "🛑 Сессия остановлена")
@@ -96,7 +97,6 @@ class SessionManager @Inject constructor(
 
         while (scope.isActive) {
             commandRepository.refreshArchiveQueueIfNeeded(
-                isArchiveEmpty = archiveRepository.isEmpty(),
                 currentStateIndex = stateRepository.getCurrentBufferIndex()
             )
 
@@ -155,7 +155,7 @@ class SessionManager @Inject constructor(
     }
 
     companion object {
-        private const val RETRY_DELAY_MS = 400L
+        private const val RETRY_DELAY_MS = 100L
         private const val RESPONSE_TIMEOUT_MS = 1000L
         private const val MAX_RETRY_COUNT = 3
         private val TAG = SessionManager::class.java.simpleName

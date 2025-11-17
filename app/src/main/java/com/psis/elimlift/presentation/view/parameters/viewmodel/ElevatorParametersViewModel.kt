@@ -4,13 +4,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.psis.elimlift.presentation.view.parameters.mapper.filterVisibleRange
-import com.psis.elimlift.presentation.view.parameters.mapper.mapToUiChartList
+import com.psis.elimlift.presentation.view.parameters.mapper.mapToUiChartList22
 import com.psis.elimlift.presentation.view.parameters.mapper.toUIParameterDisplayDataFlow
 import com.psis.elimlift.presentation.view.parameters.model.Chart
 import com.psis.transfer.chart.domain.usecase.ChartRangeObserver
 import com.psis.transfer.chart.domain.usecase.ObserveChartConfigUseCase
-import com.psis.transfer.chart.domain.usecase.ObserveChartDataUseCase
+import com.psis.transfer.chart.domain.usecase.ObserveChartFramesUseCase
 import com.psis.transfer.chart.domain.usecase.ObserveChartSettings
 import com.psis.transfer.chart.domain.usecase.ObservePopDataUseCase
 import com.psis.transfer.chart.domain.usecase.ObserveTimeUseCase
@@ -29,7 +28,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ElevatorParametersViewModel @Inject constructor(
-    observeChartDataUseCase: ObserveChartDataUseCase,
+    observeChartFramesUseCase: ObserveChartFramesUseCase,
     observePopDataUseCase: ObservePopDataUseCase,
     observeTimeUseCase: ObserveTimeUseCase,
     observeChartConfigUseCase: ObserveChartConfigUseCase,
@@ -42,34 +41,20 @@ class ElevatorParametersViewModel @Inject constructor(
     // Пока оставлю так если будут идеи как это убрать уберу
     // todo ========================================================================================
     private val chartConfigFlow = observeChartConfigUseCase()
-    private val chartDataFlow = observeChartDataUseCase()
     private val canvasSize = MutableStateFlow(IntSize.Zero)
     private val tapPosition = MutableStateFlow<Offset?>(null)
     private val _selectedIndex = MutableStateFlow<Int?>(null)
     private val _processedChartData = MutableStateFlow<List<Chart>>(emptyList())
-
-    // Только видимая часть графиков — используется в UI
-    private val visibleChartDataFlow = combine(
-        chartDataFlow,        // Flow<List<GraphSeries>>
-        chartConfigFlow,      // Flow<ChartConfig>
-        observeChartSettings(viewModelScope) // Flow<ChartSettings>
-    ) { data, config, settings ->
-
-        val visibleSignalNames = settings.config.signals
-            .filter { it.isVisible }
-            .mapTo(hashSetOf()) { it.name }
-
-        data
-            .filter { it.name in visibleSignalNames } // ⬅ фильтрация по isVisible
-            .filterVisibleRange(config.offset, config.stepCount)
-    }
+    private val visibleChartFramesFlow = observeChartFramesUseCase()
 
     init {
         chartRangeObserver.start(
             scope = viewModelScope,
-            chartDataFlow = chartDataFlow,
+            chartDataFlow = observeChartFramesUseCase.observeRawFramesFlow(),
             chartConfigFlow = chartConfigFlow
         )
+
+        observeChartSettings(viewModelScope)
     }
 
     private fun updateCanvas(size: IntSize) {
@@ -136,12 +121,15 @@ class ElevatorParametersViewModel @Inject constructor(
     // todo ========================================================================================
     private val _state: StateFlow<ParametersState> = combine(
         observeTimeUseCase(),
-        visibleChartDataFlow,
-        observePopDataUseCase(visibleChartDataFlow, _selectedIndex).toUIParameterDisplayDataFlow(),
+        visibleChartFramesFlow,
+        observePopDataUseCase(
+            visibleChartFramesFlow,
+            _selectedIndex
+        ).toUIParameterDisplayDataFlow(),
         chartConfigFlow,
         canvasSize,
     ) { time, domainSeries, popData, config, canvas ->
-        val baseChartData = domainSeries.mapToUiChartList(
+        val baseChartData = domainSeries.mapToUiChartList22(
             canvas = canvas,
             stepCounterXAxis = config.stepCount,
         )

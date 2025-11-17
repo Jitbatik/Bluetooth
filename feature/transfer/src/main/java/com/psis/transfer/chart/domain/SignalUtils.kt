@@ -18,7 +18,7 @@ object SignalUtils {
         }
     }
 
-    fun getSignalSize(offset: Int, type: String): Int {
+    private fun getSignalSize(offset: Int, type: String): Int {
         return when (type) {
             "u32" -> offset + 4
             "u16" -> offset + 2

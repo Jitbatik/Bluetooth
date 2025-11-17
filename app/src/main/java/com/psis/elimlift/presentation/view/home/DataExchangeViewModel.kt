@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.psis.elimlift.EventHandler
+import com.psis.transfer.protocol.data.LiftDataDefaults
 import com.psis.transfer.protocol.domain.usecase.EmulationLiftScreenUseCase
 import com.psis.transfer.protocol.domain.usecase.SendCommandUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

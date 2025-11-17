@@ -104,7 +104,7 @@ fun LineCharts(
                 .fillMaxWidth()
                 .weight(1f)
                 .onGloballyPositioned { updateChartBoxSize(it.size) }
-                .chartGestures(  // ⬅️ теперь жесты обрабатываются на всём LineCharts
+                .chartGestures(
                     onTap = onTapGesture,
                     onTransform = onTransformGesture
                 )
