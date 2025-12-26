@@ -1,97 +1,70 @@
 package com.psis.elimlift.presentation.view.parameters.mapper
 
-import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import com.psis.elimlift.presentation.view.parameters.model.Chart
 import com.psis.elimlift.presentation.view.parameters.util.toUiColor
-import com.psis.transfer.chart.domain.usecase.ChartFrame
+import com.psis.transfer.chart.domain.model.Line
+import com.psis.transfer.chart.domain.model.SignalUserSettings
+import com.psis.transfer.chart.domain.model.timeMs
 import kotlin.math.max
-import com.psis.transfer.chart.domain.model.GraphSeries as DomainGraphSeries
 
-fun List<ChartFrame>.mapToUiChartList22(
+/**
+ * Мапер данных из домейн слоя в UI
+ *
+ * @param canvas - размер элемента Canvas из UI, нужен для рассчета шага
+ * @param stepCounterXAxis - количество шагов на графике в секундах
+ * @param signalUserSettings - пользовательские настройки отображения графиков
+ *
+ * @return List<Chart> - список графиков с нормализацией под UI
+ */
+fun List<Line>.mapListLineToUiChartList(
     canvas: IntSize,
-    stepCounterXAxis: Int
+    stepCounterXAxis: Int,
+    signalUserSettings: List<SignalUserSettings>,
 ): List<Chart> {
-
     if (isEmpty()) return emptyList()
 
-    fun ChartFrame.timeMs(): Long = timestampSeconds * 1000L + millis
+    val signalSettingsMap = signalUserSettings.associateBy { it.name }
 
-    val minTime = minByOrNull { it.timeMs() } ?: return emptyList()
+    val visibleLines = this.filter { line ->
+        val settings = signalSettingsMap[line.name]
+        settings?.isVisible ?: true
+    }
 
+    if (visibleLines.isEmpty()) return emptyList()
 
+    val allPoints = visibleLines.flatMap { it.points }
+    val startTimeMs = allPoints.minOfOrNull { it.timeMs() } ?: return emptyList()
     val stepX = canvas.width / stepCounterXAxis.toFloat()
-    // группируем сигналы по имени
-    val signalsByName = flatMap { frame ->
-        val time = frame.timeMs()
-        frame.signals.map { signal -> signal.name to (time to signal) }
-    }.groupBy({ it.first }, { it.second })
 
-    val result =signalsByName.map { (name, timeSignalPairs) ->
-        // сортируем по времени
-        val sorted = timeSignalPairs.sortedBy { it.first }
-        val values = sorted.map { it.second.value.toFloat() }
+    return visibleLines.mapNotNull { line ->
+        if (line.points.isEmpty()) return@mapNotNull null
 
+        val settings = signalSettingsMap[line.name]
+        val lineColor = settings?.color?.toUiColor() ?: Color(0, 0, 0)
+
+        val sortedPoints = line.points.sortedBy { it.timeMs() }
+
+        val values = sortedPoints.map { it.value.toFloat() }
         val minY = 0f
         val maxY = max(1f, values.maxOrNull() ?: 1f)
         val yRange = max(1f, maxY - minY)
         val stepY = canvas.height / yRange
 
-        // нормализуем точки под Canvas (Offset)
-        val points = sorted.mapIndexed { index, (time, signal) ->
-            val x = (time - minTime.timeMs()) / 1000f * stepX
-            val y = canvas.height - (signal.value - minY) * stepY
-            val offset = Offset(x, y)
-
-            offset
+        val points = sortedPoints.map { point ->
+            val x = (point.timeMs() - startTimeMs) / 1000f * stepX
+            val y = canvas.height - (point.value - minY) * stepY
+            Offset(x, y)
         }
 
-
-        val color = sorted.firstNotNullOfOrNull { it.second.color?.toUiColor() } ?: Color.Gray
-
         Chart(
-            name = name,
+            name = line.name,
             points = points,
-            color = color,
+            color = lineColor,
             minValue = minY,
-            maxValue = maxY
+            maxValue = maxY,
         )
     }
-    return result
-}
-
-
-fun DomainGraphSeries.toUiChart(
-    canvas: IntSize,
-    stepCounterXAxis: Int
-): Chart {
-    val points = this.points
-    val minY = 0f
-    val maxY = points.maxOfOrNull { it.yCoordinate } ?: 1f
-    val yRange = max(1f, maxY - minY)
-
-    val stepX = canvas.width / stepCounterXAxis.toFloat()
-    val stepY = canvas.height / yRange
-
-    return Chart(
-        name = this.name,
-        points = this.points.map { (x, y) ->
-            Offset(
-                x = x * stepX,
-                y = canvas.height - ((y - minY) * stepY) // нормализация внутри своего диапазона
-            )
-        },
-        color = this.color?.toUiColor() ?: Color.Black,
-        minValue = minY,
-        maxValue = maxY
-    )
-}
-
-fun List<DomainGraphSeries>.mapToUiChartList(
-    canvas: IntSize,
-    stepCounterXAxis: Int
-): List<Chart> {
-    return this.map { it.toUiChart(canvas, stepCounterXAxis) }
 }

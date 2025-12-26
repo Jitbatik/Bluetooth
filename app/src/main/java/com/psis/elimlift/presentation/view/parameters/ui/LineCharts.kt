@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign.Companion.Center
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -55,14 +53,8 @@ fun LineCharts(
 
     val currentScale by rememberUpdatedState(chartConfig.scale)
     val currentOffset by rememberUpdatedState(chartConfig.offset)
-
     val currentMinOffsetX by rememberUpdatedState(chartConfig.minOffsetX)
     val currentMaxOffsetX by rememberUpdatedState(chartConfig.maxOffsetX)
-
-    val onReset by rememberUpdatedState {
-        onEvent(ParametersEvents.ChangeScale(1f))
-        onEvent(ParametersEvents.ChangeOffset(currentMaxOffsetX))
-    }
 
     val onTransformGesture =
         remember(currentOffset, currentScale, currentMinOffsetX, currentMaxOffsetX) {
@@ -70,7 +62,7 @@ fun LineCharts(
                 onEvent(
                     ParametersEvents.ChangeOffset(
                         offset = (currentOffset - pan.x / 10)
-                            .coerceIn(currentMinOffsetX, currentMaxOffsetX)
+//                            .coerceIn(currentMinOffsetX, currentMaxOffsetX)
                     )
                 )
                 onEvent(
@@ -88,22 +80,16 @@ fun LineCharts(
     }
 
 
-    val updateChartBoxSize: (IntSize) -> Unit = { parentSize = it }
-    val updateCanvasSize: (IntSize) -> Unit = {
-        onEvent(ParametersEvents.ChangeCanvasSize(size = it))
-    }
+    val updateParentSize: (IntSize) -> Unit = { parentSize = it }
+    val updateCanvasSize: (IntSize) -> Unit =
+        { onEvent(ParametersEvents.ChangeCanvasSize(size = it)) }
 
     Column(modifier = modifier) {
-        Header(
-            scale = chartConfig.scale,
-            offset = chartConfig.offset,
-            onReset = onReset
-        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .onGloballyPositioned { updateChartBoxSize(it.size) }
+                .onGloballyPositioned { updateParentSize(it.size) }
                 .chartGestures(
                     onTap = onTapGesture,
                     onTransform = onTransformGesture
@@ -159,41 +145,38 @@ private fun ChartsContent(
 fun Modifier.chartGestures(
     onTap: (Offset) -> Unit,
     onTransform: (pan: Offset, zoom: Float) -> Unit
-): Modifier = this.pointerInput(Unit) {
+): Modifier = pointerInput(Unit) {
+
     awaitEachGesture {
-        // 1) ждём касание (не требуем, чтобы оно было «не потреблено»)
         val down = awaitFirstDown(requireUnconsumed = false)
         var isTap = true
-        var verticalAccum = 0f
-        val touchSlop = viewConfiguration.touchSlop
+        var verticalDelta = 0f
+        val slop = viewConfiguration.touchSlop
 
         while (true) {
-            // Берём событие в Main pass (достаточно здесь)
             val event = awaitPointerEvent(PointerEventPass.Main)
-            val pointersDown = event.changes.count { it.pressed }
+
             val pan = event.calculatePan()
             val zoom = event.calculateZoom()
+            val pointers = event.changes.count { it.pressed }
 
-            val isMultiTouch = pointersDown > 1 || zoom != 1f
-            val isHorizontalPan = abs(pan.x) > abs(pan.y)
+            val isMultiTouch = pointers > 1 || zoom != 1f
+            val horizontal = abs(pan.x) > abs(pan.y)
 
-            if (isMultiTouch || isHorizontalPan) {
-                // Горизонтальная прокрутка графика или пинч-зум → забираем событие себе
+            if (isMultiTouch || horizontal) {
+                // берём управление → жесты графика
                 onTransform(pan, zoom)
                 event.changes.forEach { it.consume() }
                 isTap = false
             } else {
-                // Вертикальный пан одним пальцем → отдаём LazyColumn
-                verticalAccum += abs(pan.y)
-                if (verticalAccum > touchSlop) isTap = false
-                // НИЧЕГО не consume-им!
+                // вертикальный скролл → отдаём LazyColumn
+                verticalDelta += abs(pan.y)
+                if (verticalDelta > slop) isTap = false
             }
 
-            // Выход, когда все пальцы отпущены
             if (event.changes.none { it.pressed }) break
         }
 
-        // Если не было существенного движения/зума — считаем это тапом
         if (isTap) onTap(down.position)
     }
 }
@@ -208,39 +191,14 @@ private fun EmptyChart(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "No data available",
+            text = "Нет данных для отображения, пожалуйста проверьте соединение с CP6756",
+            textAlign = Center,
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Unspecified
         )
     }
 }
 
-
-@Composable
-fun Header(
-    scale: Float,
-    offset: Float,
-    onReset: () -> Unit
-) {
-    Column {
-        ScaleOffsetInfo(scale = scale, offset = offset)
-        Button(
-            onClick = onReset,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Сбросить масштаб и скролл")
-        }
-    }
-}
-
-@Composable
-private fun ScaleOffsetInfo(scale: Float, offset: Float) {
-    Text(
-        text = "Масштаб: $scale | Смещение: $offset",
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(8.dp)
-    )
-}
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 300)
 @Composable
@@ -291,6 +249,7 @@ private fun LineChartsPreviewMultiChart() {
                 fakeChartConfig.copy(scale = event.scale)
 
             is ParametersEvents.Tap -> touchPosition = event.touchPosition
+            else -> {}
         }
     }
 

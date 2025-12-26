@@ -6,8 +6,8 @@ import com.psis.elimlift.Event
 sealed interface SettingsEvent : Event
 
 sealed interface SignalEvent : SettingsEvent {
-    data class ToggleSignalVisibility(val signalId: String, val isVisible: Boolean) : SignalEvent
-    data class ChangeSignalColor(val signalId: String, val color: Color) : SignalEvent
+    data class ToggleSignalVisibility(val signalName: String, val isVisible: Boolean) : SignalEvent
+    data class ChangeSignalColor(val signalName: String, val color: Color) : SignalEvent
     data object MakeAllSignalsVisible : SignalEvent
 }
 sealed interface BluetoothEvent : SettingsEvent {

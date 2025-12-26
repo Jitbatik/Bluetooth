@@ -1,60 +1,64 @@
 package com.psis.elimlift.presentation.view.parameters.viewmodel
 
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.psis.elimlift.presentation.view.parameters.mapper.mapToUiChartList22
+import com.psis.elimlift.presentation.view.parameters.mapper.mapListLineToUiChartList
 import com.psis.elimlift.presentation.view.parameters.mapper.toUIParameterDisplayDataFlow
 import com.psis.elimlift.presentation.view.parameters.model.Chart
-import com.psis.transfer.chart.domain.usecase.ChartRangeObserver
+import com.psis.elimlift.presentation.view.parameters.model.ParameterDisplayData
+import com.psis.transfer.chart.data.SignalUserSettingsRepositoryImpl
+import com.psis.transfer.chart.domain.model.ChartConfig
+import com.psis.transfer.chart.domain.model.Line
+import com.psis.transfer.chart.domain.model.SignalUserSettings
+import com.psis.transfer.chart.domain.model.TimeRange
 import com.psis.transfer.chart.domain.usecase.ObserveChartConfigUseCase
-import com.psis.transfer.chart.domain.usecase.ObserveChartFramesUseCase
-import com.psis.transfer.chart.domain.usecase.ObserveChartSettings
+import com.psis.transfer.chart.domain.usecase.ObserveElevatorVersionUseCase
+import com.psis.transfer.chart.domain.usecase.ObserveListLineUseCase
 import com.psis.transfer.chart.domain.usecase.ObservePopDataUseCase
-import com.psis.transfer.chart.domain.usecase.ObserveTimeUseCase
 import com.psis.transfer.chart.domain.usecase.UpdateChartOffsetUseCase
 import com.psis.transfer.chart.domain.usecase.UpdateChartScaleUseCase
+import com.psis.transfer.chart.domain.usecase.GetTimeRangeUseCase
+import com.psis.transfer.chart.domain.usecase.temp.UpdateTimeRangeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ElevatorParametersViewModel @Inject constructor(
-    observeChartFramesUseCase: ObserveChartFramesUseCase,
     observePopDataUseCase: ObservePopDataUseCase,
-    observeTimeUseCase: ObserveTimeUseCase,
     observeChartConfigUseCase: ObserveChartConfigUseCase,
-
     private val updateChartScaleUseCase: UpdateChartScaleUseCase,
     private val updateChartOffsetUseCase: UpdateChartOffsetUseCase,
-    chartRangeObserver: ChartRangeObserver,
-    observeChartSettings: ObserveChartSettings,
+    observeElevatorVersionUseCase: ObserveElevatorVersionUseCase,
+    observeListLineUseCase: ObserveListLineUseCase,
+    getTimeRangeUseCase: GetTimeRangeUseCase,
+    private val updateTimeRangeUseCase: UpdateTimeRangeUseCase,
+    private val signalUserSettingsRepositoryImpl: SignalUserSettingsRepositoryImpl,
 ) : ViewModel() {
-    // Пока оставлю так если будут идеи как это убрать уберу
+    //TODO Весь блок это ТЕХДОЛГ - тут костыль на костыле
     // todo ========================================================================================
     private val chartConfigFlow = observeChartConfigUseCase()
     private val canvasSize = MutableStateFlow(IntSize.Zero)
     private val tapPosition = MutableStateFlow<Offset?>(null)
     private val _selectedIndex = MutableStateFlow<Int?>(null)
     private val _processedChartData = MutableStateFlow<List<Chart>>(emptyList())
-    private val visibleChartFramesFlow = observeChartFramesUseCase()
+
 
     init {
-        chartRangeObserver.start(
-            scope = viewModelScope,
-            chartDataFlow = observeChartFramesUseCase.observeRawFramesFlow(),
-            chartConfigFlow = chartConfigFlow
-        )
-
-        observeChartSettings(viewModelScope)
+        //TODO костыль инициализации signalUserSettingsRepositoryImpl - избежать в будующем
+        // Инициализируем настройки сигналов при создании ViewModel
+        viewModelScope.launch {
+            signalUserSettingsRepositoryImpl.initDefaults()
+        }
     }
 
     private fun updateCanvas(size: IntSize) {
@@ -62,6 +66,7 @@ class ElevatorParametersViewModel @Inject constructor(
             canvasSize.value = size
         }
     }
+
 
     private fun handleTap(position: Offset) {
         val wasSelected = tapPosition.value != null
@@ -118,46 +123,72 @@ class ElevatorParametersViewModel @Inject constructor(
         return nearest
     }
 
+    private val versionFlow = observeElevatorVersionUseCase()
+    private val currentTimeRange = getTimeRangeUseCase(versionFlow, false)
+        .onEach { value ->
+            Log.d("test", "This is ${value?.timeStart} ${value?.timeEnd}")
+        }
+
+    private val visibleListLine = observeListLineUseCase(
+        versionFlow = versionFlow,
+        rangeFlow = currentTimeRange,
+        maxGapDistance = 602_000L
+    )
+
     // todo ========================================================================================
     private val _state: StateFlow<ParametersState> = combine(
-        observeTimeUseCase(),
-        visibleChartFramesFlow,
-        observePopDataUseCase(
-            visibleChartFramesFlow,
-            _selectedIndex
-        ).toUIParameterDisplayDataFlow(),
-        chartConfigFlow,
-        canvasSize,
-    ) { time, domainSeries, popData, config, canvas ->
-        val baseChartData = domainSeries.mapToUiChartList22(
+        listOf(
+            visibleListLine,
+            observePopDataUseCase(visibleListLine, _selectedIndex).toUIParameterDisplayDataFlow(),
+            chartConfigFlow,
+            canvasSize,
+            currentTimeRange,
+            signalUserSettingsRepositoryImpl.observe()
+        )
+    ) { values ->
+        val domainSeries = values[0] as List<Line> // или ваш тип
+        val popData = values[1] as ParameterDisplayData // или ваш тип
+        val config = values[2] as ChartConfig
+        val canvas = values[3] as IntSize
+        val time = values[4] as TimeRange?
+        val test = values[5] as List<SignalUserSettings> // или ваш тип
+
+        val baseChartData = domainSeries.mapListLineToUiChartList(
             canvas = canvas,
             stepCounterXAxis = config.stepCount,
+            test
         )
 
         _processedChartData.value = baseChartData
+
         ParametersState(
-            time = time,
             chartData = baseChartData,
             tapPosition = tapPosition.value,
             popData = popData,
             chartConfig = config,
+            timeRange = time
         )
-    }.flowOn(Dispatchers.Default)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = ParametersStateDefaults.getDefault()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = ParametersStateDefaults.getDefault()
+    )
 
     val state: StateFlow<ParametersState> = _state
 
     private fun handleChartEvent(event: ParametersEvents) {
         viewModelScope.launch {
             when (event) {
+                is ParametersEvents.EditTimeRange -> updateTimeRangeUseCase(
+                    event.newTimeRange,
+                    versionFlow = versionFlow,
+                )
+
                 is ParametersEvents.ChangeScale -> updateChartScaleUseCase(event.scale)
                 is ParametersEvents.ChangeOffset -> updateChartOffsetUseCase(event.offset)
                 is ParametersEvents.ChangeCanvasSize -> updateCanvas(event.size)
                 is ParametersEvents.Tap -> handleTap(event.touchPosition)
+
             }
         }
     }

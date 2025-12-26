@@ -9,7 +9,7 @@ class EventHandlerImpl @Inject constructor() : EventHandler<HomeEvent, ByteArray
     private val baseLift = intArrayOf(0x01, 0x10, 0x01, 0x04, 0x00, 0x01, 0x02)
     private val defaultCommand = intArrayOf(0x01, 0x10, 0x01, 0x04, 0x00, 0x01, 0x02, 0x00, 0x00)
 
-    override fun handle(event: HomeEvent): ByteArray = when (event) {
+    override suspend fun handle(event: HomeEvent): ByteArray = when (event) {
         is HomeEvent.ButtonClick -> handleButtonCommands(event.buttons)
         is HomeEvent.Press -> defaultCommand
     }.toByteArray()

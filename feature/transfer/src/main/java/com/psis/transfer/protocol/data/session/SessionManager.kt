@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -34,8 +36,8 @@ class SessionManager @Inject constructor(
     private val commandRepository: CommandRepository,
     private val commandFactory: CommandFactory,
 ) {
-    @Volatile
-    private var activeSession: SessionScope? = null
+    private val sessionMutex = Mutex()
+    private var session: SessionScope? = null
 
     private val _state = MutableStateFlow(SessionState.STOPPED)
     val state: StateFlow<SessionState> = _state
@@ -45,16 +47,18 @@ class SessionManager @Inject constructor(
     /**
      * Инициализация и запуск новой сессии.
      */
-    fun start(socket: BluetoothSocket) = synchronized(this) {
-        stop()
+    suspend fun start(socket: BluetoothSocket) = sessionMutex.withLock {
+        stopUnlocked()
 
-        val sessionScope = SessionScope(socket, Job())
-        activeSession = sessionScope
+        val newSession = SessionScope(socket, Job())
+        session = newSession
 
-        // read
-        sessionScope.scope.launchSafely("observeIncomingPackets") { observeIncomingPackets() }
-        // request
-        sessionScope.scope.launchSafely("processSendCommands") { processSendCommands() }
+        newSession.scope.launchSafely("incoming") {
+            observeIncomingPackets(newSession)
+        }
+        newSession.scope.launchSafely("sender") {
+            processSendCommands(newSession)
+        }
 
         _state.value = SessionState.STARTED
         Log.i(TAG, "🚀 Сессия запущена")
@@ -63,12 +67,18 @@ class SessionManager @Inject constructor(
     /**
      * Безопасная остановка сессии и очистка состояния.
      */
-    fun stop() = synchronized(this) {
-        activeSession?.close()
-        activeSession = null
+    suspend fun stop() = sessionMutex.withLock {
+        stopUnlocked()
+    }
+
+    private fun stopUnlocked() {
+        session?.close()
+        session = null
+
         stateRepository.clear()
         archiveRepository.clear()
         responseAwaiter.cancel()
+
         _state.value = SessionState.STOPPED
         Log.i(TAG, "🛑 Сессия остановлена")
     }
@@ -77,35 +87,42 @@ class SessionManager @Inject constructor(
     /**
      * Чтение из сокета и запись в репозитории
      */
-    private suspend fun observeIncomingPackets() {
-        val socket = activeSession?.socket ?: return
-        exchangeProtocol.listen(socket).collect { parsed ->
-            val lastCommand = commandRepository.lastSentCommand ?: return@collect
-            if (commandFactory.hasHeader(parsed, lastCommand.respondHeader)) {
-                lastCommand.handleResponse(parsed)
-                responseAwaiter.complete()
-            }
+    private suspend fun observeIncomingPackets(local: SessionScope) {
+        exchangeProtocol.listen(local.socket).collect { packet ->
+            handleIncomingPacket(packet)
+        }
+    }
+
+    private suspend fun handleIncomingPacket(packet: List<Byte>) {
+        val lastCommand = commandRepository.lastSentCommand ?: return
+
+        if (commandFactory.hasHeader(packet, lastCommand.respondHeader)) {
+            lastCommand.handleResponse(packet)
+            responseAwaiter.complete()
         }
     }
 
     /**
      * Основной цикл отправки команд
      */
-    private suspend fun processSendCommands() {
-        val socket = activeSession?.socket ?: return
-        val scope = activeSession?.scope ?: return
+    private suspend fun processSendCommands(local: SessionScope) {
+        val socket = local.socket
 
-        while (scope.isActive) {
+        while (local.scope.isActive) {
+
+            // наполнение очереди
             commandRepository.refreshArchiveQueueIfNeeded(
                 currentStateIndex = stateRepository.getCurrentBufferIndex()
             )
 
-            val success = sendWithRetry(
-                socket = socket,
-                command = commandRepository.getNextCommand()
-            )
+            // отправка
+            val command = commandRepository.getNextCommand()
+            val ok = sendWithRetry(socket, command)
 
-            if (!success) Log.e(TAG, "❌ Нет ответа после $MAX_RETRY_COUNT попыток")
+            if (!ok) {
+                Log.e(TAG, "❌ Нет ответа после $MAX_RETRY_COUNT попыток")
+            }
+
             delay(RETRY_DELAY_MS)
         }
     }
@@ -119,15 +136,13 @@ class SessionManager @Inject constructor(
         command: Command<List<Byte>>
     ): Boolean {
         for (attempt in 1..MAX_RETRY_COUNT) {
-            if (!currentCoroutineContext().isActive) break
             Log.d(
                 TAG,
                 "➡️ Отправка #$attempt: ${command.bytes.joinToString(" ") { "%02X".format(it) }} " +
                         "(header=${command.respondHeader.joinToString(" ") { "%02X".format(it) }})"
             )
-
+            if (!currentCoroutineContext().isActive) break
             exchangeProtocol.sendCommand(socket, command.bytes.toByteArray())
-
             if (command.respondHeader.isEmpty()) return true
             if (responseAwaiter.await(RESPONSE_TIMEOUT_MS)) return true
 
@@ -146,7 +161,7 @@ class SessionManager @Inject constructor(
     ): Job = launch(CoroutineName(name)) {
         try {
             block()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             Log.d(TAG, "🟡 Короутина [$name] отменена (нормальное завершение)")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Ошибка в корутине [$name]", e)
@@ -155,7 +170,7 @@ class SessionManager @Inject constructor(
     }
 
     companion object {
-        private const val RETRY_DELAY_MS = 100L
+        private const val RETRY_DELAY_MS = 150L
         private const val RESPONSE_TIMEOUT_MS = 1000L
         private const val MAX_RETRY_COUNT = 3
         private val TAG = SessionManager::class.java.simpleName

@@ -1,26 +1,27 @@
 package com.psis.elimlift.presentation.view.settings
 
 import androidx.compose.ui.graphics.Color
-import com.psis.transfer.chart.data.ChartSettingsRepository
 import com.psis.elimlift.EventHandler
-import com.psis.transfer.chart.domain.model.SignalColor
 import com.psis.elimlift.presentation.view.settings.model.SignalEvent
+import com.psis.transfer.chart.data.SignalUserSettingsRepositoryImpl
+import com.psis.transfer.chart.domain.model.SignalColor
 import javax.inject.Inject
 
 class SignalEventHandler @Inject constructor(
-    private val chartSettingsRepository: ChartSettingsRepository
+    private val signalUserSettingsRepositoryImpl: SignalUserSettingsRepositoryImpl,
 ) : EventHandler<SignalEvent, Unit> {
-    override fun handle(event: SignalEvent) {
+    override suspend fun handle(event: SignalEvent) {
         when (event) {
-            is SignalEvent.ToggleSignalVisibility -> chartSettingsRepository.toggleSignalVisibility(
-                event.signalId, event.isVisible
-            )
+            is SignalEvent.ToggleSignalVisibility -> signalUserSettingsRepositoryImpl
+                .updateVisibility(event.signalName, event.isVisible)
 
-            is SignalEvent.ChangeSignalColor -> chartSettingsRepository.changeSignalColor(
-                event.signalId, event.color.toSignalColor()
-            )
+            is SignalEvent.ChangeSignalColor -> signalUserSettingsRepositoryImpl
+                .updateColor(
+                    event.signalName,
+                    event.color.toSignalColor()
+                )
 
-            is SignalEvent.MakeAllSignalsVisible -> chartSettingsRepository.makeAllSignalsVisible()
+            is SignalEvent.MakeAllSignalsVisible -> signalUserSettingsRepositoryImpl.makeAllSignalsVisible()
         }
     }
 

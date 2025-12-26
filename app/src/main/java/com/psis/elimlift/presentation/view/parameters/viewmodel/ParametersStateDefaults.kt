@@ -5,7 +5,6 @@ import com.psis.transfer.chart.domain.model.ChartConfig
 
 object ParametersStateDefaults {
     fun getDefault() = ParametersState(
-        time = "",
         chartData = emptyList(),
         popData = ParameterDisplayData(
             selectedIndex = null,
@@ -15,5 +14,6 @@ object ParametersStateDefaults {
         ),
         chartConfig = ChartConfig(),
         tapPosition = null,
+        timeRange = null
     )
 }

@@ -1,5 +1,6 @@
 package com.psis.elimlift.presentation.view.parameters.ui.tooltip
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -42,6 +43,7 @@ import com.psis.elimlift.presentation.view.parameters.model.ParameterDisplayData
 import com.psis.elimlift.presentation.view.parameters.util.calculateTooltipOffset
 import com.psis.transfer.protocol.domain.utils.DateTimeUtils
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun ChartValueTooltip(
     touchPosition: Offset,

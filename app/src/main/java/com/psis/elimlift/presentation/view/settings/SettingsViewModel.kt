@@ -8,8 +8,8 @@ import com.psis.elimlift.presentation.view.settings.model.SettingsEvent
 import com.psis.elimlift.presentation.view.settings.model.SettingsState
 import com.psis.elimlift.presentation.view.settings.model.SignalEvent
 import com.psis.elimlift.presentation.view.settings.model.WirelessBluetoothMask
-import com.psis.elimlift.presentation.view.settings.utils.chartSettingsMapToUI
-import com.psis.transfer.chart.domain.usecase.ObserveChartSettings
+import com.psis.elimlift.presentation.view.settings.utils.userChartSettingsMapToUI
+import com.psis.transfer.chart.data.SignalUserSettingsRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,19 +24,28 @@ class SettingsViewModel @Inject constructor(
     settingsManager: SettingsManager,
     private val signalHandler: SignalEventHandler,
     private val bluetoothHandler: BluetoothEventHandler,
-    observeChartSettings: ObserveChartSettings
+    private val signalUserSettingsRepositoryImpl: SignalUserSettingsRepositoryImpl,
 ) : ViewModel() {
     val state = createStateFlow(
-        observeChartSettings,
+        signalUserSettingsRepositoryImpl,
         settingsManager,
     )
 
+    init {
+        //TODO костыль - избежать в будующем
+        // Инициализируем настройки сигналов при создании ViewModel
+        viewModelScope.launch {
+            signalUserSettingsRepositoryImpl.initDefaults()
+        }
+    }
+
     private fun createStateFlow(
-        chartSettingsRepository: ObserveChartSettings,
+        chartSettingsRepository: SignalUserSettingsRepositoryImpl,
         settingsManager: SettingsManager,
     ): StateFlow<SettingsState> {
-        val chartSettingsFlow = chartSettingsRepository(viewModelScope)
-            .map { it.chartSettingsMapToUI() }
+
+        val chartSettingsFlow = chartSettingsRepository.observe()
+            .map { it.userChartSettingsMapToUI() }
 
         val bluetoothFlow = combine(
             settingsManager.isEnabledChecked(),

@@ -1,13 +1,15 @@
 package com.psis.transfer.chart.domain.model
 
-data class ChartSettings(
-    val title: String,
-    val description: String,
-    val config: ChartSignalsConfig
+data class SignalUserSettings(
+    val name: String,
+    val isVisible: Boolean = true,
+    val color: SignalColor = SignalColor(0, 255, 0)
 )
 
-data class ChartSignalsConfig(
-    val timestampSignal: SignalSettings?,
-    val millisSignal: SignalSettings?,
-    val signals: List<SignalSettings>
+data class SignalDefinition(
+    val name: String,
+    val comment: String,
+    val offset: Int,
+    val type: String,
+    val codes: List<SignalCode> = emptyList()
 )

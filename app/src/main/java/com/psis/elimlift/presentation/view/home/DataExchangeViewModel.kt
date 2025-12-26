@@ -45,10 +45,11 @@ class DataExchangeViewModel @Inject constructor(
     }
 
     fun onEvents(event: HomeEvent) {
-        sendData(eventHandler.handle(event))
+        viewModelScope.launch { sendData(eventHandler.handle(event)) }
+
     }
 
     private fun sendData(command: ByteArray) {
-        viewModelScope.launch { sendCommandUseCase(command) }
+        sendCommandUseCase(command)
     }
 }

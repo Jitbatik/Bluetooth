@@ -107,7 +107,7 @@ private fun ToggleAllSignalsButton(
     FilledTonalButton(
         onClick = {
             signals.forEach { signal ->
-                onEvents(SignalEvent.ToggleSignalVisibility(signal.id, hasHiddenSignals))
+                onEvents(SignalEvent.ToggleSignalVisibility(signal.name, hasHiddenSignals))
             }
         },
         modifier = modifier
@@ -134,15 +134,15 @@ private fun SignalsListWithScrollbar(
         ) {
             items(
                 items = signals,
-                key = { it.id }
+                key = { it.name }
             ) { signal ->
                 SignalSettingItem(
                     signal = signal,
                     onVisibilityChanged = { isVisible ->
-                        onEvents(SignalEvent.ToggleSignalVisibility(signal.id, isVisible))
+                        onEvents(SignalEvent.ToggleSignalVisibility(signal.name, isVisible))
                     },
                     onColorChanged = { color ->
-                        onEvents(SignalEvent.ChangeSignalColor(signal.id, color))
+                        onEvents(SignalEvent.ChangeSignalColor(signal.name, color))
                     }
                 )
             }
@@ -250,7 +250,7 @@ private fun SignalSettingItem(
                 modifier = Modifier.weight(0.6f)
             ) {
                 Text(
-                    text = signal.name,
+                    text = signal.comment,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )

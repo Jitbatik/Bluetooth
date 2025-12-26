@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.transfer"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

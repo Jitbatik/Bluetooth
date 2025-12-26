@@ -9,7 +9,7 @@ class BluetoothEventHandler @Inject constructor(
     private val settingsManager: SettingsManager
 ) : EventHandler<BluetoothEvent, Unit> {
 
-    override fun handle(event: BluetoothEvent) {
+    override suspend fun handle(event: BluetoothEvent) {
         when (event) {
             is BluetoothEvent.UpdateEnabled -> settingsManager.saveEnabledChecked(event.isEnabled)
             is BluetoothEvent.UpdateMask -> settingsManager.saveBluetoothMask(event.mask)

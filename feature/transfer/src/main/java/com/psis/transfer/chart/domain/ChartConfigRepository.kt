@@ -1,9 +1,9 @@
 package com.psis.transfer.chart.domain
 
 import com.psis.transfer.chart.domain.model.ChartConfig
-import com.psis.transfer.chart.domain.model.TimeRange
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +18,7 @@ class ChartConfigRepository @Inject constructor() {
         _chartConfig.value = config
     }
 
-    fun updateTimeRange(range: TimeRange) {
-        _chartConfig.value = _chartConfig.value.copy(timeRange = range)
+    fun update(transform: (ChartConfig) -> ChartConfig) {
+        _chartConfig.update(transform)
     }
 }

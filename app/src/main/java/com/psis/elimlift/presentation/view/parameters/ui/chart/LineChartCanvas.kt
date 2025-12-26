@@ -51,6 +51,9 @@ fun LineChartCanvas(
         // draw Line with Shadow
         drawGraphLine(points, color, style)
 
+        // draw points
+        drawAllPoints(points, color, style, selectedIndex)
+
         // draw Line Shadow
         drawGraphShadow(points, color)
 
@@ -62,6 +65,24 @@ fun LineChartCanvas(
         }
     }
 }
+
+private fun DrawScope.drawAllPoints(
+    points: List<Offset>,
+    color: Color,
+    style: ChartStyle,
+    selectedIndex: Int?
+) {
+    points.forEachIndexed { index, point ->
+        if (index != selectedIndex) {
+            drawCircle(
+                color = color,
+                radius = style.pointRadiusFactor * 0.5f,
+                center = point
+            )
+        }
+    }
+}
+
 
 fun DrawScope.drawCross(center: Offset, color: Color, style: ChartStyle) {
     val half = style.pointRadiusFactor * 1.2f    // коэффициент увеличения
@@ -80,9 +101,6 @@ fun DrawScope.drawCross(center: Offset, color: Color, style: ChartStyle) {
         strokeWidth = style.lineStroke.width
     )
 }
-
-
-
 
 private fun DrawScope.drawSelectedPoint(
     point: Offset,
@@ -121,8 +139,8 @@ private fun DrawScope.drawGraphShadow(
         path = path,
         brush = Brush.verticalGradient(
             colors = listOf(
-                color.copy(alpha = 0.4f), // у линии
-                color.copy(alpha = 0f)    // вниз в прозрачность
+                color.copy(alpha = 0.3f), // у линии
+                color.copy(alpha = 0.3f)    // вниз в прозрачность
             ),
             startY = points.minOf { it.y },
             endY = baseline

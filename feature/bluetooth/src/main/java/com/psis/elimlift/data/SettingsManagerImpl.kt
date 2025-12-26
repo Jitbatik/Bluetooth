@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
+import androidx.core.content.edit
 
 class SettingsManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context
@@ -17,7 +18,7 @@ class SettingsManagerImpl @Inject constructor(
     override fun isEnabledChecked(): StateFlow<Boolean> = _isEnabledFlow.asStateFlow()
 
     override fun saveEnabledChecked(isEnabled: Boolean) {
-        prefs.edit().putBoolean(KEY_ENABLED, isEnabled).apply()
+        prefs.edit { putBoolean(KEY_ENABLED, isEnabled) }
         _isEnabledFlow.value = isEnabled
     }
 
@@ -27,7 +28,7 @@ class SettingsManagerImpl @Inject constructor(
     override fun getBluetoothMask(): StateFlow<String> = _bluetoothMaskFlow.asStateFlow()
 
     override fun saveBluetoothMask(mask: String) {
-        prefs.edit().putString(KEY_MASK, mask).apply()
+        prefs.edit { putString(KEY_MASK, mask) }
         _bluetoothMaskFlow.value = mask
     }
 
